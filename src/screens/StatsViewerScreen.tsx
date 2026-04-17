@@ -1,145 +1,236 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useStore } from '../store';
 import type { Player } from '../types';
 
+interface PlayerStats {
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards: number;
+    mvps: number;
+    voteSum: number;
+    voteCount: number;
+}
+
 export default function StatsViewerScreen({ navigation }: any) {
-    const leagues = useStore(s => s.leagues);
+    const leagues = useStore(state => state.leagues);
     const league = leagues.length > 0 ? leagues[0] : null;
     const leagueId = league?.id || '';
 
-    const players = useStore(s => s.players).filter(p => p.leagueId === leagueId);
-    const realTeams = useStore(s => s.realTeams).filter(t => t.leagueId === leagueId);
-    const matches = useStore(s => s.matches).filter(m => m.leagueId === leagueId && m.status === 'finished');
-    const fantasyLineups = useStore(s => s.fantasyLineups);
+    const players = useStore(state => state.players).filter(p => p.leagueId === leagueId);
+    const matches = useStore(state => state.matches).filter(m => m.leagueId === leagueId && m.status === 'finished');
+    const realTeams = useStore(state => state.realTeams).filter(t => t.leagueId === leagueId);
 
-    if (!league) return <View style={st.center}><Text style={st.empty}>Nessun torneo.</Text></View>;
+    const [activeTab, setActiveTab] = useState<'goals' | 'assists' | 'cards' | 'votes'>('goals');
 
-    // Build stats map
-    const playersWithStats = useMemo(() => {
-        const statsMap = new Map<string, { goal: number; assist: number; yellow: number; red: number; fantasyPts: number }>();
-        players.forEach(p => statsMap.set(p.id, { goal: 0, assist: 0, yellow: 0, red: 0, fantasyPts: 0 }));
+    const aggregatedStats = useMemo(() => {
+        const statsMap = new Map<string, PlayerStats>();
 
-        matches.forEach(m => {
-            (m.events || []).forEach(ev => {
-                const s = statsMap.get(ev.playerId);
-                if (!s) return;
-                if (ev.type === 'goal') s.goal++;
-                if (ev.type === 'assist') s.assist++;
-                if (ev.type === 'yellow_card') s.yellow++;
-                if (ev.type === 'red_card') s.red++;
+        // Init stats
+        players.forEach(p => {
+            statsMap.set(p.id, {
+                goals: 0,
+                assists: 0,
+                yellowCards: 0,
+                redCards: 0,
+                mvps: 0,
+                voteSum: 0,
+                voteCount: 0
             });
         });
 
-        if (league.settings.hasFantasy) {
-            fantasyLineups.forEach(fl => {
-                const ft = useStore.getState().fantasyTeams.find(f => f.id === fl.fantasyTeamId);
-                if (ft && ft.leagueId === leagueId && fl.playerPoints) {
-                    Object.entries(fl.playerPoints).forEach(([pid, pts]) => {
-                        const s = statsMap.get(pid);
-                        if (s) s.fantasyPts += pts;
-                    });
+        // Process matches
+        matches.forEach(m => {
+            // Events
+            m.events?.forEach(ev => {
+                const s = statsMap.get(ev.playerId);
+                if (s) {
+                    if (ev.type === 'goal') s.goals++;
+                    if (ev.type === 'assist') s.assists++;
+                    if (ev.type === 'yellow_card') s.yellowCards++;
+                    if (ev.type === 'red_card') s.redCards++;
+                    if (ev.type === 'mvp') s.mvps++;
                 }
             });
-        }
 
-        return players.map(p => ({ ...p, ...statsMap.get(p.id)! }));
-    }, [players, matches, fantasyLineups, leagueId]);
+            // Votes
+            if (m.playerVotes) {
+                Object.entries(m.playerVotes).forEach(([playerId, vote]) => {
+                    const s = statsMap.get(playerId);
+                    if (s && vote > 0) {
+                        s.voteSum += vote;
+                        s.voteCount++;
+                    }
+                });
+            }
+        });
 
-    const topScorers = [...playersWithStats].sort((a, b) => b.goal - a.goal).filter(p => p.goal > 0).slice(0, 10);
-    const topAssists = [...playersWithStats].sort((a, b) => b.assist - a.assist).filter(p => p.assist > 0).slice(0, 10);
-    const topCards = [...playersWithStats].sort((a, b) => (b.red * 2 + b.yellow) - (a.red * 2 + a.yellow)).filter(p => p.yellow > 0 || p.red > 0).slice(0, 10);
-    const topFantasy = [...playersWithStats].sort((a, b) => b.fantasyPts - a.fantasyPts).filter(p => p.fantasyPts !== 0).slice(0, 10);
+        return statsMap;
+    }, [matches, players]);
 
-    type StatPlayer = Player & { goal: number; assist: number; yellow: number; red: number; fantasyPts: number };
+    const getTopScorers = () => {
+        return players
+            .filter(p => aggregatedStats.get(p.id)?.goals! > 0)
+            .sort((a, b) => aggregatedStats.get(b.id)!.goals - aggregatedStats.get(a.id)!.goals);
+    };
 
-    const renderRow = (p: StatPlayer, idx: number, valLabel: string, val: number | string) => (
-        <TouchableOpacity key={p.id} style={st.row} onPress={() => navigation.navigate('PlayerProfile', { playerId: p.id })}>
-            <Text style={[st.rank, idx === 0 && { color: '#fbbf24' }]}>{idx + 1}</Text>
-            <View style={{ flex: 1 }}>
-                <Text style={st.name}>{p.name}</Text>
-                <Text style={st.sub}>{realTeams.find(t => t.id === p.realTeamId)?.name || '?'}</Text>
+    const getTopAssists = () => {
+        return players
+            .filter(p => aggregatedStats.get(p.id)?.assists! > 0)
+            .sort((a, b) => aggregatedStats.get(b.id)!.assists - aggregatedStats.get(a.id)!.assists);
+    };
+
+    const getTopBadBoys = () => {
+        return players
+            .filter(p => aggregatedStats.get(p.id)!.redCards > 0 || aggregatedStats.get(p.id)!.yellowCards > 0)
+            .sort((a, b) => {
+                const sA = aggregatedStats.get(a.id)!;
+                const sB = aggregatedStats.get(b.id)!;
+                const pA = sA.redCards * 3 + sA.yellowCards;
+                const pB = sB.redCards * 3 + sB.yellowCards;
+                return pB - pA;
+            });
+    };
+
+    const getTopVotes = () => {
+        return players
+            .filter(p => aggregatedStats.get(p.id)!.voteCount > 0)
+            .sort((a, b) => {
+                const sA = aggregatedStats.get(a.id)!;
+                const sB = aggregatedStats.get(b.id)!;
+                const avgA = sA.voteSum / sA.voteCount;
+                const avgB = sB.voteSum / sB.voteCount;
+                return avgB - avgA;
+            });
+    };
+
+    const renderTable = (list: Player[], type: string) => {
+        if (list.length === 0) return <Text style={styles.emptyText}>Nessun dato disponibile.</Text>;
+        return (
+            <View style={styles.table}>
+                {list.slice(0, 50).map((player, idx) => {
+                    const stats = aggregatedStats.get(player.id)!;
+                    const team = realTeams.find(t => t.id === player.realTeamId);
+
+                    let mainValue = '';
+                    if (type === 'goals') mainValue = stats.goals.toString();
+                    if (type === 'assists') mainValue = stats.assists.toString();
+                    if (type === 'votes') mainValue = (stats.voteSum / stats.voteCount).toFixed(2);
+
+                    return (
+                        <View key={player.id} style={styles.row}>
+                            <Text style={styles.colPos}>{idx + 1}</Text>
+                            <View style={styles.colInfo}>
+                                <Text style={styles.playerName}>{player.name}</Text>
+                                <Text style={styles.playerTeam}>{team?.name}  •  {player.position}</Text>
+                            </View>
+
+                            {type === 'cards' ? (
+                                <View style={styles.cardsCol}>
+                                    <View style={styles.cardBox}>
+                                        <Text style={styles.cardTxtCol}>{stats.yellowCards}</Text>
+                                        <View style={[styles.cardSquare, { backgroundColor: '#fbbf24' }]} />
+                                    </View>
+                                    <View style={styles.cardBox}>
+                                        <Text style={styles.cardTxtCol}>{stats.redCards}</Text>
+                                        <View style={[styles.cardSquare, { backgroundColor: '#ef4444' }]} />
+                                    </View>
+                                </View>
+                            ) : (
+                                <Text style={styles.colValue}>{mainValue}</Text>
+                            )}
+                        </View>
+                    );
+                })}
             </View>
-            <View style={st.valBox}>
-                <Text style={st.val}>{val}</Text>
-                <Text style={st.valLabel}>{valLabel}</Text>
-            </View>
-        </TouchableOpacity>
-    );
+        );
+    };
 
-    const renderCardRow = (p: StatPlayer, idx: number) => (
-        <TouchableOpacity key={p.id} style={st.row} onPress={() => navigation.navigate('PlayerProfile', { playerId: p.id })}>
-            <Text style={[st.rank, idx === 0 && { color: '#fbbf24' }]}>{idx + 1}</Text>
-            <View style={{ flex: 1 }}>
-                <Text style={st.name}>{p.name}</Text>
-                <Text style={st.sub}>{realTeams.find(t => t.id === p.realTeamId)?.name || '?'}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-                {p.yellow > 0 && <Text style={{ color: '#FFEB3B', fontWeight: 'bold' }}>{p.yellow} 🟨</Text>}
-                {p.red > 0 && <Text style={{ color: '#F44336', fontWeight: 'bold' }}>{p.red} 🟥</Text>}
-            </View>
-        </TouchableOpacity>
-    );
+    let title = "Capocannonieri";
+    let listDesc = "Classifica dei migliori marcatori del torneo.";
+    let activeList = getTopScorers();
+
+    if (activeTab === 'assists') {
+        title = "Assist-Man";
+        listDesc = "Classifica dei migliori assist-man.";
+        activeList = getTopAssists();
+    } else if (activeTab === 'cards') {
+        title = "Peggior Fair-Play";
+        listDesc = "Giocatori più sanzionati (Rosso = 3pti, Giallo = 1pt)";
+        activeList = getTopBadBoys();
+    } else if (activeTab === 'votes') {
+        title = "Miglior Media Voto";
+        listDesc = "I migliori giocatori per media voto.";
+        activeList = getTopVotes();
+    }
 
     return (
-        <View style={st.container}>
-            <View style={st.header}>
+        <View style={styles.container}>
+            <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
-                    <Text style={st.backBtn}>&lt;</Text>
+                    <Text style={styles.backBtnText}>&lt;</Text>
                 </TouchableOpacity>
-                <Text style={st.title}>Statistiche Torneo</Text>
+                <Text style={styles.title}>Statistiche Calciatori</Text>
             </View>
 
-            <ScrollView contentContainerStyle={st.content}>
-                {/* Top Scorers */}
-                <View style={st.card}>
-                    <Text style={st.cardTitle}>⚽ Top Marcatori</Text>
-                    {topScorers.length === 0 && <Text style={st.empty}>Nessun gol registrato.</Text>}
-                    {topScorers.map((p, i) => renderRow(p, i, 'Gol', p.goal))}
-                </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrapper} contentContainerStyle={styles.tabsContent}>
+                <TouchableOpacity style={[styles.tabBtn, activeTab === 'goals' && styles.tabBtnActive]} onPress={() => setActiveTab('goals')}>
+                    <Text style={[styles.tabText, activeTab === 'goals' && styles.tabTextActive]}>⚽ Gol</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.tabBtn, activeTab === 'assists' && styles.tabBtnActive]} onPress={() => setActiveTab('assists')}>
+                    <Text style={[styles.tabText, activeTab === 'assists' && styles.tabTextActive]}>👟 Assist</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.tabBtn, activeTab === 'cards' && styles.tabBtnActive]} onPress={() => setActiveTab('cards')}>
+                    <Text style={[styles.tabText, activeTab === 'cards' && styles.tabTextActive]}>🟨 Cartellini</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.tabBtn, activeTab === 'votes' && styles.tabBtnActive]} onPress={() => setActiveTab('votes')}>
+                    <Text style={[styles.tabText, activeTab === 'votes' && styles.tabTextActive]}>⭐ Media Voto</Text>
+                </TouchableOpacity>
+            </ScrollView>
 
-                {/* Top Assists */}
-                <View style={st.card}>
-                    <Text style={st.cardTitle}>👟 Top Assistman</Text>
-                    {topAssists.length === 0 && <Text style={st.empty}>Nessun assist registrato.</Text>}
-                    {topAssists.map((p, i) => renderRow(p, i, 'Assist', p.assist))}
-                </View>
+            <View style={styles.listHeader}>
+                <Text style={styles.listTitle}>{title}</Text>
+                <Text style={styles.listDesc}>{listDesc}</Text>
+            </View>
 
-                {/* Cards */}
-                <View style={st.card}>
-                    <Text style={st.cardTitle}>🟨 Cartellini</Text>
-                    {topCards.length === 0 && <Text style={st.empty}>Nessun cartellino registrato.</Text>}
-                    {topCards.map((p, i) => renderCardRow(p, i))}
-                </View>
-
-                {/* Fantasy */}
-                {league.settings.hasFantasy && (
-                    <View style={st.card}>
-                        <Text style={[st.cardTitle, { color: '#fbbf24' }]}>🏆 Top Player Fantasy</Text>
-                        {topFantasy.length === 0 && <Text style={st.empty}>Nessun punteggio fantasy calcolato.</Text>}
-                        {topFantasy.map((p, i) => renderRow(p, i, 'pt', p.fantasyPts.toFixed(1)))}
-                    </View>
-                )}
+            <ScrollView contentContainerStyle={styles.content}>
+                {renderTable(activeList, activeTab)}
             </ScrollView>
         </View>
     );
 }
 
-const st = StyleSheet.create({
-    center: { flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center' },
+const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#0f172a' },
-    empty: { color: '#64748b', fontSize: 13, fontStyle: 'italic', textAlign: 'center', paddingVertical: 10 },
     header: { flexDirection: 'row', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-    backBtn: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold' },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#38bdf8' },
-    content: { padding: 16, paddingBottom: 40 },
-    card: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-    cardTitle: { color: '#38bdf8', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.04)' },
-    rank: { color: '#94a3b8', fontWeight: 'bold', fontSize: 14, width: 28 },
-    name: { color: '#f8fafc', fontWeight: 'bold', fontSize: 14 },
-    sub: { color: '#64748b', fontSize: 11 },
-    valBox: { alignItems: 'flex-end' },
-    val: { color: '#f8fafc', fontWeight: '900', fontSize: 16 },
-    valLabel: { color: '#64748b', fontSize: 10 },
+    backBtnText: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold' },
+    title: { fontSize: 20, fontWeight: 'bold', color: '#f8fafc' },
+
+    tabsWrapper: { maxHeight: 60, minHeight: 60, backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+    tabsContent: { paddingHorizontal: 16, alignItems: 'center' },
+    tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)', marginRight: 10 },
+    tabBtnActive: { backgroundColor: 'rgba(56, 189, 248, 0.1)' },
+    tabText: { color: '#94a3b8', fontWeight: 'bold' },
+    tabTextActive: { color: '#38bdf8' },
+
+    listHeader: { padding: 20, backgroundColor: 'rgba(56, 189, 248, 0.05)', borderBottomWidth: 1, borderBottomColor: 'rgba(56, 189, 248, 0.2)' },
+    listTitle: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
+    listDesc: { color: '#94a3b8', fontSize: 13 },
+
+    content: { paddingHorizontal: 16, paddingBottom: 60 },
+    emptyText: { color: '#94a3b8', textAlign: 'center', marginTop: 30, fontSize: 16 },
+
+    table: { marginTop: 10 },
+    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+    colPos: { width: 30, color: '#64748b', fontWeight: 'bold', fontSize: 16 },
+    colInfo: { flex: 1 },
+    playerName: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
+    playerTeam: { color: '#94a3b8', fontSize: 12 },
+    colValue: { color: '#38bdf8', fontSize: 20, fontWeight: 'bold', width: 50, textAlign: 'right' },
+
+    cardsCol: { flexDirection: 'row', gap: 12 },
+    cardBox: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    cardTxtCol: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold' },
+    cardSquare: { width: 12, height: 16, borderRadius: 2 }
 });

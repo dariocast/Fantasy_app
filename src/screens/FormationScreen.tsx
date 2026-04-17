@@ -12,6 +12,8 @@ export default function FormationScreen({ navigation }: any) {
     const currentUser = useStore(state => state.currentUser);
     const players = useStore(state => state.players);
     const fantasyTeams = useStore(state => state.fantasyTeams);
+    const updateFantasyLineup = useStore(state => state.updateFantasyLineup);
+    const fantasyLineups = useStore(state => state.fantasyLineups);
 
     const myFantasyTeamDoc = fantasyTeams.find(f => f.leagueId === leagueId && f.userId === currentUser?.id);
 
@@ -93,18 +95,18 @@ export default function FormationScreen({ navigation }: any) {
         if (isLocked) return Alert.alert("Errore", "Tempo Scaduto! Non puoi più schierare formazioni per questa giornata.");
         if (!myFantasyTeamDoc) return Alert.alert("Errore", "Nessuna fantasquadra trovata.");
 
-        Alert.alert("Successo", "Formazione salvata con successo! (Mock)");
         const newLineup: FantasyLineup = {
             id: uuidv4(),
             fantasyTeamId: myFantasyTeamDoc.id,
             matchday: currentMatchday,
             starters: starters.reduce((acc, pId, idx) => ({ ...acc, [idx.toString()]: pId || '' }), {}),
-            bench
+            bench,
+            points: 0,
+            playerPoints: {}
         };
         
-        useStore.setState(state => ({ 
-            fantasyLineups: [...state.fantasyLineups.filter(l => l.fantasyTeamId !== myFantasyTeamDoc.id || l.matchday !== currentMatchday), newLineup] 
-        }));
+        updateFantasyLineup(newLineup);
+        Alert.alert("Successo", "Formazione salvata con successo!");
     };
 
     if (!league || !myFantasyTeamDoc) {

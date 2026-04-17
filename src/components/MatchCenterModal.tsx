@@ -90,7 +90,8 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
     };
     const eventTypes: MatchEvent['type'][] = ['goal', 'assist', 'yellow_card', 'red_card', 'own_goal', 'mvp'];
 
-    const isPlayoff = liveMatch.matchType === 'playoff' || liveMatch.matchType === 'playout';
+    const isPlayoff = liveMatch.matchType === 'playoff' || liveMatch.matchType === 'playout' ||
+        (league?.settings?.groupPenaltiesEnabled && (liveMatch.matchType === 'gironi' || liveMatch.matchType === 'campionato'));
     const isManualVotes = league?.settings.baseVoteType === 'manual';
 
     return (
@@ -176,11 +177,12 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
                                         ))}
                                     </ScrollView>
                                 )}
-                                {/* Event Type */}
-                                <View style={[s.chipRow, { flexWrap: 'wrap', marginTop: 8 }]}>
+                                {/* Event Type - Grid 3 cols */}
+                                <View style={s.evGrid}>
                                     {eventTypes.map(et => (
                                         <TouchableOpacity key={et} style={[s.evChip, eventType === et && s.evChipActive]} onPress={() => setEventType(et)}>
-                                            <Text style={s.evChipText}>{eventIcons[et]} {eventLabels[et]}</Text>
+                                            <Text style={s.evChipIcon}>{eventIcons[et]}</Text>
+                                            <Text style={[s.evChipText, eventType === et && s.evChipTextActive]}>{eventLabels[et]}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -281,9 +283,12 @@ const s = StyleSheet.create({
     playerChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.08)', marginRight: 6 },
     playerChipActive: { backgroundColor: 'rgba(251,191,36,0.25)', borderWidth: 1, borderColor: '#fbbf24' },
     playerChipText: { color: '#f8fafc', fontSize: 12, fontWeight: 'bold' },
-    evChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)', marginRight: 6, marginBottom: 6 },
-    evChipActive: { backgroundColor: 'rgba(251,191,36,0.2)', borderWidth: 1, borderColor: '#fbbf24' },
-    evChipText: { color: '#f8fafc', fontSize: 12 },
+    evGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10, marginBottom: 4 },
+    evChip: { width: '31%', paddingVertical: 10, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'transparent' },
+    evChipActive: { backgroundColor: 'rgba(251,191,36,0.2)', borderColor: '#fbbf24' },
+    evChipIcon: { fontSize: 20, marginBottom: 2 },
+    evChipText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
+    evChipTextActive: { color: '#fbbf24' },
     addBtn: { backgroundColor: '#fbbf24', padding: 14, borderRadius: 12, alignItems: 'center', marginTop: 12 },
     addBtnText: { color: '#000', fontWeight: 'bold', fontSize: 15 },
     sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#f8fafc', marginTop: 20, marginBottom: 10 },

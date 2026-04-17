@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useStore } from '../store';
 
 export default function TeamsViewerScreen({ navigation }: any) {
@@ -28,9 +28,13 @@ export default function TeamsViewerScreen({ navigation }: any) {
                         const count = players.filter(p => p.realTeamId === t.id).length;
                         return (
                             <TouchableOpacity key={t.id} style={s.card} onPress={() => navigation.navigate('TeamProfile', { teamId: t.id })} activeOpacity={0.7}>
-                                <View style={s.avatar}>
-                                    <Text style={s.avatarText}>{t.name.charAt(0)}</Text>
-                                </View>
+                                {t.logo ? (
+                                    <Image source={{ uri: t.logo }} style={s.logoImg} />
+                                ) : (
+                                    <View style={s.avatar}>
+                                        <Text style={s.avatarText}>{t.name.charAt(0)}</Text>
+                                    </View>
+                                )}
                                 <Text style={s.teamName} numberOfLines={1}>{t.name}</Text>
                                 <Text style={s.teamSub}>{count} giocatori</Text>
                             </TouchableOpacity>
@@ -54,6 +58,7 @@ const s = StyleSheet.create({
     card: { width: '48%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 20, marginBottom: 14, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
     avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(251,191,36,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 10, borderWidth: 2, borderColor: '#fbbf24' },
     avatarText: { color: '#fbbf24', fontSize: 24, fontWeight: 'bold' },
+    logoImg: { width: 64, height: 64, borderRadius: 32, marginBottom: 10, resizeMode: 'contain' },
     teamName: { color: '#f8fafc', fontSize: 15, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
     teamSub: { color: '#94a3b8', fontSize: 12 },
 });

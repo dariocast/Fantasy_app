@@ -18,30 +18,34 @@ export interface LeagueSettings {
   startersCount: number;
   benchCount: number;
   useBaseVote: boolean;
-  baseVoteType: 'manual' | 'automatic'; // NEW: come vengono assegnati i voti base?
+  baseVoteType: 'manual' | 'automatic';
   scoreBonusEnabled: boolean;
-  scoreBonusRule?: string; // Example logic string
+  scoreBonusRule?: string;
   hasFantasy: boolean;
 
   // NEW: Setup Strutturato del Torneo Reale
   sportType?: 'c5' | 'c7' | 'c8' | 'c11';
   groupCount?: number;
   groupAdvancingTeams?: number;
+  groupNames?: string[];
   playoffTeamsCount?: number;
   playoffStartingStage?: string;
   playoutEnabled?: boolean;
   playoutTeamsCount?: number;
   playoffCalendarType?: 'automatic' | 'manual';
-  tournamentStages?: string[]; // es. ["Ottavi", "Quarti", "Semifinale", "Finale"]
+  tournamentStages?: string[];
+  groupPenaltiesEnabled?: boolean;
+  groupPenaltiesWinPoints?: number;
+  groupPenaltiesLossPoints?: number;
 
   // NEW: Regole Fantasy Aggiuntive
   maxSubstitutions?: number;
-  rosterType?: 'fixed' | 'variable'; // Fissa vs Variabile a Turni
-
-  // NEW: Setup Ruoli Fantasy Personalizzati
+  rosterType?: 'fixed' | 'variable';
   useCustomRoles?: boolean;
-  customRoles?: { name: string; minLimit: number; maxLimit: number; color?: string }[]; // es. { name: "Top Player", minLimit: 1, maxLimit: 3, color: "#ff0000" }
-
+  customRoles?: { name: string; minLimit: number; maxLimit: number; color?: string }[];
+  matchdayDeadlines: Record<number, string>;
+  fantasyMarketDeadline?: string;
+  autoVoteBands?: { id: string; minDiff: number; maxDiff: number; points: number }[];
 
   // Custom Default Bonus
   customBonus: {
@@ -50,14 +54,14 @@ export interface LeagueSettings {
     yellowCard: number;
     redCard: number;
     ownGoal: number;
-    mvp: number; // NEW
+    mvp: number;
   };
 
   // Extra Bonuses mapped by matchday
   extraBonuses: Record<number, { id: string; name: string; value: number }[]>;
 
-  // Scadenze per l'inserimento formazione
-  matchdayDeadlines: Record<number, string>; // matchday -> ISO date string
+  // NEW: Criteri di spareggio classifica (in ordine di priorità)
+  tiebreakerOrder?: ('head_to_head' | 'goal_difference' | 'goals_for' | 'goals_against' | 'wins' | 'fairplay')[];
 }
 
 export interface League {
@@ -132,6 +136,7 @@ export interface FantasyTeam {
   players: string[]; // array of playerIds
   manualPointsAdjustment: number; // added by admin
   matchdayPoints?: Record<number, number>; // matchday -> points
+  totalPoints?: number; // accumulated total
 }
 
 export interface FantasyLineup {
@@ -142,6 +147,16 @@ export interface FantasyLineup {
   bench: string[]; // ordered array of playerIds
   points?: number; // Total points for this lineup at this matchday
   playerPoints?: Record<string, number>; // playerId -> points scored by this specific starter
+}
+
+// NEW: Bonus assegnati ai singoli giocatori (campo o extra campo)
+export interface PlayerBonus {
+  id: string;
+  playerId: string;
+  leagueId: string;
+  value: number;
+  description: string;
+  type: 'field' | 'extra'; // campo o extra-campo
 }
 
 // Dummy export to guarantee esbuild treats this as a valid JavaScript module, overcoming an isolatedModules / Vite bug.

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../store';
 
@@ -9,11 +9,19 @@ export default function StandingsScreen() {
     const league = leagues.length > 0 ? leagues[0] : null;
     const leagueId = league?.id || '';
 
+    if (!league) {
+        return (
+            <View style={styles.centerContainer}>
+                <Text style={styles.emptyText}>Nessun torneo trovato. Crea o unisciti a un torneo per vedere la classifica.</Text>
+            </View>
+        );
+    }
+
     const realTeams = useStore(state => state.realTeams).filter(t => t.leagueId === leagueId);
     const matches = useStore(state => state.matches).filter(m => m.leagueId === leagueId && m.status === 'finished');
 
     const standings = useMemo(() => {
-        const stats = new Map<string, { id: string; name: string; logo?: string; played: number; won: number; drawn: number; lost: number; goalsFor: number; goalsAgainst: number; points: number }>();
+        const stats = new Map<string, { id: string; name: string; logo?: string; played: number; won: number; drawn: number; lost: number; goalsFor: number; goalsAgainst: number; points: number, fairplayScore: number }>();
 
         realTeams.forEach(t => {
             stats.set(t.id, {
@@ -26,7 +34,8 @@ export default function StandingsScreen() {
                 lost: 0,
                 goalsFor: 0,
                 goalsAgainst: 0,
-                points: 0
+                points: 0,
+                fairplayScore: 0
             });
         });
 
@@ -55,21 +64,76 @@ export default function StandingsScreen() {
                 away.won += 1;
                 home.lost += 1;
             } else {
-                home.points += 1;
-                away.points += 1;
-                home.drawn += 1;
-                away.drawn += 1;
+                // Pareggio
+                if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
+                    const winPoints = league.settings.groupPenaltiesWinPoints ?? 2;
+                    const lossPoints = league.settings.groupPenaltiesLossPoints ?? 1;
+                    if (m.homePenalties > m.awayPenalties) {
+                        home.points += winPoints;
+                        away.points += lossPoints;
+                        home.won += 1; // You mentioned 2 points for winner, but do they count as win or draw? Usually penalty win goes to "won" or "drawn" depending on rules. We'll count drawn for both, but points are adjusted.
+                        home.drawn += 1;
+                        away.drawn += 1;
+                    } else {
+                        away.points += winPoints;
+                        home.points += lossPoints;
+                        home.drawn += 1;
+                        away.drawn += 1;
+                    }
+                } else {
+                    home.points += 1;
+                    away.points += 1;
+                    home.drawn += 1;
+                    away.drawn += 1;
+                }
             }
+
+            m.events?.forEach(ev => {
+                if (ev.type === 'yellow_card') {
+                    if (ev.teamId === m.homeTeamId) home.fairplayScore += 1;
+                    else if (ev.teamId === m.awayTeamId) away.fairplayScore += 1;
+                } else if (ev.type === 'red_card') {
+                    if (ev.teamId === m.homeTeamId) home.fairplayScore += 2;
+                    else if (ev.teamId === m.awayTeamId) away.fairplayScore += 2;
+                }
+            });
         });
 
         return Array.from(stats.values()).sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
-            const drA = a.goalsFor - a.goalsAgainst;
-            const drB = b.goalsFor - b.goalsAgainst;
-            if (drB !== drA) return drB - drA;
-            return b.goalsFor - a.goalsFor;
+
+            const order = league?.settings?.tiebreakerOrder || ['head_to_head', 'goal_difference', 'goals_for'];
+
+            for (const criteria of order) {
+                if (criteria === 'head_to_head') {
+                    let aWins = 0; let bWins = 0;
+                    matches.forEach(m => {
+                        if (m.homeTeamId === a.id && m.awayTeamId === b.id) {
+                            if (m.homeScore > m.awayScore) aWins++;
+                            else if (m.homeScore < m.awayScore) bWins++;
+                        } else if (m.homeTeamId === b.id && m.awayTeamId === a.id) {
+                            if (m.homeScore > m.awayScore) bWins++;
+                            else if (m.homeScore < m.awayScore) aWins++;
+                        }
+                    });
+                    if (aWins !== bWins) return bWins - aWins;
+                } else if (criteria === 'goal_difference') {
+                    const drA = a.goalsFor - a.goalsAgainst;
+                    const drB = b.goalsFor - b.goalsAgainst;
+                    if (drB !== drA) return drB - drA;
+                } else if (criteria === 'goals_for') {
+                    if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+                } else if (criteria === 'goals_against') {
+                    if (a.goalsAgainst !== b.goalsAgainst) return a.goalsAgainst - b.goalsAgainst; // minor goals against is better
+                } else if (criteria === 'wins') {
+                    if (b.won !== a.won) return b.won - a.won;
+                } else if (criteria === 'fairplay') {
+                    if (a.fairplayScore !== b.fairplayScore) return a.fairplayScore - b.fairplayScore;
+                }
+            }
+            return 0;
         });
-    }, [realTeams, matches]);
+    }, [realTeams, matches, league?.settings?.tiebreakerOrder]);
 
     if (!league) {
         return (
@@ -92,7 +156,7 @@ export default function StandingsScreen() {
                         {/* Table Header */}
                         <View style={styles.tableHeader}>
                             <Text style={[styles.thText, { width: 30 }]}>#</Text>
-                            <Text style={[styles.thText, { width: 140, textAlign: 'left' }]}>SQUADRA</Text>
+                            <Text style={[styles.thText, { width: 160, textAlign: 'left' }]}>SQUADRA</Text>
                             <Text style={[styles.thText, { width: 40 }]}>PT</Text>
                             <Text style={[styles.thText, { width: 30 }]}>PG</Text>
                             <Text style={[styles.thText, { width: 30 }]}>V</Text>
@@ -116,7 +180,16 @@ export default function StandingsScreen() {
                                 return (
                                     <TouchableOpacity key={team.id} style={styles.tableRow} onPress={() => navigation.navigate('TeamProfile', { teamId: team.id, leagueId })} activeOpacity={0.7}>
                                         <Text style={[styles.tdText, { width: 30 }, isTop && styles.textGold]}>{idx + 1}</Text>
-                                        <Text style={[styles.tdText, { width: 140, textAlign: 'left', fontWeight: 'bold', color: '#38bdf8' }]} numberOfLines={1}>{team.name}</Text>
+                                        <View style={{ width: 160, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                            {team.logo ? (
+                                                <Image source={{ uri: team.logo }} style={styles.teamLogo} />
+                                            ) : (
+                                                <View style={styles.teamLogoPlaceholder}>
+                                                    <Text style={{ color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>{team.name.charAt(0)}</Text>
+                                                </View>
+                                            )}
+                                            <Text style={[styles.tdText, { flex: 1, textAlign: 'left', fontWeight: 'bold', color: '#38bdf8' }]} numberOfLines={1}>{team.name}</Text>
+                                        </View>
                                         <Text style={[styles.tdText, { width: 40, color: '#38bdf8', fontWeight: 'bold' }]}>{team.points}</Text>
                                         <Text style={[styles.tdText, { width: 30 }]}>{team.played}</Text>
                                         <Text style={[styles.tdText, { width: 30 }]}>{team.won}</Text>
@@ -125,7 +198,7 @@ export default function StandingsScreen() {
                                         <Text style={[styles.tdText, { width: 40 }]}>{team.goalsFor}</Text>
                                         <Text style={[styles.tdText, { width: 40 }]}>{team.goalsAgainst}</Text>
                                         <Text style={[
-                                            styles.tdText, 
+                                            styles.tdText,
                                             { width: 40 },
                                             dr > 0 ? styles.textSuccess : (dr < 0 ? styles.textError : {})
                                         ]}>
@@ -149,10 +222,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#0f172a',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: 40,
     },
     emptyText: {
         color: '#94a3b8',
         fontSize: 16,
+        textAlign: 'center',
+        lineHeight: 24,
     },
     container: {
         flex: 1,
@@ -204,14 +280,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: 'center',
     },
-    textGold: {
-        color: '#fbbf24',
-        fontWeight: 'bold',
-    },
-    textSuccess: {
-        color: '#22c55e',
-    },
-    textError: {
-        color: '#ef4444',
-    }
+    textGold: { color: '#fbbf24', fontWeight: 'bold' },
+    textSuccess: { color: '#22c55e' },
+    textError: { color: '#ef4444' },
+    teamLogo: { width: 22, height: 22, borderRadius: 11, resizeMode: 'contain' },
+    teamLogoPlaceholder: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(251,191,36,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#fbbf24' },
 });

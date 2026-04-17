@@ -22,6 +22,7 @@ import TournamentAdminScreen from '../screens/TournamentAdminScreen';
 import FantasyAdminScreen from '../screens/FantasyAdminScreen';
 import TournamentSettingsScreen from '../screens/TournamentSettingsScreen';
 
+
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props: any) {
@@ -58,8 +59,8 @@ function CustomDrawerContent(props: any) {
     const navItem = (label: string, icon: any, screen: string) => {
         const isActive = activeRoute === screen;
         return (
-            <TouchableOpacity 
-                style={[styles.navItem, isActive && styles.navItemActive]} 
+            <TouchableOpacity
+                style={[styles.navItem, isActive && styles.navItemActive]}
                 onPress={() => {
                     props.navigation.navigate(screen);
                 }}
@@ -95,8 +96,8 @@ function CustomDrawerContent(props: any) {
             </View>
 
             {/* Navigation */}
-            <ScrollView 
-                style={styles.scrollView} 
+            <ScrollView
+                style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
@@ -130,7 +131,8 @@ function CustomDrawerContent(props: any) {
                         </TouchableOpacity>
                         {openFantasy && (
                             <View style={styles.groupContent}>
-                                {navItem('La Mia Rosa', <Users size={18} color="#e2e8f0" />, 'Squad')}
+
+                                {navItem('Mercato & Rosa', <Users size={18} color="#e2e8f0" />, 'Squad')}
                                 {navItem('Schiera Formazione', <Calendar size={18} color="#e2e8f0" />, 'Formation')}
                                 {navItem('Formazioni', <Eye size={18} color="#e2e8f0" />, 'Lineups')}
                                 {navItem('Classifica Fantasy', <Trophy size={18} color="#e2e8f0" />, 'FantasyStandings')}
@@ -194,8 +196,10 @@ export default function DashboardDrawer() {
             <Drawer.Screen name="TeamsViewer" component={TeamsViewerScreen} options={{ title: 'Squadre' }} />
             <Drawer.Screen name="StatsViewer" component={StatsViewerScreen} options={{ title: 'Statistiche' }} />
             <Drawer.Screen name="Calendar" component={CalendarScreen} options={{ title: 'Calendario' }} />
-            
+
+
             <Drawer.Screen name="Squad" component={SquadScreen} options={{ title: 'La Mia Rosa' }} />
+
             <Drawer.Screen name="Formation" component={FormationScreen} options={{ title: 'Schiera Formazione' }} />
             <Drawer.Screen name="Lineups" component={LineupsScreen} options={{ title: 'Formazioni Altrui' }} />
             <Drawer.Screen name="FantasyStandings" component={FantasyStandingsScreen} options={{ title: 'Classifica Fantasy' }} />

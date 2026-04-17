@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Dimensions, Platform } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useStore } from '../store';
 import { v4 as uuidv4 } from 'uuid';
 import type { League, TournamentType } from '../types';
 import { Trash2, Edit3, EyeOff, Eye, ChevronRight } from 'lucide-react-native';
+import ColorPickerModal from '../components/ColorPickerModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -24,20 +26,24 @@ export default function LeaguesScreen({ navigation }: any) {
 
     // ═══ Step 2: Torneo Reale ═══
     const [leagueType, setLeagueType] = useState<TournamentType>('campionato');
-    const [groupCount, setGroupCount] = useState<number>(2);
-    const [groupAdvancingTeams, setGroupAdvancingTeams] = useState<number>(2);
+    const [groupCount, setGroupCount] = useState('2');
+    const [customGroupNames, setCustomGroupNames] = useState<Record<number, string>>({});
+    const [groupAdvancingTeams, setGroupAdvancingTeams] = useState('2');
+    const [groupPenaltiesEnabled, setGroupPenaltiesEnabled] = useState(false);
+    const [groupPenaltiesWinStr, setGroupPenaltiesWinStr] = useState('2');
+    const [groupPenaltiesLossStr, setGroupPenaltiesLossStr] = useState('1');
     const [playoffStartingStage, setPlayoffStartingStage] = useState<string>('Quarti');
     const [playoutEnabled, setPlayoutEnabled] = useState<boolean>(false);
-    const [playoutTeamsCount, setPlayoutTeamsCount] = useState<number>(4);
+    const [playoutTeamsCount, setPlayoutTeamsCount] = useState('4');
     const [playoffCalendarType, setPlayoffCalendarType] = useState<'automatic' | 'manual'>('manual');
 
     // ═══ Step 3: Fantasy ═══
     const [hasFantasy, setHasFantasy] = useState(true);
-    const [budget, setBudget] = useState<number>(500);
-    const [squadSize, setSquadSize] = useState<number>(25);
-    const [startersCount, setStartersCount] = useState<number>(11);
-    const [benchCount, setBenchCount] = useState<number>(7);
-    const [maxSubstitutions, setMaxSubstitutions] = useState<number>(5);
+    const [budget, setBudget] = useState('500');
+    const [squadSize, setSquadSize] = useState('25');
+    const [startersCount, setStartersCount] = useState('11');
+    const [benchCount, setBenchCount] = useState('7');
+    const [maxSubstitutions, setMaxSubstitutions] = useState('5');
     const [rosterType, setRosterType] = useState<'fixed' | 'variable'>('fixed');
     const [useCustomRoles, setUseCustomRoles] = useState(false);
     const [customRoles, setCustomRoles] = useState<{ name: string; minLimit: number; maxLimit: number; color?: string }[]>([
@@ -49,6 +55,10 @@ export default function LeaguesScreen({ navigation }: any) {
     // Join state
     const [joinCode, setJoinCode] = useState('');
 
+    // Color picker state for custom roles
+    const [roleColorPickerVisible, setRoleColorPickerVisible] = useState(false);
+    const [roleColorPickerIdx, setRoleColorPickerIdx] = useState(-1);
+
     // Playoff stage options
     const [stagePickerVisible, setStagePickerVisible] = useState(false);
     const stageOptions = [
@@ -59,11 +69,19 @@ export default function LeaguesScreen({ navigation }: any) {
         { value: 'Finale', label: 'Finale (2)' },
     ];
 
+    const syncAllData = useStore(state => state.syncAllData);
+
     useEffect(() => {
         if (!currentUser) {
             navigation.replace('Auth');
         }
     }, [currentUser]);
+
+    useFocusEffect(
+        useCallback(() => {
+            syncAllData();
+        }, [])
+    );
 
     if (!currentUser) return null;
 
@@ -97,6 +115,18 @@ export default function LeaguesScreen({ navigation }: any) {
             tournamentStages.push("Finale");
         }
 
+        const parsedGroupCount = parseInt(groupCount) || 2;
+        const parsedGroupAdvancing = parseInt(groupAdvancingTeams) || 2;
+        const parsedPlayoutTeams = parseInt(playoutTeamsCount) || 4;
+        const parsedBudget = parseInt(budget) || 500;
+        const parsedSquadSize = parseInt(squadSize) || 25;
+        const parsedStartersCount = parseInt(startersCount) || 11;
+        const parsedBenchCount = parseInt(benchCount) || 7;
+        const parsedMaxSubs = parseInt(maxSubstitutions) || 5;
+
+        // Build groupNames array based on entered details
+        const groupNames = Array.from({ length: parsedGroupCount }).map((_, i) => customGroupNames[i] || `Girone ${String.fromCharCode(65 + i)}`);
+
         const newLeague: League = {
             id: uuidv4(),
             name: leagueName,
@@ -107,20 +137,24 @@ export default function LeaguesScreen({ navigation }: any) {
             joinCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
             settings: {
                 sportType,
-                groupCount: (leagueType === 'gironi' || leagueType === 'gironi_eliminazione') ? groupCount : undefined,
-                groupAdvancingTeams: (leagueType === 'gironi_eliminazione') ? groupAdvancingTeams : undefined,
+                groupCount: (leagueType === 'gironi' || leagueType === 'gironi_eliminazione') ? parsedGroupCount : undefined,
+                groupNames: (leagueType === 'gironi' || leagueType === 'gironi_eliminazione') ? groupNames : undefined,
+                groupPenaltiesEnabled: (leagueType === 'gironi' || leagueType === 'gironi_eliminazione') ? groupPenaltiesEnabled : undefined,
+                groupPenaltiesWinPoints: (leagueType === 'gironi' || leagueType === 'gironi_eliminazione') && groupPenaltiesEnabled ? (parseInt(groupPenaltiesWinStr) || 2) : undefined,
+                groupPenaltiesLossPoints: (leagueType === 'gironi' || leagueType === 'gironi_eliminazione') && groupPenaltiesEnabled ? (parseInt(groupPenaltiesLossStr) || 1) : undefined,
+                groupAdvancingTeams: (leagueType === 'gironi_eliminazione') ? parsedGroupAdvancing : undefined,
                 playoffTeamsCount: (leagueType === 'gironi_eliminazione' || leagueType === 'eliminazione') ? 8 : undefined,
                 playoffStartingStage: (leagueType === 'gironi_eliminazione' || leagueType === 'eliminazione') ? playoffStartingStage : undefined,
                 playoutEnabled,
-                playoutTeamsCount: playoutEnabled ? playoutTeamsCount : undefined,
+                playoutTeamsCount: playoutEnabled ? parsedPlayoutTeams : undefined,
                 playoffCalendarType: (leagueType === 'gironi_eliminazione' || leagueType === 'eliminazione') ? playoffCalendarType : undefined,
                 tournamentStages: tournamentStages.length > 0 ? tournamentStages : undefined,
                 hasFantasy,
-                budget,
-                squadSize,
-                startersCount,
-                benchCount,
-                maxSubstitutions,
+                budget: parsedBudget,
+                squadSize: parsedSquadSize,
+                startersCount: parsedStartersCount,
+                benchCount: parsedBenchCount,
+                maxSubstitutions: parsedMaxSubs,
                 rosterType,
                 useBaseVote: true,
                 baseVoteType: 'automatic',
@@ -446,12 +480,54 @@ export default function LeaguesScreen({ navigation }: any) {
                                         <View style={styles.configRow}>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.configLabel}>Numero di Gironi</Text>
-                                                <TextInput style={styles.configInput} keyboardType="numeric" value={groupCount.toString()} onChangeText={v => setGroupCount(parseInt(v) || 2)} />
+                                                <TextInput style={styles.configInput} keyboardType="numeric" value={groupCount} onChangeText={setGroupCount} />
                                             </View>
                                             {leagueType === 'gironi_eliminazione' && (
                                                 <View style={{ flex: 1, marginLeft: 10 }}>
                                                     <Text style={styles.configLabel}>Squadre che passano</Text>
-                                                    <TextInput style={styles.configInput} keyboardType="numeric" value={groupAdvancingTeams.toString()} onChangeText={v => setGroupAdvancingTeams(parseInt(v) || 2)} />
+                                                    <TextInput style={styles.configInput} keyboardType="numeric" value={groupAdvancingTeams} onChangeText={setGroupAdvancingTeams} />
+                                                </View>
+                                            )}
+                                        </View>
+                                        {/* Nomi dei gironi configurabili */}
+                                        <View style={{ marginTop: 12 }}>
+                                            <Text style={styles.configLabel}>Nomi dei Gironi (opzionale)</Text>
+                                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+                                                {Array.from({ length: Math.min(parseInt(groupCount) || 2, 20) }).map((_, i) => (
+                                                    <TextInput
+                                                        key={i}
+                                                        style={[styles.configInput, { width: '48%', marginBottom: 10 }]}
+                                                        placeholder={`Girone ${String.fromCharCode(65 + i)}`}
+                                                        placeholderTextColor="#64748b"
+                                                        value={customGroupNames[i] || ''}
+                                                        onChangeText={val => setCustomGroupNames(prev => ({ ...prev, [i]: val }))}
+                                                    />
+                                                ))}
+                                            </View>
+                                        </View>
+
+                                        {/* Rigori gironi */}
+                                        <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 12 }}>
+                                            <TouchableOpacity
+                                                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+                                                onPress={() => setGroupPenaltiesEnabled(!groupPenaltiesEnabled)}
+                                            >
+                                                <View style={[styles.checkbox, groupPenaltiesEnabled && styles.checkboxActive]}>
+                                                    {groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
+                                                </View>
+                                                <Text style={[styles.configLabel, { marginBottom: 0 }]}>Rigori in caso di pareggio</Text>
+                                            </TouchableOpacity>
+
+                                            {groupPenaltiesEnabled && (
+                                                <View style={styles.configRow}>
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={styles.configLabel}>Punti Vincitore</Text>
+                                                        <TextInput style={styles.configInput} keyboardType="numeric" value={groupPenaltiesWinStr} onChangeText={setGroupPenaltiesWinStr} />
+                                                    </View>
+                                                    <View style={{ flex: 1, marginLeft: 10 }}>
+                                                        <Text style={styles.configLabel}>Punti Sconfitto</Text>
+                                                        <TextInput style={styles.configInput} keyboardType="numeric" value={groupPenaltiesLossStr} onChangeText={setGroupPenaltiesLossStr} />
+                                                    </View>
                                                 </View>
                                             )}
                                         </View>
@@ -507,7 +583,7 @@ export default function LeaguesScreen({ navigation }: any) {
                                     {playoutEnabled && (
                                         <View style={{ marginTop: 10 }}>
                                             <Text style={styles.configLabel}>Squadre nel Playout</Text>
-                                            <TextInput style={[styles.configInput, { width: 80 }]} keyboardType="numeric" value={playoutTeamsCount.toString()} onChangeText={v => setPlayoutTeamsCount(parseInt(v) || 4)} />
+                                            <TextInput style={[styles.configInput, { width: 80 }]} keyboardType="numeric" value={playoutTeamsCount} onChangeText={setPlayoutTeamsCount} />
                                         </View>
                                     )}
                                 </View>
@@ -544,23 +620,23 @@ export default function LeaguesScreen({ navigation }: any) {
                                         <View style={styles.rulesGrid}>
                                             <View style={styles.ruleItem}>
                                                 <Text style={styles.ruleLabel}>Budget</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={budget.toString()} onChangeText={v => setBudget(parseInt(v) || 500)} />
+                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={budget} onChangeText={setBudget} />
                                             </View>
                                             <View style={styles.ruleItem}>
                                                 <Text style={styles.ruleLabel}>Max Rosa</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={squadSize.toString()} onChangeText={v => setSquadSize(parseInt(v) || 25)} />
+                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={squadSize} onChangeText={setSquadSize} />
                                             </View>
                                             <View style={styles.ruleItem}>
                                                 <Text style={styles.ruleLabel}>Titolari</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={startersCount.toString()} onChangeText={v => setStartersCount(parseInt(v) || 11)} />
+                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={startersCount} onChangeText={setStartersCount} />
                                             </View>
                                             <View style={styles.ruleItem}>
                                                 <Text style={styles.ruleLabel}>Panchinari</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={benchCount.toString()} onChangeText={v => setBenchCount(parseInt(v) || 7)} />
+                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={benchCount} onChangeText={setBenchCount} />
                                             </View>
                                             <View style={styles.ruleItem}>
                                                 <Text style={styles.ruleLabel}>Sost. Max</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={maxSubstitutions.toString()} onChangeText={v => setMaxSubstitutions(parseInt(v) || 5)} />
+                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={maxSubstitutions} onChangeText={setMaxSubstitutions} />
                                             </View>
                                             <View style={styles.ruleItem}>
                                                 <Text style={styles.ruleLabel}>Tipo Rosa</Text>
@@ -592,7 +668,10 @@ export default function LeaguesScreen({ navigation }: any) {
                                                 <View style={{ marginTop: 12 }}>
                                                     {customRoles.map((role, idx) => (
                                                         <View key={idx} style={styles.customRoleRow}>
-                                                            <View style={[styles.roleColorDot, { backgroundColor: role.color || '#fff' }]} />
+                                                            <TouchableOpacity
+                                                                style={[styles.roleColorDot, { backgroundColor: role.color || '#fff' }]}
+                                                                onPress={() => { setRoleColorPickerIdx(idx); setRoleColorPickerVisible(true); }}
+                                                            />
                                                             <TextInput
                                                                 style={[styles.input, { flex: 2, marginBottom: 0, padding: 8, fontSize: 13 }]}
                                                                 value={role.name}
@@ -666,6 +745,18 @@ export default function LeaguesScreen({ navigation }: any) {
                     </View>
                 )}
             </ScrollView>
+
+            {/* Color Picker Modal for Custom Roles */}
+            <ColorPickerModal
+                visible={roleColorPickerVisible}
+                currentColor={roleColorPickerIdx >= 0 ? (customRoles[roleColorPickerIdx]?.color || '#ffffff') : '#ffffff'}
+                onSelect={(color) => {
+                    if (roleColorPickerIdx >= 0) {
+                        handleUpdateCustomRole(roleColorPickerIdx, 'color', color);
+                    }
+                }}
+                onClose={() => { setRoleColorPickerVisible(false); setRoleColorPickerIdx(-1); }}
+            />
         </View>
     );
 }
@@ -764,4 +855,7 @@ const styles = StyleSheet.create({
     manageRole: { color: '#94a3b8', fontSize: 12 },
     manageBtnToggle: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#ef4444' },
     manageBtnShow: { borderColor: '#22c55e' },
+    checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: '#64748b', marginRight: 10, justifyContent: 'center', alignItems: 'center' },
+    checkboxActive: { backgroundColor: '#fbbf24', borderColor: '#fbbf24' },
+    checkmark: { color: 'white', fontSize: 14, fontWeight: 'bold' },
 });

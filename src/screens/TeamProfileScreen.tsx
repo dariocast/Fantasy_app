@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useStore } from '../store';
 
 export default function TeamProfileScreen({ route, navigation }: any) {
@@ -64,7 +64,11 @@ export default function TeamProfileScreen({ route, navigation }: any) {
             <ScrollView contentContainerStyle={st.content}>
                 {/* Hero */}
                 <View style={st.hero}>
-                    <View style={st.avatar}><Text style={st.avatarText}>{team.name.charAt(0)}</Text></View>
+                    {team.logo ? (
+                        <Image source={{ uri: team.logo }} style={st.heroLogo} />
+                    ) : (
+                        <View style={st.avatar}><Text style={st.avatarText}>{team.name.charAt(0)}</Text></View>
+                    )}
                     <Text style={st.heroName}>{team.name}</Text>
                     <Text style={st.heroSub}>{teamPlayers.length} Giocatori · {teamMatches.length} Partite</Text>
                 </View>
@@ -90,9 +94,13 @@ export default function TeamProfileScreen({ route, navigation }: any) {
                             </View>
                             {pls.map(p => (
                                 <TouchableOpacity key={p.id} style={[st.playerRow, { borderLeftColor: color }]} onPress={() => navigation.navigate('PlayerProfile', { playerId: p.id })}>
-                                    <View style={[st.playerAvatar, { backgroundColor: color + '22' }]}>
-                                        <Text style={[st.playerAvatarText, { color }]}>{p.name.charAt(0)}</Text>
-                                    </View>
+                                    {p.photo ? (
+                                        <Image source={{ uri: p.photo }} style={st.playerPhotoImg} />
+                                    ) : (
+                                        <View style={[st.playerAvatar, { backgroundColor: color + '22' }]}>
+                                            <Text style={[st.playerAvatarText, { color }]}>{p.name.charAt(0)}</Text>
+                                        </View>
+                                    )}
                                     <View style={{ flex: 1 }}>
                                         <Text style={st.playerName}>{p.name}</Text>
                                         <Text style={st.playerInfo}>{p.realPosition || '?'} · {p.age}a</Text>
@@ -161,6 +169,8 @@ const st = StyleSheet.create({
     hero: { alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderColor: 'rgba(251,191,36,0.2)' },
     avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(251,191,36,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fbbf24', marginBottom: 10 },
     avatarText: { color: '#fbbf24', fontSize: 30, fontWeight: 'bold' },
+    heroLogo: { width: 80, height: 80, borderRadius: 40, marginBottom: 10, resizeMode: 'contain' },
+    playerPhotoImg: { width: 32, height: 32, borderRadius: 16, marginRight: 10, resizeMode: 'cover' },
     heroName: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
     heroSub: { color: '#94a3b8', fontSize: 14 },
     statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 20 },

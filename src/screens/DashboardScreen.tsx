@@ -17,26 +17,33 @@ export default function DashboardScreen({ navigation }: any) {
   const currentUser = useStore(state => state.currentUser);
   const isAdmin = currentUser && league ? league.roles[currentUser.id] === 'admin' : false;
 
-  const [countdown, setCountdown] = useState<{ matchday: number; time: string; isExpiring: boolean } | null>(null);
+  const [countdown, setCountdown] = useState<{ label: string; time: string; isExpiring: boolean } | null>(null);
   const [fantasyViewMode, setFantasyViewMode] = useState<'totale' | number>('totale');
 
   useEffect(() => {
-    if (!league?.settings.matchdayDeadlines) return;
-
     const timer = setInterval(() => {
         const now = new Date().getTime();
-        let nextMatchday = -1;
         let nextDeadline = Infinity;
+        let matchdayLabel = '';
+        const isVariable = league?.settings.rosterType === 'variable';
 
-        Object.entries(league.settings.matchdayDeadlines).forEach(([md, dateStr]) => {
-            const dTime = new Date(dateStr).getTime();
-            if (dTime > now && dTime < nextDeadline) {
+        if (isVariable && league?.settings.matchdayDeadlines) {
+            Object.entries(league.settings.matchdayDeadlines).forEach(([md, dateStr]) => {
+                const dTime = new Date(dateStr).getTime();
+                if (dTime > now && dTime < nextDeadline) {
+                    nextDeadline = dTime;
+                    matchdayLabel = `G${md}`;
+                }
+            });
+        } else if (!isVariable && league?.settings.fantasyMarketDeadline) {
+            const dTime = new Date(league.settings.fantasyMarketDeadline).getTime();
+            if (dTime > now) {
                 nextDeadline = dTime;
-                nextMatchday = Number(md);
+                matchdayLabel = 'Unica';
             }
-        });
+        }
 
-        if (nextMatchday !== -1) {
+        if (nextDeadline !== Infinity) {
             const distance = nextDeadline - now;
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -45,7 +52,7 @@ export default function DashboardScreen({ navigation }: any) {
 
             const timeStr = `${days > 0 ? days + 'g ' : ''}${hours}h ${minutes}m ${seconds}s`;
             setCountdown({ 
-                matchday: nextMatchday, 
+                label: matchdayLabel, 
                 time: timeStr,
                 isExpiring: distance < (1000 * 60 * 60 * 2)
             });
@@ -55,7 +62,7 @@ export default function DashboardScreen({ navigation }: any) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [league?.settings.matchdayDeadlines]);
+  }, [league?.settings.matchdayDeadlines, league?.settings.fantasyMarketDeadline, league?.settings.rosterType]);
 
   if (!league) {
     return (
@@ -93,20 +100,38 @@ export default function DashboardScreen({ navigation }: any) {
       let played = 0;
       let gf = 0;
       let gs = 0;
+      
       matches.forEach(m => {
           if (m.matchType && m.matchType !== 'campionato' && m.matchType !== 'gironi') return;
+          
           if (m.homeTeamId === t.id) {
               played++;
               gf += m.homeScore;
               gs += m.awayScore;
-              if (m.homeScore > m.awayScore) points += 3;
-              else if (m.homeScore === m.awayScore) points += 1;
+              if (m.homeScore > m.awayScore) {
+                  points += 3;
+              } else if (m.homeScore === m.awayScore) {
+                  if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
+                      if (m.homePenalties > m.awayPenalties) points += (league.settings.groupPenaltiesWinPoints ?? 2);
+                      else points += (league.settings.groupPenaltiesLossPoints ?? 1);
+                  } else {
+                      points += 1;
+                  }
+              }
           } else if (m.awayTeamId === t.id) {
               played++;
               gf += m.awayScore;
               gs += m.homeScore;
-              if (m.awayScore > m.homeScore) points += 3;
-              else if (m.awayScore === m.homeScore) points += 1;
+              if (m.awayScore > m.homeScore) {
+                  points += 3;
+              } else if (m.awayScore === m.homeScore) {
+                  if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
+                      if (m.awayPenalties > m.homePenalties) points += (league.settings.groupPenaltiesWinPoints ?? 2);
+                      else points += (league.settings.groupPenaltiesLossPoints ?? 1);
+                  } else {
+                      points += 1;
+                  }
+              }
           }
       });
       return { ...t, points, played, gf, gs, dr: gf - gs };
@@ -125,6 +150,36 @@ export default function DashboardScreen({ navigation }: any) {
         <Text style={styles.subtitle}>Benvenuto in {league.name}</Text>
       </View>
 
+      {league.settings.hasFantasy && currentUser && (
+          (() => {
+              const myFantasyTeamIndex = fantasyLeaderboard.findIndex((t: any) => t.userId === currentUser.id);
+              const myFantasyTeam = myFantasyTeamIndex >= 0 ? fantasyLeaderboard[myFantasyTeamIndex] : null;
+              if (!myFantasyTeam) return null;
+              
+              const isFirst = myFantasyTeamIndex === 0;
+              const myFantasyPosition = myFantasyTeamIndex + 1;
+              const points = fantasyViewMode === 'totale' ? (myFantasyTeam as any).totalPoints || 0 : myFantasyTeam.matchdayPoints?.[fantasyViewMode] || 0;
+              
+              return (
+                  <View style={[styles.card, { backgroundColor: isFirst ? 'rgba(251, 191, 36, 0.1)' : 'rgba(14, 165, 233, 0.1)', borderColor: isFirst ? '#fbbf24' : '#0ea5e9' }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ backgroundColor: isFirst ? '#fbbf24' : '#0ea5e9', padding: 12, borderRadius: 12, marginRight: 16 }}>
+                        <Trophy color={isFirst ? '#000' : '#fff'} size={24} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: isFirst ? '#fbbf24' : '#0ea5e9', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase' }}>La tua Fantasquadra</Text>
+                        <Text style={{ color: '#f8fafc', fontSize: 20, fontWeight: 'bold' }}>{myFantasyPosition}º Posto</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ color: '#f8fafc', fontSize: 22, fontWeight: 'bold' }}>{points.toFixed(1)}</Text>
+                        <Text style={{ color: '#94a3b8', fontSize: 12 }}>Punti Tot.</Text>
+                      </View>
+                    </View>
+                  </View>
+              );
+          })()
+      )}
+
       {countdown && (
         <View style={[styles.card, countdown.isExpiring && styles.cardExpiring]}>
           <View style={styles.countdownRow}>
@@ -134,7 +189,7 @@ export default function DashboardScreen({ navigation }: any) {
             <View style={styles.countdownTexts}>
               <Text style={styles.countdownTitle}>Schiera la Formazione!</Text>
               <Text style={styles.countdownSub}>
-                Prossima Giornata: G{countdown.matchday}
+                Formazione: {countdown.label}
               </Text>
               <Text style={styles.countdownTime}>
                 Scade tra: <Text style={[styles.timeBold, countdown.isExpiring && styles.textError]}>{countdown.time}</Text>
@@ -258,13 +313,24 @@ export default function DashboardScreen({ navigation }: any) {
           <>
             <TouchableOpacity 
               style={styles.actionCard}
+              onPress={() => navigation.navigate('Squad')}
+            >
+              <View style={styles.actionHeader}>
+                <Users color="#38bdf8" size={20} />
+                <Text style={styles.actionTitle}>Mercato & Rosa</Text>
+              </View>
+              <Text style={styles.actionDesc}>Acquista, svincola e gestisci la rosa.</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionCard}
               onPress={() => navigation.navigate('Formation')}
             >
               <View style={styles.actionHeader}>
                 <Timer color="#38bdf8" size={20} />
-                <Text style={styles.actionTitle}>Rosa e Formazione</Text>
+                <Text style={styles.actionTitle}>Schiera Formazione</Text>
               </View>
-              <Text style={styles.actionDesc}>Controlla la tua squadra.</Text>
+              <Text style={styles.actionDesc}>Prepara la tattica per la giornata.</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 

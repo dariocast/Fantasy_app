@@ -1,10 +1,12 @@
 import 'react-native-gesture-handler';
 import 'react-native-get-random-values';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
+import { supabase } from './src/lib/supabase';
+import { useStore } from './src/store';
 import AuthScreen from './src/screens/AuthScreen';
 import LeaguesScreen from './src/screens/LeaguesScreen';
 import DashboardDrawer from './src/navigation/DashboardDrawer';
@@ -14,6 +16,21 @@ import PlayerProfileScreen from './src/screens/PlayerProfileScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const syncAllData = useStore(state => state.syncAllData);
+
+  useEffect(() => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        syncAllData();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useStore } from '../store';
 
 export default function PlayerProfileScreen({ route, navigation }: any) {
@@ -55,9 +55,13 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
             <ScrollView contentContainerStyle={st.content}>
                 {/* Hero */}
                 <View style={[st.hero, { borderBottomColor: posColor + '44' }]}>
-                    <View style={[st.avatar, { borderColor: posColor }]}>
-                        <Text style={[st.avatarText, { color: posColor }]}>{player.name.charAt(0)}</Text>
-                    </View>
+                    {player.photo ? (
+                        <Image source={{ uri: player.photo }} style={[st.avatar, { borderColor: posColor }]} />
+                    ) : (
+                        <View style={[st.avatar, { borderColor: posColor }]}>
+                            <Text style={[st.avatarText, { color: posColor }]}>{player.name.charAt(0)}</Text>
+                        </View>
+                    )}
                     <Text style={st.heroName}>{player.name}</Text>
                     <View style={st.badgeRow}>
                         <View style={st.badge}><Text style={st.badgeText}>Età: <Text style={{ color: '#fff', fontWeight: 'bold' }}>{player.age}</Text></Text></View>

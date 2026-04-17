@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useStore } from '../store';
 import { v4 as uuidv4 } from 'uuid';
 import type { RealTeam, Player, Match } from '../types';
@@ -10,6 +12,12 @@ export default function TournamentAdminScreen({ navigation }: any) {
     const league = leagues.length > 0 ? leagues[0] : null;
     const leagueId = league?.id || '';
     const currentUser = useStore((state) => state.currentUser);
+    const updateTeam = useStore(state => state.updateTeam);
+    const deleteTeamStore = useStore(state => state.deleteTeam);
+    const updatePlayer = useStore(state => state.updatePlayer);
+    const deletePlayerStore = useStore(state => state.deletePlayer);
+    const updateMatch = useStore(state => state.updateMatch);
+    const deleteMatchStore = useStore(state => state.deleteMatch);
 
     const realTeams = useStore(state => state.realTeams).filter(t => t.leagueId === leagueId);
     const players = useStore(state => state.players).filter(p => p.leagueId === leagueId);
@@ -24,6 +32,7 @@ export default function TournamentAdminScreen({ navigation }: any) {
     const [editingTeam, setEditingTeam] = useState<RealTeam | null>(null);
     const [editTeamName, setEditTeamName] = useState('');
     const [editTeamLogo, setEditTeamLogo] = useState('');
+    const [teamGroupId, setTeamGroupId] = useState(''); // NEW
 
     // Player state
     const [playerName, setPlayerName] = useState('');
@@ -31,6 +40,7 @@ export default function TournamentAdminScreen({ navigation }: any) {
     const [playerRealPos, setPlayerRealPos] = useState('');
     const [playerAge, setPlayerAge] = useState('25');
     const [playerPrice, setPlayerPrice] = useState('1');
+    const [playerPhoto, setPlayerPhoto] = useState(''); // NEW
     const [isPlayerModalVisible, setPlayerModalVisible] = useState(false);
     const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
@@ -42,6 +52,11 @@ export default function TournamentAdminScreen({ navigation }: any) {
     const [matchStage, setMatchStage] = useState('');
     const [matchDate, setMatchDate] = useState('');
     const [matchTime, setMatchTime] = useState('');
+    const [matchGroupId, setMatchGroupId] = useState('');
+
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    const [tempDate, setTempDate] = useState(new Date());
 
     // Match Center
     const [matchCenterMatch, setMatchCenterMatch] = useState<Match | null>(null);
@@ -57,27 +72,43 @@ export default function TournamentAdminScreen({ navigation }: any) {
     }
 
     // ---- TEAM HANDLERS ----
+    const pickImage = async (setter: (uri: string) => void) => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+            base64: true,
+        });
+        if (!result.canceled && result.assets && result.assets[0].base64) {
+             setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
+        }
+    };
+
     const handleCreateTeam = () => {
         if (!teamName) return Alert.alert('Errore', 'Nome squadra richiesto.');
         const t: RealTeam = {
-            id: uuidv4(), leagueId, name: teamName,
-            logo: teamLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=random`
+            id: uuidv4(), 
+            leagueId, 
+            name: teamName,
+            logo: teamLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=random`,
+            groupId: typeof league?.settings?.groupCount === 'number' && typeof teamGroupId === 'string' && teamGroupId !== '' ? teamGroupId : undefined
         };
-        useStore.setState(state => ({ realTeams: [...state.realTeams, t] }));
-        setTeamName(''); setTeamLogo('');
+        updateTeam(t);
+        setTeamName(''); setTeamLogo(''); setTeamGroupId('');
         Alert.alert('Successo', 'Squadra creata!');
     };
 
     const handleDeleteTeam = (id: string) => {
         Alert.alert('Conferma', 'Eliminare questa squadra e i suoi giocatori?', [
             { text: 'Annulla', style: 'cancel' },
-            { text: 'Elimina', style: 'destructive', onPress: () => { useStore.getState().deleteTeam(id); if (selectedTeam?.id === id) setSelectedTeam(null); } }
+            { text: 'Elimina', style: 'destructive', onPress: () => { deleteTeamStore(id); if (selectedTeam?.id === id) setSelectedTeam(null); } }
         ]);
     };
 
     const handleSaveTeamEdit = () => {
         if (!editingTeam) return;
-        useStore.getState().updateTeam({ ...editingTeam, name: editTeamName, logo: editTeamLogo });
+        updateTeam({ ...editingTeam, name: editTeamName, logo: editTeamLogo });
         setEditingTeam(null);
     };
 
@@ -90,9 +121,10 @@ export default function TournamentAdminScreen({ navigation }: any) {
             setPlayerRealPos(player.realPosition || '');
             setPlayerAge(player.age.toString());
             setPlayerPrice((player.price || 1).toString());
+            setPlayerPhoto(player.photo || '');
         } else {
             setEditingPlayer(null);
-            setPlayerName(''); setPlayerRealPos(''); setPlayerAge('25'); setPlayerPrice('1');
+            setPlayerName(''); setPlayerRealPos(''); setPlayerAge('25'); setPlayerPrice('1'); setPlayerPhoto('');
         }
         setPlayerModalVisible(true);
     };
@@ -100,47 +132,62 @@ export default function TournamentAdminScreen({ navigation }: any) {
     const handleSavePlayer = () => {
         if (!playerName || !selectedTeam) return;
         if (editingPlayer) {
-            useStore.setState(state => ({
-                players: state.players.map(p => p.id === editingPlayer.id ? {
-                    ...p, name: playerName, position: playerPos, realPosition: playerRealPos,
-                    age: parseInt(playerAge) || 25, price: parseInt(playerPrice) || 1
-                } : p)
-            }));
+            updatePlayer({
+                ...editingPlayer, name: playerName, position: playerPos, realPosition: playerRealPos,
+                age: parseInt(playerAge) || 25, price: parseInt(playerPrice) || 1, photo: playerPhoto || editingPlayer.photo
+            });
         } else {
             const newP: Player = {
-                id: uuidv4(), leagueId, name: playerName, position: playerPos,
-                realPosition: playerRealPos || 'Sconosciuto', age: parseInt(playerAge) || 25,
-                price: parseInt(playerPrice) || 1, realTeamId: selectedTeam.id, careerId: uuidv4()
+                id: uuidv4(), 
+                leagueId, 
+                name: playerName, 
+                position: playerPos,
+                realPosition: playerRealPos || 'Sconosciuto', 
+                age: parseInt(playerAge) || 25,
+                price: parseInt(playerPrice) || 1, 
+                realTeamId: selectedTeam.id, 
+                careerId: uuidv4(),
+                photo: playerPhoto || undefined
             };
-            useStore.setState(state => ({ players: [...state.players, newP] }));
+            updatePlayer(newP);
         }
-        setPlayerName(''); setPlayerModalVisible(false); setEditingPlayer(null);
+        setPlayerName(''); setPlayerPhoto(''); setPlayerModalVisible(false); setEditingPlayer(null);
     };
 
     const handleDeletePlayer = (id: string) => {
-        useStore.setState(state => ({ players: state.players.filter(p => p.id !== id) }));
+        deletePlayerStore(id);
     };
 
     // ---- MATCH HANDLERS ----
     const handleCreateMatch = () => {
         if (!homeTeamId || !awayTeamId || homeTeamId === awayTeamId) return Alert.alert('Errore', 'Seleziona due squadre diverse.');
         const newMatch: Match = {
-            id: uuidv4(), leagueId, matchday: parseInt(matchday) || 1,
-            homeTeamId, awayTeamId, homeScore: 0, awayScore: 0,
-            events: [], playerVotes: {}, status: 'scheduled', isFantasyMatchday: false,
-            matchType, stage: matchStage || undefined,
-            scheduledDate: matchDate || undefined, scheduledTime: matchTime || undefined
+            id: uuidv4(), 
+            leagueId, 
+            matchday: parseInt(matchday) || 1,
+            homeTeamId, 
+            awayTeamId, 
+            homeScore: 0, 
+            awayScore: 0,
+            events: [], 
+            playerVotes: {}, 
+            status: 'scheduled', 
+            isFantasyMatchday: false,
+            matchType, 
+            stage: matchStage || undefined,
+            scheduledDate: matchDate || undefined, 
+            scheduledTime: matchTime || undefined
         };
-        useStore.setState(state => ({ matches: [...state.matches, newMatch] }));
+        updateMatch(newMatch);
         Alert.alert('Successo', 'Partita creata!');
     };
 
-    const handleDeleteMatch = (id: string) => { useStore.getState().deleteMatch(id); };
+    const handleDeleteMatch = (id: string) => { deleteMatchStore(id); };
 
     const handleChangeMatchStatus = (match: Match) => {
         const statuses: Match['status'][] = ['scheduled', 'in_progress', 'finished'];
         const nextIdx = (statuses.indexOf(match.status) + 1) % statuses.length;
-        useStore.getState().updateMatch({ ...match, status: statuses[nextIdx] });
+        updateMatch({ ...match, status: statuses[nextIdx] });
     };
 
     const statusColors: Record<string, string> = { scheduled: '#94a3b8', in_progress: '#f59e0b', finished: '#4ade80' };
@@ -175,7 +222,37 @@ export default function TournamentAdminScreen({ navigation }: any) {
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Crea Nuova Squadra</Text>
                             <TextInput style={styles.input} placeholder="Nome Squadra" placeholderTextColor="#94a3b8" value={teamName} onChangeText={setTeamName} />
-                            <TextInput style={styles.input} placeholder="URL Logo (opzionale)" placeholderTextColor="#94a3b8" value={teamLogo} onChangeText={setTeamLogo} />
+                            {league.settings.groupCount ? (
+                                <View style={{ marginBottom: 16 }}>
+                                    <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Appartenenza Girone</Text>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    {league.settings.groupNames ? league.settings.groupNames.map((name, idx) => (
+                                         <TouchableOpacity key={idx} style={[styles.miniChip, teamGroupId === name && styles.miniChipActiveHome]} onPress={() => setTeamGroupId(name)}>
+                                             <Text style={[styles.miniChipText, teamGroupId === name && {color: '#f8fafc'}]}>{name}</Text>
+                                         </TouchableOpacity>
+                                    )) : Array.from({ length: league.settings.groupCount }).map((_, idx) => {
+                                        const name = `Girone ${String.fromCharCode(65 + idx)}`;
+                                        return (
+                                         <TouchableOpacity key={idx} style={[styles.miniChip, teamGroupId === name && styles.miniChipActiveHome]} onPress={() => setTeamGroupId(name)}>
+                                             <Text style={[styles.miniChipText, teamGroupId === name && {color: '#f8fafc'}]}>{name}</Text>
+                                         </TouchableOpacity>
+                                        );
+                                    })}
+                                    </ScrollView>
+                                </View>
+                            ) : null}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+                                {teamLogo ? (
+                                    <Image source={{ uri: teamLogo }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                                ) : (
+                                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text style={{fontSize: 20}}>📷</Text>
+                                    </View>
+                                )}
+                                <TouchableOpacity style={[styles.secondaryBtn, {flex: 1}]} onPress={() => pickImage(setTeamLogo)}>
+                                    <Text style={styles.secondaryBtnText}>{teamLogo ? 'Cambia Logo' : 'Carica Logo'}</Text>
+                                </TouchableOpacity>
+                            </View>
                             <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateTeam}>
                                 <Text style={styles.primaryBtnText}>Salva Squadra</Text>
                             </TouchableOpacity>
@@ -254,12 +331,34 @@ export default function TournamentAdminScreen({ navigation }: any) {
                                 )}
                             </View>
                             <View style={{ flexDirection: 'row', gap: 10 }}>
-                                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Data (AAAA-MM-GG)" placeholderTextColor="#94a3b8" value={matchDate} onChangeText={setMatchDate} />
-                                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ora (HH:MM)" placeholderTextColor="#94a3b8" value={matchTime} onChangeText={setMatchTime} />
+                                <TouchableOpacity style={[styles.input, { flex: 1, justifyContent: 'center' }]} onPress={() => setShowDatePicker(true)}>
+                                    <Text style={{ color: matchDate ? '#f8fafc' : '#94a3b8' }}>{matchDate || 'Data (GG/MM/AAAA)'}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.input, { flex: 1, justifyContent: 'center' }]} onPress={() => setShowTimePicker(true)}>
+                                    <Text style={{ color: matchTime ? '#f8fafc' : '#94a3b8' }}>{matchTime || 'Ora (HH:MM)'}</Text>
+                                </TouchableOpacity>
                             </View>
+
+                            {/* Dropdown Girone per Filtro (se tipo gironi o campionato con gironi) */}
+                            {(matchType === 'gironi' || matchType === 'campionato') && league.settings.groupCount ? (
+                                <View style={{ marginBottom: 10 }}>
+                                    <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Filtra squadre per girone</Text>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                        <TouchableOpacity style={[styles.miniChip, matchGroupId === '' && styles.miniChipActiveHome]} onPress={() => {setMatchGroupId(''); setHomeTeamId(''); setAwayTeamId('');}}>
+                                            <Text style={styles.miniChipText}>Tutti</Text>
+                                        </TouchableOpacity>
+                                        {(league.settings.groupNames || Array.from({ length: league.settings.groupCount }).map((_, i) => `Girone ${String.fromCharCode(65 + i)}`)).map((gName, idx) => (
+                                            <TouchableOpacity key={idx} style={[styles.miniChip, matchGroupId === gName && styles.miniChipActiveHome]} onPress={() => {setMatchGroupId(gName); setHomeTeamId(''); setAwayTeamId('');}}>
+                                                <Text style={[styles.miniChipText, matchGroupId === gName && {color: '#f8fafc'}]}>{gName}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            ) : null}
+
                             {/* Team selector chips */}
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 8 }}>
-                                {realTeams.map(t => (
+                                {realTeams.filter(t => matchGroupId ? t.groupId === matchGroupId : true).map(t => (
                                     <TouchableOpacity key={t.id}
                                         style={[styles.miniChip, homeTeamId === t.id ? styles.miniChipActiveHome : (awayTeamId === t.id ? styles.miniChipActiveAway : null)]}
                                         onPress={() => {
@@ -330,14 +429,50 @@ export default function TournamentAdminScreen({ navigation }: any) {
                     <View style={styles.modalContent}>
                         <Text style={styles.cardTitle}>{editingPlayer ? `Modifica ${editingPlayer.name}` : `Nuovo Giocatore in ${selectedTeam?.name}`}</Text>
                         <TextInput style={styles.input} placeholder="Nome Cognome" placeholderTextColor="#94a3b8" value={playerName} onChangeText={setPlayerName} />
-                        <View style={{ flexDirection: 'row', gap: 10 }}>
-                            <TextInput style={[styles.input, { flex: 1 }]} placeholder="Cat. Fantasy (POR/DIF/CEN/ATT)" placeholderTextColor="#94a3b8" value={playerPos} onChangeText={setPlayerPos} />
-                        </View>
+                        {/* Category Dropdown (chips) */}
+                        <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Categoria Fantasy</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+                            {(league.settings.useCustomRoles && league.settings.customRoles && league.settings.customRoles.length > 0
+                                ? league.settings.customRoles.map(cr => ({ label: cr.name, value: cr.name, color: cr.color }))
+                                : [
+                                    { label: 'POR', value: 'POR', color: '#fbbf24' },
+                                    { label: 'DIF', value: 'DIF', color: '#3b82f6' },
+                                    { label: 'CEN', value: 'CEN', color: '#22c55e' },
+                                    { label: 'ATT', value: 'ATT', color: '#ef4444' },
+                                ]
+                            ).map(cat => (
+                                <TouchableOpacity
+                                    key={cat.value}
+                                    style={[
+                                        styles.miniChip,
+                                        playerPos === cat.value && { backgroundColor: (cat.color || '#fbbf24') + '33', borderColor: cat.color || '#fbbf24', borderWidth: 1.5 }
+                                    ]}
+                                    onPress={() => setPlayerPos(cat.value)}
+                                >
+                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat.color || '#94a3b8', marginRight: 6 }} />
+                                    <Text style={[styles.miniChipText, playerPos === cat.value && { color: cat.color || '#fbbf24' }]}>{cat.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
                         <View style={{ flexDirection: 'row', gap: 10 }}>
                             <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ruolo Reale" placeholderTextColor="#94a3b8" value={playerRealPos} onChangeText={setPlayerRealPos} />
                             <TextInput style={[styles.input, { flex: 1 }]} placeholder="Età" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerAge} onChangeText={setPlayerAge} />
                         </View>
                         <TextInput style={styles.input} placeholder="Quotazione" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerPrice} onChangeText={setPlayerPrice} />
+                        
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+                            {playerPhoto ? (
+                                <Image source={{ uri: playerPhoto }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                            ) : (
+                                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Text style={{fontSize: 20}}>📷</Text>
+                                </View>
+                            )}
+                            <TouchableOpacity style={[styles.secondaryBtn, {flex: 1}]} onPress={() => pickImage(setPlayerPhoto)}>
+                                <Text style={styles.secondaryBtnText}>{playerPhoto ? 'Cambia Foto' : 'Aggiungi Foto'}</Text>
+                            </TouchableOpacity>
+                        </View>
+
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                             <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => { setPlayerModalVisible(false); setEditingPlayer(null); }}>
                                 <Text style={styles.secondaryBtnText}>Annulla</Text>
@@ -356,7 +491,19 @@ export default function TournamentAdminScreen({ navigation }: any) {
                     <View style={styles.modalContent}>
                         <Text style={styles.cardTitle}>Modifica Squadra</Text>
                         <TextInput style={styles.input} placeholder="Nome" placeholderTextColor="#94a3b8" value={editTeamName} onChangeText={setEditTeamName} />
-                        <TextInput style={styles.input} placeholder="URL Logo" placeholderTextColor="#94a3b8" value={editTeamLogo} onChangeText={setEditTeamLogo} />
+                        
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+                            {editTeamLogo ? (
+                                <Image source={{ uri: editTeamLogo }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                            ) : (
+                                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Text style={{fontSize: 20}}>📷</Text>
+                                </View>
+                            )}
+                            <TouchableOpacity style={[styles.secondaryBtn, {flex: 1}]} onPress={() => pickImage(setEditTeamLogo)}>
+                                <Text style={styles.secondaryBtnText}>{editTeamLogo ? 'Cambia Logo' : 'Carica Logo'}</Text>
+                            </TouchableOpacity>
+                        </View>
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                             <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => setEditingTeam(null)}>
                                 <Text style={styles.secondaryBtnText}>Annulla</Text>
@@ -368,6 +515,36 @@ export default function TournamentAdminScreen({ navigation }: any) {
                     </View>
                 </View>
             </Modal>
+
+            {/* Date Pickers */}
+            {showDatePicker && (
+                <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                        setShowDatePicker(false);
+                        if (selectedDate) {
+                            setTempDate(selectedDate);
+                            setMatchDate(selectedDate.toISOString().split('T')[0]);
+                        }
+                    }}
+                />
+            )}
+            {showTimePicker && (
+                <DateTimePicker
+                    value={tempDate}
+                    mode="time"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                        setShowTimePicker(false);
+                        if (selectedDate) {
+                            setTempDate(selectedDate);
+                            setMatchTime(selectedDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+                        }
+                    }}
+                />
+            )}
 
             {/* ======= MATCH CENTER MODAL ======= */}
             {matchCenterMatch && (

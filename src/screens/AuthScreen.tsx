@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { supabase } from '../lib/supabase';
 import { useStore } from '../store';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function AuthScreen({ navigation }: any) {
     const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
@@ -10,114 +10,110 @@ export default function AuthScreen({ navigation }: any) {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [message, setMessage] = useState('');
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const users = useStore(state => state.users);
-    const addUser = useStore(state => state.addUser);
     const setCurrentUser = useStore(state => state.setCurrentUser);
-    const updateUser = useStore(state => state.updateUser);
+    const addUser = useStore(state => state.addUser);
 
-    const handleLogin = () => {
-        if (!email || !password) {
-            setMessage('Compila tutti i campi');
-            return;
-        }
-        const user = users.find(u => u.email === email && u.password === password);
-        if (user) {
-            setCurrentUser(user);
-            setMessage('');
-            navigation.replace('Leagues');
-        } else {
-            setMessage('Email o password errati');
-        }
-    };
+    const handleLogin = async () => {
+        if (!email || !password) { setMessage('Compila tutti i campi'); setIsSuccess(false); return; }
+        setLoading(true);
+        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        setLoading(false);
+        if (error) { setMessage(error.message); setIsSuccess(false); return; }
 
-    const handleRegister = () => {
-        if (!email || !password || !firstName || !lastName) {
-            setMessage('Compila tutti i campi');
-            return;
-        }
-        if (users.some(u => u.email === email)) {
-            setMessage('Email già in uso');
-            return;
-        }
-        const newUser = {
-            id: uuidv4(),
-            email,
-            firstName,
-            lastName,
-            password
+        // Fetch profile
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+        const user = {
+            id: data.user.id,
+            email: data.user.email || email,
+            firstName: profile?.first_name || '',
+            lastName: profile?.last_name || '',
         };
-        addUser(newUser);
-        setCurrentUser(newUser);
+        setCurrentUser(user);
         setMessage('');
         navigation.replace('Leagues');
     };
 
-    const handleRecover = () => {
-        if (!email) {
-            setMessage('Inserisci un\'email valida');
-            return;
+    const handleRegister = async () => {
+        if (!email || !password || !firstName || !lastName) {
+            setMessage('Compila tutti i campi'); setIsSuccess(false); return;
         }
-        const user = users.find(u => u.email === email);
-        if (user) {
-            const code = Math.floor(100000 + Math.random() * 900000).toString();
-            updateUser({ ...user, resetCode: code });
-            setMessage(`Codice di recupero inviato. Il codice è: ${code}`);
-            setMode('login');
+        setLoading(true);
+        const { data, error } = await supabase.auth.signUp({
+            email: email.trim(),
+            password,
+            options: { data: { first_name: firstName, last_name: lastName } }
+        });
+        setLoading(false);
+        if (error) { setMessage(error.message); setIsSuccess(false); return; }
+
+        if (data.user) {
+            const user = {
+                id: data.user.id,
+                email: data.user.email || email,
+                firstName,
+                lastName,
+            };
+            addUser(user);
+            setCurrentUser(user);
+            setMessage('');
+            navigation.replace('Leagues');
         } else {
-            setMessage('Email non trovata');
+            setMessage('Controlla la tua email per confermare la registrazione.');
+            setIsSuccess(true);
         }
     };
 
+    const handleRecover = async () => {
+        if (!email) { setMessage("Inserisci un'email valida"); setIsSuccess(false); return; }
+        setLoading(true);
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+        setLoading(false);
+        if (error) { setMessage(error.message); setIsSuccess(false); return; }
+        setMessage('Email di recupero inviata! Controlla la tua casella.');
+        setIsSuccess(true);
+        setMode('login');
+    };
+
+    const isError = !isSuccess && message.length > 0;
+
     return (
-        <KeyboardAvoidingView 
-            style={styles.container} 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.card}>
-                    <Text style={styles.title}>FantaTorneo</Text>
+                    <Text style={styles.logoEmoji}>⚽</Text>
+                    <Text style={styles.title}>Fantalega</Text>
+                    <Text style={styles.subtitle}>
+                        {mode === 'login' ? 'Accedi al tuo account' : mode === 'register' ? 'Crea un nuovo account' : 'Recupera la password'}
+                    </Text>
 
                     {message ? (
-                        <View style={[
-                            styles.messageBox, 
-                            (message.includes('errati') || message.includes('non trovata') || message.includes('compila') || message.includes('già')) ? styles.messageError : styles.messageSuccess
-                        ]}>
-                            <Text style={[
-                                styles.messageText,
-                                (message.includes('errati') || message.includes('non trovata') || message.includes('compila') || message.includes('già')) ? styles.messageTextError : styles.messageTextSuccess
-                            ]}>{message}</Text>
+                        <View style={[styles.messageBox, isError ? styles.messageError : styles.messageSuccess]}>
+                            <Text style={[styles.messageText, isError ? styles.messageTextError : styles.messageTextSuccess]}>{message}</Text>
                         </View>
                     ) : null}
 
                     {mode === 'login' && (
                         <View style={styles.form}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Email"
-                                placeholderTextColor="#94a3b8"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                            />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Password"
-                                placeholderTextColor="#94a3b8"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                            <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                                <Text style={styles.primaryButtonText}>Accedi</Text>
+                            <Text style={styles.label}>Email</Text>
+                            <TextInput style={styles.input} placeholder="la@tua.email" placeholderTextColor="#475569" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+                            <Text style={styles.label}>Password</Text>
+                            <TextInput style={styles.input} placeholder="••••••••" placeholderTextColor="#475569" value={password} onChangeText={setPassword} secureTextEntry />
+                            <TouchableOpacity style={[styles.primaryButton, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
+                                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Accedi</Text>}
                             </TouchableOpacity>
-
                             <View style={styles.linksContainer}>
-                                <TouchableOpacity onPress={() => setMode('register')}>
-                                    <Text style={styles.linkText}>Nuovo utente? Registrati</Text>
+                                <TouchableOpacity onPress={() => { setMode('register'); setMessage(''); }}>
+                                    <Text style={styles.linkText}>Nuovo utente? <Text style={styles.linkTextHighlight}>Registrati</Text></Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => setMode('forgot')}>
+                                <TouchableOpacity onPress={() => { setMode('forgot'); setMessage(''); }}>
                                     <Text style={styles.linkText}>Hai dimenticato la password?</Text>
                                 </TouchableOpacity>
                             </View>
@@ -126,44 +122,20 @@ export default function AuthScreen({ navigation }: any) {
 
                     {mode === 'register' && (
                         <View style={styles.form}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nome"
-                                placeholderTextColor="#94a3b8"
-                                value={firstName}
-                                onChangeText={setFirstName}
-                            />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Cognome"
-                                placeholderTextColor="#94a3b8"
-                                value={lastName}
-                                onChangeText={setLastName}
-                            />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Email"
-                                placeholderTextColor="#94a3b8"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                            />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Password"
-                                placeholderTextColor="#94a3b8"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                            <TouchableOpacity style={styles.primaryButton} onPress={handleRegister}>
-                                <Text style={styles.primaryButtonText}>Registrati</Text>
+                            <Text style={styles.label}>Nome</Text>
+                            <TextInput style={styles.input} placeholder="Mario" placeholderTextColor="#475569" value={firstName} onChangeText={setFirstName} />
+                            <Text style={styles.label}>Cognome</Text>
+                            <TextInput style={styles.input} placeholder="Rossi" placeholderTextColor="#475569" value={lastName} onChangeText={setLastName} />
+                            <Text style={styles.label}>Email</Text>
+                            <TextInput style={styles.input} placeholder="mario@rossi.it" placeholderTextColor="#475569" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+                            <Text style={styles.label}>Password</Text>
+                            <TextInput style={styles.input} placeholder="Almeno 6 caratteri" placeholderTextColor="#475569" value={password} onChangeText={setPassword} secureTextEntry />
+                            <TouchableOpacity style={[styles.primaryButton, loading && { opacity: 0.6 }]} onPress={handleRegister} disabled={loading}>
+                                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Registrati</Text>}
                             </TouchableOpacity>
-
                             <View style={styles.linksContainer}>
-                                <TouchableOpacity onPress={() => setMode('login')}>
-                                    <Text style={styles.linkText}>Torna al Login</Text>
+                                <TouchableOpacity onPress={() => { setMode('login'); setMessage(''); }}>
+                                    <Text style={styles.linkText}>Hai già un account? <Text style={styles.linkTextHighlight}>Accedi</Text></Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -171,25 +143,15 @@ export default function AuthScreen({ navigation }: any) {
 
                     {mode === 'forgot' && (
                         <View style={styles.form}>
-                            <Text style={styles.helperText}>
-                                Inserisci la tua email per ricevere un codice di ripristino
-                            </Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Email"
-                                placeholderTextColor="#94a3b8"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                            />
-                            <TouchableOpacity style={styles.primaryButton} onPress={handleRecover}>
-                                <Text style={styles.primaryButtonText}>Invia Codice</Text>
+                            <Text style={styles.helperText}>Inserisci la tua email e ti invieremo un link per reimpostare la password.</Text>
+                            <Text style={styles.label}>Email</Text>
+                            <TextInput style={styles.input} placeholder="la@tua.email" placeholderTextColor="#475569" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+                            <TouchableOpacity style={[styles.primaryButton, loading && { opacity: 0.6 }]} onPress={handleRecover} disabled={loading}>
+                                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Invia Email di Recupero</Text>}
                             </TouchableOpacity>
-
                             <View style={styles.linksContainer}>
-                                <TouchableOpacity onPress={() => setMode('login')}>
-                                    <Text style={styles.linkText}>Annulla e torna al Login</Text>
+                                <TouchableOpacity onPress={() => { setMode('login'); setMessage(''); }}>
+                                    <Text style={styles.linkText}>Torna al Login</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -201,93 +163,25 @@ export default function AuthScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0f172a',
-    },
-    scrollContent: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        padding: 20,
-    },
-    card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 16,
-        padding: 24,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        width: '100%',
-        maxWidth: 400,
-        alignSelf: 'center',
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#38bdf8',
-        textAlign: 'center',
-        marginBottom: 24,
-    },
-    messageBox: {
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 16,
-        borderWidth: 1,
-    },
-    messageError: {
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderColor: '#ef4444',
-    },
-    messageSuccess: {
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        borderColor: '#22c55e',
-    },
-    messageText: {
-        textAlign: 'center',
-        fontSize: 14,
-    },
-    messageTextError: {
-        color: '#ef4444',
-    },
-    messageTextSuccess: {
-        color: '#22c55e',
-    },
-    form: {
-        width: '100%',
-    },
-    helperText: {
-        color: '#94a3b8',
-        textAlign: 'center',
-        marginBottom: 16,
-    },
-    input: {
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-        color: '#f8fafc',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-        fontSize: 16,
-    },
-    primaryButton: {
-        backgroundColor: '#0ea5e9',
-        padding: 14,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    primaryButtonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    linksContainer: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    linkText: {
-        color: '#94a3b8',
-        fontSize: 14,
-        marginBottom: 12,
-    }
+    container: { flex: 1, backgroundColor: '#0f172a' },
+    scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+    card: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, padding: 28, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', width: '100%', maxWidth: 420, alignSelf: 'center' },
+    logoEmoji: { textAlign: 'center', fontSize: 48, marginBottom: 8 },
+    title: { fontSize: 34, fontWeight: 'bold', color: '#38bdf8', textAlign: 'center', marginBottom: 4 },
+    subtitle: { fontSize: 15, color: '#64748b', textAlign: 'center', marginBottom: 24 },
+    messageBox: { padding: 12, borderRadius: 10, marginBottom: 16, borderWidth: 1 },
+    messageError: { backgroundColor: 'rgba(239,68,68,0.1)', borderColor: '#ef4444' },
+    messageSuccess: { backgroundColor: 'rgba(34,197,94,0.1)', borderColor: '#22c55e' },
+    messageText: { textAlign: 'center', fontSize: 14 },
+    messageTextError: { color: '#ef4444' },
+    messageTextSuccess: { color: '#22c55e' },
+    form: { width: '100%' },
+    label: { color: '#94a3b8', fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    helperText: { color: '#94a3b8', textAlign: 'center', marginBottom: 20, lineHeight: 20 },
+    input: { backgroundColor: 'rgba(15,23,42,0.8)', color: '#f8fafc', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: 14, marginBottom: 16, fontSize: 16 },
+    primaryButton: { backgroundColor: '#0ea5e9', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 4 },
+    primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    linksContainer: { marginTop: 20, alignItems: 'center', gap: 10 },
+    linkText: { color: '#64748b', fontSize: 14 },
+    linkTextHighlight: { color: '#38bdf8', fontWeight: 'bold' },
 });
