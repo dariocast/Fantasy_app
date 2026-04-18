@@ -82,7 +82,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
         return sorted.filter(p => p.position === playerRoleFilter);
     }, [matches, allPlayers, league.settings.customBonus, playerRoleFilter]);
 
-    const roleOptions = ['TUTTI', ...(league.settings.useCustomRoles ? (league.settings.customRoles?.map(r=>r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])];
+    const roleOptions = ['TUTTI', ...(league.settings.useCustomRoles ? (league.settings.customRoles?.map(r => r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])];
 
     const getPosColor = (pos: string) => {
         if (league.settings.useCustomRoles && league.settings.customRoles) {
@@ -106,14 +106,14 @@ export default function FantasyStandingsScreen({ navigation }: any) {
             </View>
 
             <View style={styles.mainTabs}>
-                <TouchableOpacity 
-                    style={[styles.mainTabBtn, mainTab === 'squadre' && styles.mainTabBtnActive]} 
+                <TouchableOpacity
+                    style={[styles.mainTabBtn, mainTab === 'squadre' && styles.mainTabBtnActive]}
                     onPress={() => setMainTab('squadre')}
                 >
                     <Text style={[styles.mainTabText, mainTab === 'squadre' && styles.mainTabTextActive]}>Squadre</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                    style={[styles.mainTabBtn, mainTab === 'giocatori' && styles.mainTabBtnActive]} 
+                <TouchableOpacity
+                    style={[styles.mainTabBtn, mainTab === 'giocatori' && styles.mainTabBtnActive]}
                     onPress={() => setMainTab('giocatori')}
                 >
                     <Text style={[styles.mainTabText, mainTab === 'giocatori' && styles.mainTabTextActive]}>Giocatori</Text>
@@ -123,14 +123,14 @@ export default function FantasyStandingsScreen({ navigation }: any) {
             {mainTab === 'squadre' && (
                 <View style={styles.tabsContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.tabBtn, viewMode === 'totale' && styles.tabBtnActive]}
                             onPress={() => setViewMode('totale')}
                         >
                             <Text style={[styles.tabText, viewMode === 'totale' && styles.tabTextActive]}>Generale</Text>
                         </TouchableOpacity>
                         {matchdays.map(m => (
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 key={m}
                                 style={[styles.tabBtn, viewMode === m && styles.tabBtnActive]}
                                 onPress={() => setViewMode(m)}
@@ -146,8 +146,8 @@ export default function FantasyStandingsScreen({ navigation }: any) {
                 <View style={styles.filterMenu}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
                         {roleOptions.map(pos => (
-                            <TouchableOpacity 
-                                key={pos} 
+                            <TouchableOpacity
+                                key={pos}
                                 style={[styles.filterChip, playerRoleFilter === pos && styles.filterChipActive]}
                                 onPress={() => setPlayerRoleFilter(pos)}
                             >
@@ -179,7 +179,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
                                     const isTop = idx === 0;
                                     let points = viewMode === 'totale' ? ((team as any).totalPoints || 0) : (team.matchdayPoints?.[viewMode] || 0);
                                     const user = users.find(u => u.id === team.userId);
-                                    
+
                                     return (
                                         <View key={team.id} style={styles.tableRow}>
                                             <Text style={[styles.colPos, isTop && styles.textGold]}>{idx + 1}</Text>
@@ -204,7 +204,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
                                 <Text style={[styles.colName, styles.headerText]}>CALCIATORE</Text>
                                 <Text style={[styles.colPoints, styles.headerText]}>PUNTI TOT.</Text>
                             </View>
-                            
+
                             {playerFantasyLeaderboard.length === 0 ? (
                                 <Text style={styles.emptyTableText}>Nessun giocatore trovato.</Text>
                             ) : (
@@ -214,7 +214,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
                                             <Text style={[styles.colPos]}>{idx + 1}</Text>
                                             <View style={[styles.colName, { flexDirection: 'row', alignItems: 'center' }]}>
                                                 <View style={[styles.roleBadge, { backgroundColor: getPosColor(player.position) }]}>
-                                                    <Text style={styles.roleBadgeText}>{player.position.slice(0,3)}</Text>
+                                                    <Text style={styles.roleBadgeText}>{player.position.slice(0, 3)}</Text>
                                                 </View>
                                                 <Text style={styles.teamNameText} numberOfLines={1}>{player.name}</Text>
                                             </View>

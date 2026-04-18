@@ -19,7 +19,7 @@ export default function SquadScreen({ navigation }: any) {
 
     const [activeTab, setActiveTab] = useState<'market' | 'roster'>('market');
     const [teamName, setTeamName] = useState(myFantasyTeamDoc?.name || '');
-    
+
     const defaultQueryPos = league?.settings.useCustomRoles ? 'TUTTI' : 'TUTTI';
     const [filterPos, setFilterPos] = useState<string>(defaultQueryPos);
     const [searchQuery, setSearchQuery] = useState('');
@@ -28,15 +28,15 @@ export default function SquadScreen({ navigation }: any) {
     const [isMarketOpen, setIsMarketOpen] = useState<boolean>(true);
 
     const isVariable = league?.settings.rosterType === 'variable';
-    
+
     const upcomingFantasyMatch = useStore(state => state.matches)
         .filter(m => m.leagueId === leagueId && m.isFantasyMatchday)
         .sort((a, b) => a.matchday - b.matchday)[0];
-    
+
     const currentMatchday = upcomingFantasyMatch ? upcomingFantasyMatch.matchday : 1;
-    
-    const deadlineString = isVariable 
-        ? league?.settings.matchdayDeadlines?.[currentMatchday] 
+
+    const deadlineString = isVariable
+        ? league?.settings.matchdayDeadlines?.[currentMatchday]
         : league?.settings.fantasyMarketDeadline;
 
     useEffect(() => {
@@ -84,7 +84,7 @@ export default function SquadScreen({ navigation }: any) {
     const handleBuyPlayer = (playerId: string) => {
         if (!myFantasyTeamDoc || !league) return;
         if (!isMarketOpen) return Alert.alert('Attenzione', 'Mercato chiuso!');
-        
+
         if (myFantasyTeamDoc.players.length >= league.settings.squadSize) {
             return Alert.alert('Attenzione', 'Hai raggiunto il limite della rosa.');
         }
@@ -118,7 +118,7 @@ export default function SquadScreen({ navigation }: any) {
         if (!isMarketOpen) return Alert.alert('Attenzione', 'Mercato chiuso!');
 
         const playerToSell = players.find(p => p.id === playerId);
-        const price = playerToSell?.price || 1; 
+        const price = playerToSell?.price || 1;
 
         const updatedTeam = {
             ...myFantasyTeamDoc,
@@ -142,7 +142,7 @@ export default function SquadScreen({ navigation }: any) {
                 <View style={styles.card}>
                     <Text style={styles.title}>Crea Fantasquadra</Text>
                     <Text style={styles.label}>Nome Squadra</Text>
-                    <TextInput 
+                    <TextInput
                         style={styles.input}
                         placeholder="Es. Atletico Ma Non Troppo"
                         placeholderTextColor="#94a3b8"
@@ -159,7 +159,7 @@ export default function SquadScreen({ navigation }: any) {
     }
 
     const availablePlayersThisLeague = players.filter(p => p.leagueId === leagueId && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const myPlayersDetails = availablePlayersThisLeague.filter(p => myFantasyTeamDoc.players.includes(p.id));
     const freePlayers = availablePlayersThisLeague.filter(p => !myFantasyTeamDoc.players.includes(p.id) && (filterPos === 'TUTTI' || p.position === filterPos));
 
@@ -179,7 +179,7 @@ export default function SquadScreen({ navigation }: any) {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
-                     <Text style={styles.backBtnText}>&lt;</Text>
+                    <Text style={styles.backBtnText}>&lt;</Text>
                 </TouchableOpacity>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.teamTitle}>{myFantasyTeamDoc.name}</Text>
@@ -206,14 +206,14 @@ export default function SquadScreen({ navigation }: any) {
             </View>
 
             <View style={styles.tabsMenu}>
-                <TouchableOpacity 
-                    style={[styles.tabBtn, activeTab === 'market' && styles.tabBtnActive]} 
+                <TouchableOpacity
+                    style={[styles.tabBtn, activeTab === 'market' && styles.tabBtnActive]}
                     onPress={() => setActiveTab('market')}
                 >
                     <Text style={[styles.tabBtnText, activeTab === 'market' && styles.tabBtnTextActive]}>Listone Mercato</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                    style={[styles.tabBtn, activeTab === 'roster' && styles.tabBtnActive]} 
+                <TouchableOpacity
+                    style={[styles.tabBtn, activeTab === 'roster' && styles.tabBtnActive]}
                     onPress={() => setActiveTab('roster')}
                 >
                     <Text style={[styles.tabBtnText, activeTab === 'roster' && styles.tabBtnTextActive]}>
@@ -224,7 +224,7 @@ export default function SquadScreen({ navigation }: any) {
 
             {activeTab === 'market' && (
                 <View style={styles.marketFilters}>
-                    <TextInput 
+                    <TextInput
                         style={styles.searchInput}
                         placeholder="Cerca calciatore..."
                         placeholderTextColor="#94a3b8"
@@ -232,9 +232,9 @@ export default function SquadScreen({ navigation }: any) {
                         onChangeText={setSearchQuery}
                     />
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
-                        {['TUTTI', ...(league.settings.useCustomRoles ? (league.settings.customRoles?.map(r=>r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])].map(pos => (
-                            <TouchableOpacity 
-                                key={pos} 
+                        {['TUTTI', ...(league.settings.useCustomRoles ? (league.settings.customRoles?.map(r => r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])].map(pos => (
+                            <TouchableOpacity
+                                key={pos}
                                 style={[styles.filterChip, filterPos === pos && styles.filterChipActive]}
                                 onPress={() => setFilterPos(pos)}
                             >
@@ -252,21 +252,21 @@ export default function SquadScreen({ navigation }: any) {
                             const pTeam = realTeams.find(t => t.id === p.realTeamId);
                             return (
                                 <View key={p.id} style={styles.playerCard}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            {p.photo ? (
-                                                <Image source={{ uri: p.photo }} style={styles.playerPhoto} />
-                                            ) : (
-                                                <View style={[styles.posBadge, { backgroundColor: 'transparent', borderColor: getPosColor(p.position), borderWidth: 1 }]}>
-                                                    <Text style={[styles.posText, { color: getPosColor(p.position) }]}>{p.position.substring(0, 3).toUpperCase()}</Text>
-                                                </View>
-                                            )}
-                                            <View>
-                                                <Text style={styles.playerName}>{p.name}</Text>
-                                                <Text style={styles.playerTeam}>{pTeam?.name || 'Svincolato'}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        {p.photo ? (
+                                            <Image source={{ uri: p.photo }} style={styles.playerPhoto} />
+                                        ) : (
+                                            <View style={[styles.posBadge, { backgroundColor: 'transparent', borderColor: getPosColor(p.position), borderWidth: 1 }]}>
+                                                <Text style={[styles.posText, { color: getPosColor(p.position) }]}>{p.position.substring(0, 3).toUpperCase()}</Text>
                                             </View>
+                                        )}
+                                        <View>
+                                            <Text style={styles.playerName}>{p.name}</Text>
+                                            <Text style={styles.playerTeam}>{pTeam?.name || 'Svincolato'}</Text>
                                         </View>
-                                    <TouchableOpacity 
-                                        style={[styles.buyBtn, !isMarketOpen && styles.disabledBtn]} 
+                                    </View>
+                                    <TouchableOpacity
+                                        style={[styles.buyBtn, !isMarketOpen && styles.disabledBtn]}
                                         disabled={!isMarketOpen}
                                         onPress={() => handleBuyPlayer(p.id)}
                                     >
@@ -285,21 +285,21 @@ export default function SquadScreen({ navigation }: any) {
                             const pTeam = realTeams.find(t => t.id === p.realTeamId);
                             return (
                                 <View key={p.id} style={styles.playerCard}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            {p.photo ? (
-                                                <Image source={{ uri: p.photo }} style={styles.playerPhoto} />
-                                            ) : (
-                                                <View style={[styles.posBadge, { backgroundColor: 'transparent', borderColor: getPosColor(p.position), borderWidth: 1 }]}>
-                                                    <Text style={[styles.posText, { color: getPosColor(p.position) }]}>{p.position.substring(0, 3).toUpperCase()}</Text>
-                                                </View>
-                                            )}
-                                            <View>
-                                                <Text style={styles.playerName}>{p.name}</Text>
-                                                <Text style={styles.playerTeam}>{pTeam?.name || 'Svincolato'}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        {p.photo ? (
+                                            <Image source={{ uri: p.photo }} style={styles.playerPhoto} />
+                                        ) : (
+                                            <View style={[styles.posBadge, { backgroundColor: 'transparent', borderColor: getPosColor(p.position), borderWidth: 1 }]}>
+                                                <Text style={[styles.posText, { color: getPosColor(p.position) }]}>{p.position.substring(0, 3).toUpperCase()}</Text>
                                             </View>
+                                        )}
+                                        <View>
+                                            <Text style={styles.playerName}>{p.name}</Text>
+                                            <Text style={styles.playerTeam}>{pTeam?.name || 'Svincolato'}</Text>
                                         </View>
-                                    <TouchableOpacity 
-                                        style={[styles.sellBtn, !isMarketOpen && styles.disabledBtn]} 
+                                    </View>
+                                    <TouchableOpacity
+                                        style={[styles.sellBtn, !isMarketOpen && styles.disabledBtn]}
                                         disabled={!isMarketOpen}
                                         onPress={() => handleSellPlayer(p.id)}
                                     >
@@ -324,7 +324,6 @@ const styles = StyleSheet.create({
     label: { color: '#f8fafc', fontWeight: 'bold', marginBottom: 8 },
     input: { backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 14, fontSize: 16, marginBottom: 8 },
     budgetHelp: { color: '#94a3b8', fontSize: 12, marginBottom: 20 },
-    emptyText: { color: '#94a3b8', textAlign: 'center', marginTop: 20 },
     primaryBtn: { backgroundColor: '#0ea5e9', padding: 16, borderRadius: 12, alignItems: 'center' },
     primaryBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },

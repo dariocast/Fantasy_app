@@ -13,7 +13,7 @@ export default function DashboardScreen({ navigation }: any) {
   const fantasyTeams = useStore(state => state.fantasyTeams).filter(f => f.leagueId === id);
   const realTeams = useStore(state => state.realTeams).filter(t => t.leagueId === id);
   const matches = useStore(state => state.matches).filter(m => m.leagueId === id && m.status === 'finished');
-  
+
   const currentUser = useStore(state => state.currentUser);
   const isAdmin = currentUser && league ? league.roles[currentUser.id] === 'admin' : false;
 
@@ -22,43 +22,43 @@ export default function DashboardScreen({ navigation }: any) {
 
   useEffect(() => {
     const timer = setInterval(() => {
-        const now = new Date().getTime();
-        let nextDeadline = Infinity;
-        let matchdayLabel = '';
-        const isVariable = league?.settings.rosterType === 'variable';
+      const now = new Date().getTime();
+      let nextDeadline = Infinity;
+      let matchdayLabel = '';
+      const isVariable = league?.settings.rosterType === 'variable';
 
-        if (isVariable && league?.settings.matchdayDeadlines) {
-            Object.entries(league.settings.matchdayDeadlines).forEach(([md, dateStr]) => {
-                const dTime = new Date(dateStr).getTime();
-                if (dTime > now && dTime < nextDeadline) {
-                    nextDeadline = dTime;
-                    matchdayLabel = `G${md}`;
-                }
-            });
-        } else if (!isVariable && league?.settings.fantasyMarketDeadline) {
-            const dTime = new Date(league.settings.fantasyMarketDeadline).getTime();
-            if (dTime > now) {
-                nextDeadline = dTime;
-                matchdayLabel = 'Unica';
-            }
+      if (isVariable && league?.settings.matchdayDeadlines) {
+        Object.entries(league.settings.matchdayDeadlines).forEach(([md, dateStr]) => {
+          const dTime = new Date(dateStr).getTime();
+          if (dTime > now && dTime < nextDeadline) {
+            nextDeadline = dTime;
+            matchdayLabel = `G${md}`;
+          }
+        });
+      } else if (!isVariable && league?.settings.fantasyMarketDeadline) {
+        const dTime = new Date(league.settings.fantasyMarketDeadline).getTime();
+        if (dTime > now) {
+          nextDeadline = dTime;
+          matchdayLabel = 'Unica';
         }
+      }
 
-        if (nextDeadline !== Infinity) {
-            const distance = nextDeadline - now;
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      if (nextDeadline !== Infinity) {
+        const distance = nextDeadline - now;
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            const timeStr = `${days > 0 ? days + 'g ' : ''}${hours}h ${minutes}m ${seconds}s`;
-            setCountdown({ 
-                label: matchdayLabel, 
-                time: timeStr,
-                isExpiring: distance < (1000 * 60 * 60 * 2)
-            });
-        } else {
-            setCountdown(null);
-        }
+        const timeStr = `${days > 0 ? days + 'g ' : ''}${hours}h ${minutes}m ${seconds}s`;
+        setCountdown({
+          label: matchdayLabel,
+          time: timeStr,
+          isExpiring: distance < (1000 * 60 * 60 * 2)
+        });
+      } else {
+        setCountdown(null);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
@@ -75,72 +75,72 @@ export default function DashboardScreen({ navigation }: any) {
   // Identify all played matchdays that have points
   const playedMatchdaysSet = new Set<number>();
   fantasyTeams.forEach(ft => {
-      if (ft.matchdayPoints) {
-          Object.keys(ft.matchdayPoints).forEach(d => playedMatchdaysSet.add(Number(d)));
-      }
+    if (ft.matchdayPoints) {
+      Object.keys(ft.matchdayPoints).forEach(d => playedMatchdaysSet.add(Number(d)));
+    }
   });
   const playedMatchdays = Array.from(playedMatchdaysSet).sort((a, b) => b - a);
 
   // Calculate fantasy leaderboard
   const fantasyLeaderboard = [...fantasyTeams].sort((a, b) => {
-      if (fantasyViewMode === 'totale') {
-          const ptsA = (a as any).totalPoints || 0;
-          const ptsB = (b as any).totalPoints || 0;
-          return ptsB - ptsA;
-      } else {
-          const ptsA = a.matchdayPoints?.[fantasyViewMode] || 0;
-          const ptsB = b.matchdayPoints?.[fantasyViewMode] || 0;
-          return ptsB - ptsA;
-      }
+    if (fantasyViewMode === 'totale') {
+      const ptsA = (a as any).totalPoints || 0;
+      const ptsB = (b as any).totalPoints || 0;
+      return ptsB - ptsA;
+    } else {
+      const ptsA = a.matchdayPoints?.[fantasyViewMode] || 0;
+      const ptsB = b.matchdayPoints?.[fantasyViewMode] || 0;
+      return ptsB - ptsA;
+    }
   });
 
   // Calculate real standings
   const realStandings = [...realTeams].map(t => {
-      let points = 0;
-      let played = 0;
-      let gf = 0;
-      let gs = 0;
-      
-      matches.forEach(m => {
-          if (m.matchType && m.matchType !== 'campionato' && m.matchType !== 'gironi') return;
-          
-          if (m.homeTeamId === t.id) {
-              played++;
-              gf += m.homeScore;
-              gs += m.awayScore;
-              if (m.homeScore > m.awayScore) {
-                  points += 3;
-              } else if (m.homeScore === m.awayScore) {
-                  if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
-                      if (m.homePenalties > m.awayPenalties) points += (league.settings.groupPenaltiesWinPoints ?? 2);
-                      else points += (league.settings.groupPenaltiesLossPoints ?? 1);
-                  } else {
-                      points += 1;
-                  }
-              }
-          } else if (m.awayTeamId === t.id) {
-              played++;
-              gf += m.awayScore;
-              gs += m.homeScore;
-              if (m.awayScore > m.homeScore) {
-                  points += 3;
-              } else if (m.awayScore === m.homeScore) {
-                  if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
-                      if (m.awayPenalties > m.homePenalties) points += (league.settings.groupPenaltiesWinPoints ?? 2);
-                      else points += (league.settings.groupPenaltiesLossPoints ?? 1);
-                  } else {
-                      points += 1;
-                  }
-              }
+    let points = 0;
+    let played = 0;
+    let gf = 0;
+    let gs = 0;
+
+    matches.forEach(m => {
+      if (m.matchType && m.matchType !== 'campionato' && m.matchType !== 'gironi') return;
+
+      if (m.homeTeamId === t.id) {
+        played++;
+        gf += m.homeScore;
+        gs += m.awayScore;
+        if (m.homeScore > m.awayScore) {
+          points += 3;
+        } else if (m.homeScore === m.awayScore) {
+          if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
+            if (m.homePenalties > m.awayPenalties) points += (league.settings.groupPenaltiesWinPoints ?? 2);
+            else points += (league.settings.groupPenaltiesLossPoints ?? 1);
+          } else {
+            points += 1;
           }
-      });
-      return { ...t, points, played, gf, gs, dr: gf - gs };
+        }
+      } else if (m.awayTeamId === t.id) {
+        played++;
+        gf += m.awayScore;
+        gs += m.homeScore;
+        if (m.awayScore > m.homeScore) {
+          points += 3;
+        } else if (m.awayScore === m.homeScore) {
+          if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
+            if (m.awayPenalties > m.homePenalties) points += (league.settings.groupPenaltiesWinPoints ?? 2);
+            else points += (league.settings.groupPenaltiesLossPoints ?? 1);
+          } else {
+            points += 1;
+          }
+        }
+      }
+    });
+    return { ...t, points, played, gf, gs, dr: gf - gs };
   }).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      const drA = a.gf - a.gs;
-      const drB = b.gf - b.gs;
-      if (drB !== drA) return drB - drA;
-      return b.gf - a.gf;
+    if (b.points !== a.points) return b.points - a.points;
+    const drA = a.gf - a.gs;
+    const drB = b.gf - b.gs;
+    if (drB !== drA) return drB - drA;
+    return b.gf - a.gf;
   });
 
   return (
@@ -151,33 +151,33 @@ export default function DashboardScreen({ navigation }: any) {
       </View>
 
       {league.settings.hasFantasy && currentUser && (
-          (() => {
-              const myFantasyTeamIndex = fantasyLeaderboard.findIndex((t: any) => t.userId === currentUser.id);
-              const myFantasyTeam = myFantasyTeamIndex >= 0 ? fantasyLeaderboard[myFantasyTeamIndex] : null;
-              if (!myFantasyTeam) return null;
-              
-              const isFirst = myFantasyTeamIndex === 0;
-              const myFantasyPosition = myFantasyTeamIndex + 1;
-              const points = fantasyViewMode === 'totale' ? (myFantasyTeam as any).totalPoints || 0 : myFantasyTeam.matchdayPoints?.[fantasyViewMode] || 0;
-              
-              return (
-                  <View style={[styles.card, { backgroundColor: isFirst ? 'rgba(251, 191, 36, 0.1)' : 'rgba(14, 165, 233, 0.1)', borderColor: isFirst ? '#fbbf24' : '#0ea5e9' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <View style={{ backgroundColor: isFirst ? '#fbbf24' : '#0ea5e9', padding: 12, borderRadius: 12, marginRight: 16 }}>
-                        <Trophy color={isFirst ? '#000' : '#fff'} size={24} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ color: isFirst ? '#fbbf24' : '#0ea5e9', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase' }}>La tua Fantasquadra</Text>
-                        <Text style={{ color: '#f8fafc', fontSize: 20, fontWeight: 'bold' }}>{myFantasyPosition}º Posto</Text>
-                      </View>
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ color: '#f8fafc', fontSize: 22, fontWeight: 'bold' }}>{points.toFixed(1)}</Text>
-                        <Text style={{ color: '#94a3b8', fontSize: 12 }}>Punti Tot.</Text>
-                      </View>
-                    </View>
-                  </View>
-              );
-          })()
+        (() => {
+          const myFantasyTeamIndex = fantasyLeaderboard.findIndex((t: any) => t.userId === currentUser.id);
+          const myFantasyTeam = myFantasyTeamIndex >= 0 ? fantasyLeaderboard[myFantasyTeamIndex] : null;
+          if (!myFantasyTeam) return null;
+
+          const isFirst = myFantasyTeamIndex === 0;
+          const myFantasyPosition = myFantasyTeamIndex + 1;
+          const points = fantasyViewMode === 'totale' ? (myFantasyTeam as any).totalPoints || 0 : myFantasyTeam.matchdayPoints?.[fantasyViewMode] || 0;
+
+          return (
+            <View style={[styles.card, { backgroundColor: isFirst ? 'rgba(251, 191, 36, 0.1)' : 'rgba(14, 165, 233, 0.1)', borderColor: isFirst ? '#fbbf24' : '#0ea5e9' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ backgroundColor: isFirst ? '#fbbf24' : '#0ea5e9', padding: 12, borderRadius: 12, marginRight: 16 }}>
+                  <Trophy color={isFirst ? '#000' : '#fff'} size={24} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: isFirst ? '#fbbf24' : '#0ea5e9', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase' }}>La tua Fantasquadra</Text>
+                  <Text style={{ color: '#f8fafc', fontSize: 20, fontWeight: 'bold' }}>{myFantasyPosition}º Posto</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{ color: '#f8fafc', fontSize: 22, fontWeight: 'bold' }}>{points.toFixed(1)}</Text>
+                  <Text style={{ color: '#94a3b8', fontSize: 12 }}>Punti Tot.</Text>
+                </View>
+              </View>
+            </View>
+          );
+        })()
       )}
 
       {countdown && (
@@ -196,7 +196,7 @@ export default function DashboardScreen({ navigation }: any) {
               </Text>
             </View>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => navigation.navigate('Formation')}
           >
@@ -311,7 +311,7 @@ export default function DashboardScreen({ navigation }: any) {
 
         {league.settings.hasFantasy && (
           <>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionCard}
               onPress={() => navigation.navigate('Squad')}
             >
@@ -322,7 +322,7 @@ export default function DashboardScreen({ navigation }: any) {
               <Text style={styles.actionDesc}>Acquista, svincola e gestisci la rosa.</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionCard}
               onPress={() => navigation.navigate('Formation')}
             >
@@ -332,8 +332,8 @@ export default function DashboardScreen({ navigation }: any) {
               </View>
               <Text style={styles.actionDesc}>Prepara la tattica per la giornata.</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.actionCard}
               onPress={() => navigation.navigate('Lineups')}
             >
@@ -344,7 +344,7 @@ export default function DashboardScreen({ navigation }: any) {
               <Text style={styles.actionDesc}>Vedi le scelte degli altri giocatori.</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionCard}
               onPress={() => navigation.navigate('FantasyStandings')}
             >
@@ -362,7 +362,7 @@ export default function DashboardScreen({ navigation }: any) {
         <View style={{ marginTop: 24 }}>
           <Text style={styles.sectionHeading}>Pannello Amministratore</Text>
           <View style={styles.actionGrid}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionCard, { borderColor: '#ef4444', borderWidth: 1 }]}
               onPress={() => navigation.navigate('TournamentAdmin')}
             >
@@ -374,7 +374,7 @@ export default function DashboardScreen({ navigation }: any) {
             </TouchableOpacity>
 
             {league.settings.hasFantasy && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.actionCard, { borderColor: '#fbbf24', borderWidth: 1 }]}
                 onPress={() => navigation.navigate('FantasyAdmin')}
               >
@@ -386,7 +386,7 @@ export default function DashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionCard, { borderColor: '#94a3b8', borderWidth: 1 }]}
               onPress={() => navigation.navigate('TournamentSettings')}
             >
@@ -605,5 +605,16 @@ const styles = StyleSheet.create({
   },
   matchdayChipTextActive: {
     color: '#38bdf8',
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
   }
 });

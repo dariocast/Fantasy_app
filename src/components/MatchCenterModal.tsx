@@ -82,13 +82,13 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
 
     const eventIcons: Record<string, string> = {
         goal: '⚽', assist: '👟', yellow_card: '🟨', red_card: '🟥',
-        own_goal: '🤦', mvp: '⭐', foul: '❌', extra: '✨'
+        own_goal: '🤦', mvp: '⭐', foul: '❌', extra: '✨', clean_sheet: '🧤'
     };
     const eventLabels: Record<string, string> = {
         goal: 'Gol', assist: 'Assist', yellow_card: 'Giallo', red_card: 'Rosso',
-        own_goal: 'Autogol', mvp: 'MVP', foul: 'Fallo', extra: 'Extra'
+        own_goal: 'Autogol', mvp: 'MVP', foul: 'Fallo', extra: 'Extra', clean_sheet: 'Porta Inv.'
     };
-    const eventTypes: MatchEvent['type'][] = ['goal', 'assist', 'yellow_card', 'red_card', 'own_goal', 'mvp'];
+    const eventTypes: MatchEvent['type'][] = ['goal', 'assist', 'yellow_card', 'red_card', 'own_goal', 'mvp', 'clean_sheet'];
 
     const isPlayoff = liveMatch.matchType === 'playoff' || liveMatch.matchType === 'playout' ||
         (league?.settings?.groupPenaltiesEnabled && (liveMatch.matchType === 'gironi' || liveMatch.matchType === 'campionato'));

@@ -104,7 +104,7 @@ export default function FormationScreen({ navigation }: any) {
             points: 0,
             playerPoints: {}
         };
-        
+
         updateFantasyLineup(newLineup);
         Alert.alert("Successo", "Formazione salvata con successo!");
     };
@@ -131,7 +131,7 @@ export default function FormationScreen({ navigation }: any) {
                 <View style={styles.field}>
                     <View style={styles.centerCircle} />
                     <View style={styles.centerLine} />
-                    
+
                     <View style={styles.fieldGrid}>
                         {starters.map((playerId, idx) => {
                             const p = players.find(x => x.id === playerId);
@@ -190,7 +190,7 @@ export default function FormationScreen({ navigation }: any) {
 
             <View style={styles.benchContainer}>
                 <Text style={styles.benchTitle}>Panchina ({bench.length}/{league.settings.benchCount || 7})</Text>
-                
+
                 <View style={styles.benchList}>
                     {bench.map((playerId, index) => {
                         const p = players.find(x => x.id === playerId);

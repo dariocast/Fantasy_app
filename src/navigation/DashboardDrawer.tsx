@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Shield, Settings, Users, ArrowLeft, Trophy, LayoutDashboard, Calendar, Flag, Eye, BarChart3, ChevronDown, ChevronUp, LogOut, X, Menu } from 'lucide-react-native';
 import { useStore } from '../store';
+import { supabase } from '../lib/supabase';
 
 // Import all screens
 import DashboardScreen from '../screens/DashboardScreen';
@@ -32,7 +33,8 @@ function CustomDrawerContent(props: any) {
     const leagues = useStore(state => state.leagues);
     const setCurrentUser = useStore(state => state.setCurrentUser);
 
-    const league = leagues[0]; // TODO: Manage active league robustly if multiple.
+    const league = leagues && leagues.length > 0 ? leagues[0] : null; 
+    const resetStore = useStore(state => state.resetStore);
 
     const [openTorneo, setOpenTorneo] = useState(true);
     const [openFantasy, setOpenFantasy] = useState(true);
@@ -44,8 +46,9 @@ function CustomDrawerContent(props: any) {
     const isAdmin = userRole === 'admin';
     const isOrganizer = userRole === 'organizer' || isAdmin;
 
-    const handleLogout = () => {
-        setCurrentUser(null);
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        resetStore();
         navigation.navigate('Auth');
     };
 

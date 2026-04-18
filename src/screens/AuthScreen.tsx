@@ -24,17 +24,21 @@ export default function AuthScreen({ navigation }: any) {
         if (error) { setMessage(error.message); setIsSuccess(false); return; }
 
         // Fetch profile
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', data.user.id)
             .single();
 
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+            console.error('Error fetching profile:', profileError.message);
+        }
+
         const user = {
             id: data.user.id,
             email: data.user.email || email,
-            firstName: profile?.first_name || '',
-            lastName: profile?.last_name || '',
+            firstName: profile?.first_name || data.user.user_metadata?.first_name || 'Utente',
+            lastName: profile?.last_name || data.user.user_metadata?.last_name || '',
         };
         setCurrentUser(user);
         setMessage('');

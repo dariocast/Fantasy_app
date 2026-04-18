@@ -167,7 +167,8 @@ export default function LeaguesScreen({ navigation }: any) {
                     yellowCard: -0.5,
                     redCard: -1,
                     ownGoal: -2,
-                    mvp: 1
+                    mvp: 1,
+                    cleanSheet: 1
                 },
                 extraBonuses: {},
                 matchdayDeadlines: {}

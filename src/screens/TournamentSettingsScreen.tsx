@@ -159,6 +159,24 @@ export default function TournamentSettingsScreen({ navigation }: any) {
                     {league.settings.hasFantasy && (
                         <>
                             <View style={styles.settingRow}>
+                                <Text style={styles.settingLabel}>Tipo di Rose</Text>
+                                <View style={{ flexDirection: 'row', gap: 10 }}>
+                                    <TouchableOpacity
+                                        style={[styles.chip, settings.rosterType === 'fixed' && styles.chipActive]}
+                                        onPress={() => setSettings({ ...settings, rosterType: 'fixed' })}
+                                    >
+                                        <Text style={[styles.chipText, settings.rosterType === 'fixed' && styles.chipTextActive]}>Rose Fisse</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.chip, (settings.rosterType === 'variable' || !settings.rosterType) && styles.chipActive]}
+                                        onPress={() => setSettings({ ...settings, rosterType: 'variable' })}
+                                    >
+                                        <Text style={[styles.chipText, (settings.rosterType === 'variable' || !settings.rosterType) && styles.chipTextActive]}>Rose Variabili</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            <View style={styles.settingRow}>
                                 <Text style={styles.settingLabel}>Crediti Iniziali (Budget)</Text>
                                 <TextInput
                                     style={[styles.input, styles.shortInput]}
@@ -171,16 +189,16 @@ export default function TournamentSettingsScreen({ navigation }: any) {
                             <View style={styles.settingRow}>
                                 <Text style={styles.settingLabel}>Scadenza Mercato</Text>
                                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    <TouchableOpacity 
-                                        style={[styles.input, { flex: 1, padding: 12, justifyContent: 'center' }]} 
+                                    <TouchableOpacity
+                                        style={[styles.input, { flex: 1, padding: 12, justifyContent: 'center' }]}
                                         onPress={() => setShowDatePicker(true)}
                                     >
                                         <Text style={{ color: settings.fantasyMarketDeadline ? '#f8fafc' : '#94a3b8' }}>
                                             {settings.fantasyMarketDeadline ? new Date(settings.fantasyMarketDeadline).toLocaleDateString('it-IT') : 'Seleziona Data'}
                                         </Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity 
-                                        style={[styles.input, { width: 80, padding: 12, justifyContent: 'center', alignItems: 'center' }]} 
+                                    <TouchableOpacity
+                                        style={[styles.input, { width: 80, padding: 12, justifyContent: 'center', alignItems: 'center' }]}
                                         onPress={() => setShowTimePicker(true)}
                                     >
                                         <Text style={{ color: settings.fantasyMarketDeadline ? '#f8fafc' : '#94a3b8' }}>
@@ -197,14 +215,14 @@ export default function TournamentSettingsScreen({ navigation }: any) {
                             <View style={{ marginTop: 10, marginBottom: 15 }}>
                                 <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Modalità Calcolo Voti Partita</Text>
                                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    <TouchableOpacity 
-                                        style={[styles.chip, settings.baseVoteType === 'manual' && styles.chipActive]} 
+                                    <TouchableOpacity
+                                        style={[styles.chip, settings.baseVoteType === 'manual' && styles.chipActive]}
                                         onPress={() => setSettings({ ...settings, baseVoteType: 'manual' })}
                                     >
                                         <Text style={[styles.chipText, settings.baseVoteType === 'manual' && styles.chipTextActive]}>🖐 Manuale</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity 
-                                        style={[styles.chip, settings.baseVoteType !== 'manual' && styles.chipActive]} 
+                                    <TouchableOpacity
+                                        style={[styles.chip, settings.baseVoteType !== 'manual' && styles.chipActive]}
                                         onPress={() => setSettings({ ...settings, baseVoteType: 'automatic' })}
                                     >
                                         <Text style={[styles.chipText, settings.baseVoteType !== 'manual' && styles.chipTextActive]}>🤖 Automatico (Fasce Gol)</Text>
@@ -214,34 +232,34 @@ export default function TournamentSettingsScreen({ navigation }: any) {
                                 {settings.baseVoteType !== 'manual' && (
                                     <View style={{ marginTop: 15, padding: 12, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12 }}>
                                         <Text style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Imposta i punti bonus (+ o -) da associare alla differenza reti della squadra del calciatore per calcolare automaticamente il voto base.</Text>
-                                        
+
                                         {(settings.autoVoteBands || []).map((band, idx) => (
                                             <View key={band.id} style={{ flexDirection: 'row', gap: 8, marginBottom: 10, alignItems: 'center' }}>
-                                                <TextInput 
-                                                    style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]} 
-                                                    keyboardType="numbers-and-punctuation" 
-                                                    placeholder="Diff Min" 
-                                                    placeholderTextColor="#94a3b8" 
-                                                    value={band.minDiff.toString()} 
-                                                    onChangeText={v => updateVoteBand(band.id, 'minDiff', v)} 
+                                                <TextInput
+                                                    style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]}
+                                                    keyboardType="numbers-and-punctuation"
+                                                    placeholder="Diff Min"
+                                                    placeholderTextColor="#94a3b8"
+                                                    value={band.minDiff.toString()}
+                                                    onChangeText={v => updateVoteBand(band.id, 'minDiff', v)}
                                                 />
                                                 <Text style={{ color: '#64748b' }}>a</Text>
-                                                <TextInput 
-                                                    style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]} 
-                                                    keyboardType="numbers-and-punctuation" 
-                                                    placeholder="Diff Max" 
-                                                    placeholderTextColor="#94a3b8" 
-                                                    value={band.maxDiff.toString()} 
-                                                    onChangeText={v => updateVoteBand(band.id, 'maxDiff', v)} 
+                                                <TextInput
+                                                    style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]}
+                                                    keyboardType="numbers-and-punctuation"
+                                                    placeholder="Diff Max"
+                                                    placeholderTextColor="#94a3b8"
+                                                    value={band.maxDiff.toString()}
+                                                    onChangeText={v => updateVoteBand(band.id, 'maxDiff', v)}
                                                 />
                                                 <Text style={{ color: '#64748b' }}>➡</Text>
-                                                <TextInput 
-                                                    style={[styles.input, { flex: 1, marginBottom: 0, textAlign: 'center' }]} 
-                                                    keyboardType="numbers-and-punctuation" 
-                                                    placeholder="Punti (es. 4.5)" 
-                                                    placeholderTextColor="#94a3b8" 
-                                                    value={band.points.toString()} 
-                                                    onChangeText={v => updateVoteBand(band.id, 'points', v)} 
+                                                <TextInput
+                                                    style={[styles.input, { flex: 1, marginBottom: 0, textAlign: 'center' }]}
+                                                    keyboardType="numbers-and-punctuation"
+                                                    placeholder="Punti (es. 4.5)"
+                                                    placeholderTextColor="#94a3b8"
+                                                    value={band.points.toString()}
+                                                    onChangeText={v => updateVoteBand(band.id, 'points', v)}
                                                 />
                                                 <TouchableOpacity onPress={() => handleRemoveVoteBand(band.id)}>
                                                     <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
@@ -271,35 +289,35 @@ export default function TournamentSettingsScreen({ navigation }: any) {
                     {/* Impostazioni Rigori Gironi */}
                     {(league.type === 'gironi' || league.type === 'gironi_eliminazione') && (
                         <View style={{ marginTop: 20, marginBottom: 10 }}>
-                            <Text style={[styles.settingLabel, {marginBottom: 8, color: '#fbbf24'}]}>Gestione Rigori Pareggio</Text>
-                            <TouchableOpacity 
+                            <Text style={[styles.settingLabel, { marginBottom: 8, color: '#fbbf24' }]}>Gestione Rigori Pareggio</Text>
+                            <TouchableOpacity
                                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
                                 onPress={() => setSettings({ ...settings, groupPenaltiesEnabled: !settings.groupPenaltiesEnabled })}
                             >
                                 <View style={[styles.checkbox, settings.groupPenaltiesEnabled && styles.checkboxActive]}>
-                                        {settings.groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
+                                    {settings.groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
                                 </View>
                                 <Text style={[styles.settingLabel, { marginBottom: 0 }]}>Rigori se pareggio (Gironi)</Text>
                             </TouchableOpacity>
-                            
+
                             {settings.groupPenaltiesEnabled && (
                                 <View style={{ flexDirection: 'row', gap: 10 }}>
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.settingLabel, { fontSize: 12 }]}>Punti al Vincitore</Text>
-                                        <TextInput 
-                                            style={styles.input} 
-                                            keyboardType="numeric" 
-                                            value={settings.groupPenaltiesWinPoints?.toString() || '2'} 
-                                            onChangeText={val => setSettings({ ...settings, groupPenaltiesWinPoints: parseInt(val) || 2 })} 
+                                        <TextInput
+                                            style={styles.input}
+                                            keyboardType="numeric"
+                                            value={settings.groupPenaltiesWinPoints?.toString() || '2'}
+                                            onChangeText={val => setSettings({ ...settings, groupPenaltiesWinPoints: parseInt(val) || 2 })}
                                         />
                                     </View>
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.settingLabel, { fontSize: 12 }]}>Punti allo Sconfitto</Text>
-                                        <TextInput 
-                                            style={styles.input} 
-                                            keyboardType="numeric" 
-                                            value={settings.groupPenaltiesLossPoints?.toString() || '1'} 
-                                            onChangeText={val => setSettings({ ...settings, groupPenaltiesLossPoints: parseInt(val) || 1 })} 
+                                        <TextInput
+                                            style={styles.input}
+                                            keyboardType="numeric"
+                                            value={settings.groupPenaltiesLossPoints?.toString() || '1'}
+                                            onChangeText={val => setSettings({ ...settings, groupPenaltiesLossPoints: parseInt(val) || 1 })}
                                         />
                                     </View>
                                 </View>

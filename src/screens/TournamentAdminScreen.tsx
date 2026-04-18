@@ -81,15 +81,15 @@ export default function TournamentAdminScreen({ navigation }: any) {
             base64: true,
         });
         if (!result.canceled && result.assets && result.assets[0].base64) {
-             setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
+            setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
         }
     };
 
     const handleCreateTeam = () => {
         if (!teamName) return Alert.alert('Errore', 'Nome squadra richiesto.');
         const t: RealTeam = {
-            id: uuidv4(), 
-            leagueId, 
+            id: uuidv4(),
+            leagueId,
             name: teamName,
             logo: teamLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=random`,
             groupId: typeof league?.settings?.groupCount === 'number' && typeof teamGroupId === 'string' && teamGroupId !== '' ? teamGroupId : undefined
@@ -138,14 +138,14 @@ export default function TournamentAdminScreen({ navigation }: any) {
             });
         } else {
             const newP: Player = {
-                id: uuidv4(), 
-                leagueId, 
-                name: playerName, 
+                id: uuidv4(),
+                leagueId,
+                name: playerName,
                 position: playerPos,
-                realPosition: playerRealPos || 'Sconosciuto', 
+                realPosition: playerRealPos || 'Sconosciuto',
                 age: parseInt(playerAge) || 25,
-                price: parseInt(playerPrice) || 1, 
-                realTeamId: selectedTeam.id, 
+                price: parseInt(playerPrice) || 1,
+                realTeamId: selectedTeam.id,
                 careerId: uuidv4(),
                 photo: playerPhoto || undefined
             };
@@ -162,20 +162,20 @@ export default function TournamentAdminScreen({ navigation }: any) {
     const handleCreateMatch = () => {
         if (!homeTeamId || !awayTeamId || homeTeamId === awayTeamId) return Alert.alert('Errore', 'Seleziona due squadre diverse.');
         const newMatch: Match = {
-            id: uuidv4(), 
-            leagueId, 
+            id: uuidv4(),
+            leagueId,
             matchday: parseInt(matchday) || 1,
-            homeTeamId, 
-            awayTeamId, 
-            homeScore: 0, 
+            homeTeamId,
+            awayTeamId,
+            homeScore: 0,
             awayScore: 0,
-            events: [], 
-            playerVotes: {}, 
-            status: 'scheduled', 
+            events: [],
+            playerVotes: {},
+            status: 'scheduled',
             isFantasyMatchday: false,
-            matchType, 
+            matchType,
             stage: matchStage || undefined,
-            scheduledDate: matchDate || undefined, 
+            scheduledDate: matchDate || undefined,
             scheduledTime: matchTime || undefined
         };
         updateMatch(newMatch);
@@ -226,18 +226,18 @@ export default function TournamentAdminScreen({ navigation }: any) {
                                 <View style={{ marginBottom: 16 }}>
                                     <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Appartenenza Girone</Text>
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    {league.settings.groupNames ? league.settings.groupNames.map((name, idx) => (
-                                         <TouchableOpacity key={idx} style={[styles.miniChip, teamGroupId === name && styles.miniChipActiveHome]} onPress={() => setTeamGroupId(name)}>
-                                             <Text style={[styles.miniChipText, teamGroupId === name && {color: '#f8fafc'}]}>{name}</Text>
-                                         </TouchableOpacity>
-                                    )) : Array.from({ length: league.settings.groupCount }).map((_, idx) => {
-                                        const name = `Girone ${String.fromCharCode(65 + idx)}`;
-                                        return (
-                                         <TouchableOpacity key={idx} style={[styles.miniChip, teamGroupId === name && styles.miniChipActiveHome]} onPress={() => setTeamGroupId(name)}>
-                                             <Text style={[styles.miniChipText, teamGroupId === name && {color: '#f8fafc'}]}>{name}</Text>
-                                         </TouchableOpacity>
-                                        );
-                                    })}
+                                        {league.settings.groupNames ? league.settings.groupNames.map((name, idx) => (
+                                            <TouchableOpacity key={idx} style={[styles.miniChip, teamGroupId === name && styles.miniChipActiveHome]} onPress={() => setTeamGroupId(name)}>
+                                                <Text style={[styles.miniChipText, teamGroupId === name && { color: '#f8fafc' }]}>{name}</Text>
+                                            </TouchableOpacity>
+                                        )) : Array.from({ length: league.settings.groupCount }).map((_, idx) => {
+                                            const name = `Girone ${String.fromCharCode(65 + idx)}`;
+                                            return (
+                                                <TouchableOpacity key={idx} style={[styles.miniChip, teamGroupId === name && styles.miniChipActiveHome]} onPress={() => setTeamGroupId(name)}>
+                                                    <Text style={[styles.miniChipText, teamGroupId === name && { color: '#f8fafc' }]}>{name}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
                                     </ScrollView>
                                 </View>
                             ) : null}
@@ -246,10 +246,10 @@ export default function TournamentAdminScreen({ navigation }: any) {
                                     <Image source={{ uri: teamLogo }} style={{ width: 40, height: 40, borderRadius: 20 }} />
                                 ) : (
                                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
-                                        <Text style={{fontSize: 20}}>📷</Text>
+                                        <Text style={{ fontSize: 20 }}>📷</Text>
                                     </View>
                                 )}
-                                <TouchableOpacity style={[styles.secondaryBtn, {flex: 1}]} onPress={() => pickImage(setTeamLogo)}>
+                                <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => pickImage(setTeamLogo)}>
                                     <Text style={styles.secondaryBtnText}>{teamLogo ? 'Cambia Logo' : 'Carica Logo'}</Text>
                                 </TouchableOpacity>
                             </View>
@@ -344,12 +344,12 @@ export default function TournamentAdminScreen({ navigation }: any) {
                                 <View style={{ marginBottom: 10 }}>
                                     <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Filtra squadre per girone</Text>
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                        <TouchableOpacity style={[styles.miniChip, matchGroupId === '' && styles.miniChipActiveHome]} onPress={() => {setMatchGroupId(''); setHomeTeamId(''); setAwayTeamId('');}}>
+                                        <TouchableOpacity style={[styles.miniChip, matchGroupId === '' && styles.miniChipActiveHome]} onPress={() => { setMatchGroupId(''); setHomeTeamId(''); setAwayTeamId(''); }}>
                                             <Text style={styles.miniChipText}>Tutti</Text>
                                         </TouchableOpacity>
                                         {(league.settings.groupNames || Array.from({ length: league.settings.groupCount }).map((_, i) => `Girone ${String.fromCharCode(65 + i)}`)).map((gName, idx) => (
-                                            <TouchableOpacity key={idx} style={[styles.miniChip, matchGroupId === gName && styles.miniChipActiveHome]} onPress={() => {setMatchGroupId(gName); setHomeTeamId(''); setAwayTeamId('');}}>
-                                                <Text style={[styles.miniChipText, matchGroupId === gName && {color: '#f8fafc'}]}>{gName}</Text>
+                                            <TouchableOpacity key={idx} style={[styles.miniChip, matchGroupId === gName && styles.miniChipActiveHome]} onPress={() => { setMatchGroupId(gName); setHomeTeamId(''); setAwayTeamId(''); }}>
+                                                <Text style={[styles.miniChipText, matchGroupId === gName && { color: '#f8fafc' }]}>{gName}</Text>
                                             </TouchableOpacity>
                                         ))}
                                     </ScrollView>
@@ -459,16 +459,16 @@ export default function TournamentAdminScreen({ navigation }: any) {
                             <TextInput style={[styles.input, { flex: 1 }]} placeholder="Età" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerAge} onChangeText={setPlayerAge} />
                         </View>
                         <TextInput style={styles.input} placeholder="Quotazione" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerPrice} onChangeText={setPlayerPrice} />
-                        
+
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
                             {playerPhoto ? (
                                 <Image source={{ uri: playerPhoto }} style={{ width: 40, height: 40, borderRadius: 20 }} />
                             ) : (
                                 <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
-                                    <Text style={{fontSize: 20}}>📷</Text>
+                                    <Text style={{ fontSize: 20 }}>📷</Text>
                                 </View>
                             )}
-                            <TouchableOpacity style={[styles.secondaryBtn, {flex: 1}]} onPress={() => pickImage(setPlayerPhoto)}>
+                            <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => pickImage(setPlayerPhoto)}>
                                 <Text style={styles.secondaryBtnText}>{playerPhoto ? 'Cambia Foto' : 'Aggiungi Foto'}</Text>
                             </TouchableOpacity>
                         </View>
@@ -491,16 +491,16 @@ export default function TournamentAdminScreen({ navigation }: any) {
                     <View style={styles.modalContent}>
                         <Text style={styles.cardTitle}>Modifica Squadra</Text>
                         <TextInput style={styles.input} placeholder="Nome" placeholderTextColor="#94a3b8" value={editTeamName} onChangeText={setEditTeamName} />
-                        
+
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
                             {editTeamLogo ? (
                                 <Image source={{ uri: editTeamLogo }} style={{ width: 40, height: 40, borderRadius: 20 }} />
                             ) : (
                                 <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
-                                    <Text style={{fontSize: 20}}>📷</Text>
+                                    <Text style={{ fontSize: 20 }}>📷</Text>
                                 </View>
                             )}
-                            <TouchableOpacity style={[styles.secondaryBtn, {flex: 1}]} onPress={() => pickImage(setEditTeamLogo)}>
+                            <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => pickImage(setEditTeamLogo)}>
                                 <Text style={styles.secondaryBtnText}>{editTeamLogo ? 'Cambia Logo' : 'Carica Logo'}</Text>
                             </TouchableOpacity>
                         </View>

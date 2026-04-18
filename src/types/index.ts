@@ -55,6 +55,7 @@ export interface LeagueSettings {
     redCard: number;
     ownGoal: number;
     mvp: number;
+    cleanSheet: number;
   };
 
   // Extra Bonuses mapped by matchday
@@ -99,7 +100,7 @@ export interface Player {
 export interface MatchEvent {
   id: string;
   playerId: string;
-  type: 'goal' | 'assist' | 'yellow_card' | 'red_card' | 'own_goal' | 'mvp' | 'foul' | 'extra';
+  type: 'goal' | 'assist' | 'yellow_card' | 'red_card' | 'own_goal' | 'mvp' | 'foul' | 'extra' | 'clean_sheet';
   teamId: string; // which team the player belongs to
   extraBonusId?: string; // se type === 'extra'
 }

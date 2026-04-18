@@ -20,15 +20,15 @@ export default function FantasyAdminScreen({ navigation }: any) {
     const players = useStore(state => state.players).filter(p => p.leagueId === leagueId);
     const users = useStore(state => state.users);
 
-    const [activeTab, setActiveTab] = useState<'matchdays' | 'calc' | 'bonus'>('matchdays');
-    
+    const [activeTab, setActiveTab] = useState<'matchdays' | 'calc' | 'bonus' | 'settings'>('matchdays');
+
     // Bonus Tab states
     const [selectedFantasyTeam, setSelectedFantasyTeam] = useState('');
     const [bonusPoints, setBonusPoints] = useState('');
     const [selPlayerId, setSelPlayerId] = useState('');
     const [pBonusDesc, setPBonusDesc] = useState('');
     const [pBonusVal, setPBonusVal] = useState('');
-    
+
     // Search states
     const [searchTeamObj, setSearchTeamObj] = useState('');
     const [searchPlayerObj, setSearchPlayerObj] = useState('');
@@ -36,6 +36,11 @@ export default function FantasyAdminScreen({ navigation }: any) {
     // Scadenze form states
     const [tempDeadlineStr, setTempDeadlineStr] = useState('');
     const [tempMatchdayInput, setTempMatchdayInput] = useState('1');
+
+    // Scoring Settings states
+    const [customBonuses, setCustomBonuses] = useState(league?.settings?.customBonus || {
+        goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1, cleanSheet: 1
+    });
 
     if (!league || !isAdmin) {
         return (
@@ -49,11 +54,11 @@ export default function FantasyAdminScreen({ navigation }: any) {
 
     const handleSaveDeadline = () => {
         if (!tempDeadlineStr.trim()) return Alert.alert('Errore', 'Inserisci una data in formato ISO (es. 2026-05-15T18:00:00)');
-        
+
         try {
             const d = new Date(tempDeadlineStr);
             if (isNaN(d.getTime())) throw new Error();
-        } catch(e) {
+        } catch (e) {
             return Alert.alert('Errore', 'Formato data non valido.');
         }
 
@@ -112,6 +117,17 @@ export default function FantasyAdminScreen({ navigation }: any) {
         setPBonusVal('');
     };
 
+    const handleSaveScoringRules = () => {
+        updateLeague({
+            ...league,
+            settings: {
+                ...league.settings,
+                customBonus: customBonuses
+            }
+        });
+        Alert.alert('Successo', 'Regolamento punteggi aggiornato correttamente.');
+    };
+
     const calculateMatchday = () => {
         Alert.alert(
             "Conferma Calcolo",
@@ -154,6 +170,7 @@ export default function FantasyAdminScreen({ navigation }: any) {
                                         if (ev.type === 'red_card') totalPlayerPoints -= Math.abs(league?.settings.customBonus?.redCard ?? 1);
                                         if (ev.type === 'own_goal') totalPlayerPoints -= Math.abs(league?.settings.customBonus?.ownGoal ?? 2);
                                         if (ev.type === 'mvp') totalPlayerPoints += (league?.settings.customBonus?.mvp ?? 1);
+                                        if (ev.type === 'clean_sheet') totalPlayerPoints += (league?.settings.customBonus?.cleanSheet ?? 1);
                                     });
 
                                     // Manual Player Bonus (es. Extra campo, sanzioni)
@@ -175,7 +192,7 @@ export default function FantasyAdminScreen({ navigation }: any) {
                                 let teamMatchdayPoints = 0;
                                 const playerPointsToSave: Record<string, number> = {};
                                 let availableBench = [...(lineup.bench || [])];
-                                
+
                                 Object.values(lineup.starters).forEach(playerId => {
                                     let pts = 0;
                                     let scorerId: string | null = playerId;
@@ -259,6 +276,7 @@ export default function FantasyAdminScreen({ navigation }: any) {
                                         if (ev.type === 'red_card') pts -= Math.abs(league.settings.customBonus?.redCard ?? 1);
                                         if (ev.type === 'own_goal') pts -= Math.abs(league.settings.customBonus?.ownGoal ?? 2);
                                         if (ev.type === 'mvp') pts += (league.settings.customBonus?.mvp ?? 1);
+                                        if (ev.type === 'clean_sheet') pts += (league.settings.customBonus?.cleanSheet ?? 1);
                                     });
                                     const extraPts = useStore.getState().playerBonuses.filter(b => b.playerId === player.id).reduce((s, b) => s + b.value, 0);
                                     pts += extraPts;
@@ -309,7 +327,7 @@ export default function FantasyAdminScreen({ navigation }: any) {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
-                     <Text style={styles.backBtnText}>&lt;</Text>
+                    <Text style={styles.backBtnText}>&lt;</Text>
                 </TouchableOpacity>
                 <Text style={styles.title}>Gestione Fantasy</Text>
             </View>
@@ -321,23 +339,26 @@ export default function FantasyAdminScreen({ navigation }: any) {
                 <TouchableOpacity style={[styles.tabBtn, activeTab === 'bonus' && styles.tabBtnActive]} onPress={() => setActiveTab('bonus')}>
                     <Text style={[styles.tabText, activeTab === 'bonus' && styles.tabTextActive]}>Bonus Extra</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={[styles.tabBtn, activeTab === 'settings' && styles.tabBtnActive]} onPress={() => setActiveTab('settings')}>
+                    <Text style={[styles.tabText, activeTab === 'settings' && styles.tabTextActive]}>Punteggi</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={[styles.tabBtn, activeTab === 'calc' && styles.tabBtnActive]} onPress={() => setActiveTab('calc')}>
                     <Text style={[styles.tabText, activeTab === 'calc' && styles.tabTextActive]}>Calcolo</Text>
                 </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                
+
                 {activeTab === 'matchdays' && (
                     <View>
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Scadenza Formazioni / Mercato</Text>
                             <Text style={styles.helpText}>Imposta la data limite entro la quale gli utenti potranno inserire o modificare la formazione o comprare giocatori.</Text>
-                            
+
                             {isVariable && (
                                 <>
                                     <Text style={styles.label}>Giornata di Riferimento:</Text>
-                                    <TextInput 
+                                    <TextInput
                                         style={styles.input}
                                         keyboardType="numeric"
                                         value={tempMatchdayInput}
@@ -346,7 +367,7 @@ export default function FantasyAdminScreen({ navigation }: any) {
                                 </>
                             )}
                             <Text style={styles.label}>Data e Ora (Formato ISO):</Text>
-                            <TextInput 
+                            <TextInput
                                 style={[styles.input, { marginBottom: 16 }]}
                                 placeholder="Esempio: 2026-05-15T18:00:00"
                                 placeholderTextColor="#64748b"
@@ -356,7 +377,7 @@ export default function FantasyAdminScreen({ navigation }: any) {
                             <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveDeadline}>
                                 <Text style={styles.primaryBtnText}>Aggiorna Timer Scadenza</Text>
                             </TouchableOpacity>
-                            
+
                             {isVariable ? (
                                 <View style={{ marginTop: 24 }}>
                                     <Text style={styles.sectionTitle}>Seleziona Partite (Giornata Fantasy)</Text>
@@ -403,12 +424,12 @@ export default function FantasyAdminScreen({ navigation }: any) {
                     <View>
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Punti Extra Manuali Squadra</Text>
-                            <TextInput 
-                                style={[styles.searchInput, { marginBottom: 12 }]} 
-                                placeholder="Cerca squadra o username..." 
+                            <TextInput
+                                style={[styles.searchInput, { marginBottom: 12 }]}
+                                placeholder="Cerca squadra o username..."
                                 placeholderTextColor="#64748b"
                                 value={searchTeamObj}
-                                onChangeText={setSearchTeamObj} 
+                                onChangeText={setSearchTeamObj}
                             />
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
                                 {filteredTeams.map(f => (
@@ -437,12 +458,12 @@ export default function FantasyAdminScreen({ navigation }: any) {
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Penalità e Bonus Calciatore (Extra Campo)</Text>
                             <Text style={styles.helpText}>Servono per ritardi agli allenamenti o premi, e varranno al primo calcolo giornata.</Text>
-                            <TextInput 
-                                style={[styles.searchInput, { marginBottom: 12 }]} 
-                                placeholder="Cerca calciatore..." 
+                            <TextInput
+                                style={[styles.searchInput, { marginBottom: 12 }]}
+                                placeholder="Cerca calciatore..."
                                 placeholderTextColor="#64748b"
                                 value={searchPlayerObj}
-                                onChangeText={setSearchPlayerObj} 
+                                onChangeText={setSearchPlayerObj}
                             />
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
                                 {filteredPlayers.map(p => (
@@ -472,6 +493,85 @@ export default function FantasyAdminScreen({ navigation }: any) {
                             />
                             <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#fbbf24' }]} onPress={handleApplyPlayerBonus}>
                                 <Text style={[styles.primaryBtnText, { color: '#000' }]}>Applica Malus/Bonus Calciatore</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {activeTab === 'settings' && (
+                    <View>
+                        <View style={styles.card}>
+                            <Text style={styles.cardTitle}>Regolamento Punteggi Fantasy</Text>
+                            <Text style={styles.helpText}>Modifica i bonus e malus applicati automaticamente durante il calcolo della giornata.</Text>
+                            
+                            <View style={styles.settingsGrid}>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>⚽ Gol Segnato</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={customBonuses.goal.toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, goal: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>👟 Assist</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={customBonuses.assist.toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, assist: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>🟨 Ammonizione</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={customBonuses.yellowCard.toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, yellowCard: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>🟥 Espulsione</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={customBonuses.redCard.toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, redCard: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>🤦 Autogol</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={customBonuses.ownGoal.toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, ownGoal: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>⭐ MVP Partita</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={customBonuses.mvp.toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, mvp: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                                <View style={styles.settingItem}>
+                                    <Text style={styles.label}>🧤 Porta Inviolata</Text>
+                                    <TextInput 
+                                        style={styles.input} 
+                                        keyboardType="decimal-pad" 
+                                        value={(customBonuses.cleanSheet ?? 1).toString()} 
+                                        onChangeText={v => setCustomBonuses({...customBonuses, cleanSheet: parseFloat(v) || 0})} 
+                                    />
+                                </View>
+                            </View>
+
+                            <TouchableOpacity style={[styles.primaryBtn, { marginTop: 10 }]} onPress={handleSaveScoringRules}>
+                                <Text style={styles.primaryBtnText}>Salva Regolamento 💾</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -539,5 +639,18 @@ const styles = StyleSheet.create({
     itemTitle: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold' },
     itemSub: { color: '#94a3b8', fontSize: 13, marginTop: 2 },
     checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#94a3b8' },
-    checkboxActive: { backgroundColor: '#fbbf24', borderColor: '#fbbf24' }
+    checkboxActive: {
+        backgroundColor: '#fbbf24',
+        borderColor: '#fbbf24',
+    },
+    settingsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    settingItem: {
+        width: '48%',
+        marginBottom: 10,
+    }
 });
