@@ -110,6 +110,12 @@ export default function SquadScreen({ navigation }: any) {
             }
         }
 
+        const updatedTeam = {
+            ...myFantasyTeamDoc,
+            budgetRemaining: myFantasyTeamDoc.budgetRemaining - price,
+            players: [...myFantasyTeamDoc.players, playerId]
+        };
+
         try {
             await updateFantasyTeam(updatedTeam);
             Alert.alert('Successo', 'Giocatore acquistato!');
@@ -124,6 +130,12 @@ export default function SquadScreen({ navigation }: any) {
 
         const playerToSell = players.find(p => p.id === playerId);
         const price = playerToSell?.price || 1;
+
+        const updatedTeam = {
+            ...myFantasyTeamDoc,
+            budgetRemaining: myFantasyTeamDoc.budgetRemaining + price,
+            players: myFantasyTeamDoc.players.filter(id => id !== playerId)
+        };
 
         try {
             await updateFantasyTeam(updatedTeam);
