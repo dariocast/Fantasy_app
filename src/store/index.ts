@@ -14,9 +14,11 @@ interface AppState {
     fantasyTeams: FantasyTeam[];
     fantasyLineups: FantasyLineup[];
     playerBonuses: PlayerBonus[];
+    activeLeagueId: string | null;
 
     // Actions
     setCurrentUser: (user: User | null) => void;
+    setActiveLeagueId: (id: string | null) => void;
     addUser: (user: User) => void;
     updateUser: (user: User) => void;
     addLeague: (league: League) => void;
@@ -52,8 +54,10 @@ export const useStore = create<AppState>()(
             fantasyTeams: [],
             fantasyLineups: [],
             playerBonuses: [],
+            activeLeagueId: null,
 
             setCurrentUser: (user: User | null) => set({ currentUser: user }),
+            setActiveLeagueId: (id: string | null) => set({ activeLeagueId: id }),
             addUser: (user: User) => set((state) => ({ users: [...state.users, user] })),
 
             // --- League CRUD ---
@@ -385,7 +389,8 @@ export const useStore = create<AppState>()(
                     matches: [],
                     fantasyTeams: [],
                     fantasyLineups: [],
-                    playerBonuses: []
+                    playerBonuses: [],
+                    activeLeagueId: null
                 });
             },
 
@@ -448,16 +453,16 @@ export const useStore = create<AppState>()(
                 });
 
                 set({
-                    leagues: (leagues || []).map((l: any) => ({ 
-                        ...l, 
-                        seriesId: l.series_id, 
-                        seriesName: l.series_name, 
-                        joinCode: l.join_code 
+                    leagues: (leagues || []).map((l: any) => ({
+                        ...l,
+                        seriesId: l.series_id,
+                        seriesName: l.series_name,
+                        joinCode: l.join_code
                     })),
-                    realTeams: (realTeams || []).map((rt: any) => ({ 
-                        ...rt, 
-                        leagueId: rt.league_id, 
-                        groupId: rt.group_id 
+                    realTeams: (realTeams || []).map((rt: any) => ({
+                        ...rt,
+                        leagueId: rt.league_id,
+                        groupId: rt.group_id
                     })),
                     players: (players || []).map((p: any) => ({ ...p, leagueId: p.league_id, realTeamId: p.real_team_id, realPosition: p.real_position, careerId: p.career_id })),
                     matches: (matches || []).map(mapMatch),

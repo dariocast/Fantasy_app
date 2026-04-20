@@ -503,69 +503,69 @@ export default function FantasyAdminScreen({ navigation }: any) {
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Regolamento Punteggi Fantasy</Text>
                             <Text style={styles.helpText}>Modifica i bonus e malus applicati automaticamente durante il calcolo della giornata.</Text>
-                            
+
                             <View style={styles.settingsGrid}>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>⚽ Gol Segnato</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={customBonuses.goal.toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, goal: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={customBonuses.goal.toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, goal: parseFloat(v) || 0 })}
                                     />
                                 </View>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>👟 Assist</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={customBonuses.assist.toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, assist: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={customBonuses.assist.toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, assist: parseFloat(v) || 0 })}
                                     />
                                 </View>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>🟨 Ammonizione</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={customBonuses.yellowCard.toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, yellowCard: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={customBonuses.yellowCard.toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, yellowCard: parseFloat(v) || 0 })}
                                     />
                                 </View>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>🟥 Espulsione</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={customBonuses.redCard.toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, redCard: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={customBonuses.redCard.toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, redCard: parseFloat(v) || 0 })}
                                     />
                                 </View>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>🤦 Autogol</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={customBonuses.ownGoal.toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, ownGoal: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={customBonuses.ownGoal.toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, ownGoal: parseFloat(v) || 0 })}
                                     />
                                 </View>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>⭐ MVP Partita</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={customBonuses.mvp.toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, mvp: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={customBonuses.mvp.toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, mvp: parseFloat(v) || 0 })}
                                     />
                                 </View>
                                 <View style={styles.settingItem}>
                                     <Text style={styles.label}>🧤 Porta Inviolata</Text>
-                                    <TextInput 
-                                        style={styles.input} 
-                                        keyboardType="decimal-pad" 
-                                        value={(customBonuses.cleanSheet ?? 1).toString()} 
-                                        onChangeText={v => setCustomBonuses({...customBonuses, cleanSheet: parseFloat(v) || 0})} 
+                                    <TextInput
+                                        style={styles.input}
+                                        keyboardType="decimal-pad"
+                                        value={(customBonuses.cleanSheet ?? 1).toString()}
+                                        onChangeText={v => setCustomBonuses({ ...customBonuses, cleanSheet: parseFloat(v) || 0 })}
                                     />
                                 </View>
                             </View>

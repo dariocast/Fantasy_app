@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { League, TournamentType } from '../types';
 import { Trash2, Edit3, EyeOff, Eye, ChevronRight } from 'lucide-react-native';
 import ColorPickerModal from '../components/ColorPickerModal';
+import { supabase } from '../lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -15,6 +16,7 @@ export default function LeaguesScreen({ navigation }: any) {
     const addLeague = useStore(state => state.addLeague);
     const joinLeagueStore = useStore(state => state.joinLeague);
     const setCurrentUser = useStore(state => state.setCurrentUser);
+    const setActiveLeagueId = useStore(state => state.setActiveLeagueId);
 
     const [mode, setMode] = useState<'list' | 'create' | 'join' | 'manage'>('list');
     const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
@@ -80,7 +82,7 @@ export default function LeaguesScreen({ navigation }: any) {
     useFocusEffect(
         useCallback(() => {
             syncAllData();
-        }, [])
+        }, [syncAllData])
     );
 
     if (!currentUser) return null;
@@ -115,14 +117,14 @@ export default function LeaguesScreen({ navigation }: any) {
             tournamentStages.push("Finale");
         }
 
-        const parsedGroupCount = parseInt(groupCount) || 2;
-        const parsedGroupAdvancing = parseInt(groupAdvancingTeams) || 2;
-        const parsedPlayoutTeams = parseInt(playoutTeamsCount) || 4;
-        const parsedBudget = parseInt(budget) || 500;
-        const parsedSquadSize = parseInt(squadSize) || 25;
-        const parsedStartersCount = parseInt(startersCount) || 11;
-        const parsedBenchCount = parseInt(benchCount) || 7;
-        const parsedMaxSubs = parseInt(maxSubstitutions) || 5;
+        const parsedGroupCount = Math.max(1, parseInt(groupCount) || 1);
+        const parsedGroupAdvancing = Math.max(1, parseInt(groupAdvancingTeams) || 2);
+        const parsedPlayoutTeams = Math.max(2, parseInt(playoutTeamsCount) || 4);
+        const parsedBudget = Math.max(0, parseInt(budget) || 500);
+        const parsedSquadSize = Math.max(5, parseInt(squadSize) || 25);
+        const parsedStartersCount = Math.max(1, parseInt(startersCount) || 11);
+        const parsedBenchCount = Math.max(0, parseInt(benchCount) || 7);
+        const parsedMaxSubs = Math.max(0, parseInt(maxSubstitutions) || 5);
 
         // Build groupNames array based on entered details
         const groupNames = Array.from({ length: parsedGroupCount }).map((_, i) => customGroupNames[i] || `Girone ${String.fromCharCode(65 + i)}`);
@@ -198,7 +200,8 @@ export default function LeaguesScreen({ navigation }: any) {
     };
 
     const handleJoinLeague = () => {
-        const leagueToJoin = leagues.find(l => l.joinCode === joinCode);
+        const trJoinCode = joinCode?.trim().toUpperCase();
+        const leagueToJoin = leagues.find(l => l.joinCode?.toUpperCase() === trJoinCode);
         if (!leagueToJoin) {
             Alert.alert('Errore', 'Codice lega non valido');
             return;
@@ -212,12 +215,15 @@ export default function LeaguesScreen({ navigation }: any) {
         Alert.alert('Successo', 'Ti sei unito al torneo!');
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setActiveLeagueId(null);
         setCurrentUser(null);
         navigation.replace('Auth');
     };
 
     const openLeague = (leagueId: string) => {
+        setActiveLeagueId(leagueId);
         navigation.replace('AppDrawer', { leagueId });
     };
 

@@ -12,7 +12,8 @@ export default function SquadScreen({ navigation }: any) {
     const fantasyTeams = useStore(state => state.fantasyTeams);
     const updateFantasyTeam = useStore(state => state.updateFantasyTeam);
 
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const leagueIdStore = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === leagueIdStore) || (leagues.length > 0 ? leagues[0] : null);
     const leagueId = league?.id || '';
 
     const myFantasyTeamDoc = fantasyTeams.find(f => f.leagueId === leagueId && f.userId === currentUser?.id);
@@ -62,9 +63,9 @@ export default function SquadScreen({ navigation }: any) {
             }
         }, 1000);
         return () => clearInterval(timer);
-    }, [deadlineString]);
+    }, [deadlineString, leagueId]);
 
-    const createFantasyTeam = () => {
+    const createFantasyTeam = async () => {
         if (!league || !currentUser) return;
         if (!teamName.trim()) return Alert.alert('Errore', 'Inserisci il nome della squadra.');
 
@@ -78,10 +79,14 @@ export default function SquadScreen({ navigation }: any) {
             manualPointsAdjustment: 0,
             matchdayPoints: {}
         };
-        updateFantasyTeam(newTeam);
+        try {
+    await updateFantasyTeam(newTeam);
+} catch (error) {
+    Alert.alert('Errore', 'Impossibile salvare la squadra.');
+}
     };
 
-    const handleBuyPlayer = (playerId: string) => {
+    const handleBuyPlayer = async (playerId: string) => {
         if (!myFantasyTeamDoc || !league) return;
         if (!isMarketOpen) return Alert.alert('Attenzione', 'Mercato chiuso!');
 
@@ -110,10 +115,10 @@ export default function SquadScreen({ navigation }: any) {
             budgetRemaining: myFantasyTeamDoc.budgetRemaining - price,
             players: [...myFantasyTeamDoc.players, playerId]
         };
-        updateFantasyTeam(updatedTeam);
+        await updateFantasyTeam(updatedTeam);
     };
 
-    const handleSellPlayer = (playerId: string) => {
+    const handleSellPlayer = async (playerId: string) => {
         if (!myFantasyTeamDoc) return;
         if (!isMarketOpen) return Alert.alert('Attenzione', 'Mercato chiuso!');
 
@@ -125,7 +130,7 @@ export default function SquadScreen({ navigation }: any) {
             budgetRemaining: myFantasyTeamDoc.budgetRemaining + price,
             players: myFantasyTeamDoc.players.filter(id => id !== playerId)
         };
-        updateFantasyTeam(updatedTeam);
+        await updateFantasyTeam(updatedTeam);
     };
 
     if (!league) {
@@ -164,7 +169,7 @@ export default function SquadScreen({ navigation }: any) {
     const freePlayers = availablePlayersThisLeague.filter(p => !myFantasyTeamDoc.players.includes(p.id) && (filterPos === 'TUTTI' || p.position === filterPos));
 
     const getPosColor = (pos: string) => {
-        if (league.settings.useCustomRoles && league.settings.customRoles) {
+        if (league?.settings?.useCustomRoles && league.settings.customRoles) {
             const customRole = league.settings.customRoles.find(r => r.name === pos);
             if (customRole && customRole.color) return customRole.color;
         }

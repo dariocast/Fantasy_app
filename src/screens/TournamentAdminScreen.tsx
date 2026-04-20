@@ -9,7 +9,8 @@ import MatchCenterModal from '../components/MatchCenterModal';
 
 export default function TournamentAdminScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId) || (leagues.length > 0 ? leagues[0] : null);
     const leagueId = league?.id || '';
     const currentUser = useStore((state) => state.currentUser);
     const updateTeam = useStore(state => state.updateTeam);
@@ -82,6 +83,8 @@ export default function TournamentAdminScreen({ navigation }: any) {
         });
         if (!result.canceled && result.assets && result.assets[0].base64) {
             setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
+        } else if (!result.canceled) {
+            Alert.alert('Errore', 'Impossibile leggere i dati dell\'immagine.');
         }
     };
 
@@ -131,10 +134,17 @@ export default function TournamentAdminScreen({ navigation }: any) {
 
     const handleSavePlayer = () => {
         if (!playerName || !selectedTeam) return;
+
+        const age = parseInt(playerAge);
+        const price = parseInt(playerPrice);
+        if (isNaN(age) || isNaN(price)) {
+            return Alert.alert('Errore', 'Età e quotazione devono essere numeri validi.');
+        }
+
         if (editingPlayer) {
             updatePlayer({
                 ...editingPlayer, name: playerName, position: playerPos, realPosition: playerRealPos,
-                age: parseInt(playerAge) || 25, price: parseInt(playerPrice) || 1, photo: playerPhoto || editingPlayer.photo
+                age: age, price: price, photo: playerPhoto || editingPlayer.photo
             });
         } else {
             const newP: Player = {
@@ -143,8 +153,8 @@ export default function TournamentAdminScreen({ navigation }: any) {
                 name: playerName,
                 position: playerPos,
                 realPosition: playerRealPos || 'Sconosciuto',
-                age: parseInt(playerAge) || 25,
-                price: parseInt(playerPrice) || 1,
+                age: age,
+                price: price,
                 realTeamId: selectedTeam.id,
                 careerId: uuidv4(),
                 photo: playerPhoto || undefined

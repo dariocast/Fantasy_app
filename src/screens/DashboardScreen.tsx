@@ -5,9 +5,9 @@ import { useStore } from '../store';
 import type { League, FantasyTeam, RealTeam, Match } from '../types';
 
 export default function DashboardScreen({ navigation }: any) {
-  // For now, let's just pick the first league available
   const leagues = useStore(state => state.leagues);
-  const league = leagues.length > 0 ? leagues[0] : null;
+  const activeLeagueId = useStore(state => state.activeLeagueId);
+  const league = leagues.find(l => l.id === activeLeagueId) || (leagues.length > 0 ? leagues[0] : null);
   const id = league?.id;
 
   const fantasyTeams = useStore(state => state.fantasyTeams).filter(f => f.leagueId === id);
@@ -62,7 +62,7 @@ export default function DashboardScreen({ navigation }: any) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [league?.settings.matchdayDeadlines, league?.settings.fantasyMarketDeadline, league?.settings.rosterType]);
+  }, [league?.settings.matchdayDeadlines, league?.settings.fantasyMarketDeadline, league?.settings.rosterType, id]);
 
   if (!league) {
     return (

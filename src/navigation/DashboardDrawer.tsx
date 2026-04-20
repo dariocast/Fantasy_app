@@ -31,9 +31,11 @@ function CustomDrawerContent(props: any) {
     const insets = useSafeAreaInsets();
     const currentUser = useStore(state => state.currentUser);
     const leagues = useStore(state => state.leagues);
+    const activeLeagueId = useStore(state => state.activeLeagueId);
     const setCurrentUser = useStore(state => state.setCurrentUser);
+    const setActiveLeagueId = useStore(state => state.setActiveLeagueId);
 
-    const league = leagues && leagues.length > 0 ? leagues[0] : null; 
+    const league = leagues.find(l => l.id === activeLeagueId) || (leagues.length > 0 ? leagues[0] : null);
     const resetStore = useStore(state => state.resetStore);
 
     const [openTorneo, setOpenTorneo] = useState(true);
@@ -48,6 +50,7 @@ function CustomDrawerContent(props: any) {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
+        setActiveLeagueId(null);
         resetStore();
         navigation.navigate('Auth');
     };
