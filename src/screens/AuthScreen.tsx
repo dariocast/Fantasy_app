@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store';
+import { isValidEmail, isNonEmptyString } from '../lib/validation';
+import { logger } from '../utils/logger';
 
 export default function AuthScreen({ navigation }: any) {
     const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
@@ -19,8 +21,19 @@ export default function AuthScreen({ navigation }: any) {
     const setLoading = useStore(state => state.setLoading);
 
     const handleLogin = async () => {
-        if (!email || !password) { setMessage('Compila tutti i campi'); setIsSuccess(false); return; }
+        if (!isValidEmail(email)) { 
+            setMessage('Inserisci un indirizzo email valido'); 
+            setIsSuccess(false); 
+            return; 
+        }
+        if (!password || password.length < 6) { 
+            setMessage('La password deve essere di almeno 6 caratteri'); 
+            setIsSuccess(false); 
+            return; 
+        }
+
         try {
+            logger.debug('Attempting login for:', email);
             await signIn(email, password);
             setMessage('');
             navigation.replace('Leagues');
@@ -33,10 +46,24 @@ export default function AuthScreen({ navigation }: any) {
     };
 
     const handleRegister = async () => {
-        if (!email || !password || !firstName || !lastName) {
-            setMessage('Compila tutti i campi'); setIsSuccess(false); return;
+        if (!isValidEmail(email)) { 
+            setMessage('Inserisci un indirizzo email valido'); 
+            setIsSuccess(false); 
+            return; 
         }
+        if (password.length < 8) {
+            setMessage('La password deve essere di almeno 8 caratteri per la registrazione');
+            setIsSuccess(false);
+            return;
+        }
+        if (!isNonEmptyString(firstName) || !isNonEmptyString(lastName)) {
+            setMessage('Nome e Cognome sono richiesti'); 
+            setIsSuccess(false); 
+            return;
+        }
+
         try {
+            logger.debug('Attempting registration for:', email);
             await signUp({ email, password, firstName, lastName });
             setMessage('');
             navigation.replace('Leagues');

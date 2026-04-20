@@ -20,17 +20,24 @@ export const handleError = (err: any, context?: string) => {
 
     // Provide specific user-friendly messages for common Supabase/Network errors
     let userMessage = errorMessage;
+    const status = err?.status || err?.code;
     
-    if (errorMessage.includes('network')) {
+    if (status === 422 || status === '23505') {
+        userMessage = 'Questo elemento (o email) è già registrato nel sistema.';
+    } else if (status === 401 || status === 'PGRST301') {
+        userMessage = 'Credenziali non valide o sessione scaduta.';
+    } else if (status === 403) {
+        userMessage = 'Non hai i permessi per eseguire questa operazione.';
+    } else if (status === 404) {
+        userMessage = 'Risorsa non trovata.';
+    } else if (errorMessage.toLowerCase().includes('network') || status === '0') {
         userMessage = 'Errore di rete. Controlla la tua connessione e riprova.';
-    } else if (errorMessage.includes('JWT')) {
-        userMessage = 'Sessione scaduta. Effettua nuovamente l\'accesso.';
-    } else if (errorMessage.includes('duplicate')) {
-        userMessage = 'Questo elemento esiste già.';
+    } else if (errorMessage.includes('JWT') || errorMessage.includes('invalid claim')) {
+        userMessage = 'Sessione non valida. Effettua nuovamente l\'accesso.';
     }
 
     Alert.alert(
-        context ? `Errore - ${context}` : 'Errore',
+        context ? `Attenzione - ${context}` : 'Attenzione',
         userMessage,
         [{ text: 'OK' }]
     );

@@ -13,6 +13,7 @@ import DashboardDrawer from './src/navigation/DashboardDrawer';
 import TeamProfileScreen from './src/screens/TeamProfileScreen';
 import PlayerProfileScreen from './src/screens/PlayerProfileScreen';
 import { LoadingOverlay } from './src/components/LoadingOverlay';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,37 +36,27 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-      <NavigationContainer theme={DarkTheme}>
-        <Stack.Navigator
-          initialRouteName="Auth"
-          screenOptions={{
-            headerStyle: { backgroundColor: '#1e293b' },
-            headerTintColor: '#fff',
-            headerTitleStyle: { fontWeight: 'bold' },
-            headerShown: false, // Hide headers for main screens, we handle them or let Tabs handle them
-          }}
-        >
-          <Stack.Screen name="Auth" component={AuthScreen} />
-          <Stack.Screen 
-            name="Leagues" 
-            component={LeaguesScreen} 
-          />
-          <Stack.Screen 
-            name="AppDrawer" 
-            component={DashboardDrawer} 
-          />
-          <Stack.Screen 
-            name="TeamProfile" 
-            component={TeamProfileScreen} 
-          />
-          <Stack.Screen 
-            name="PlayerProfile" 
-            component={PlayerProfileScreen} 
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-      <LoadingOverlay visible={isLoading} />
+      <ErrorBoundary>
+        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+        <NavigationContainer theme={DarkTheme}>
+          <Stack.Navigator
+            initialRouteName="Auth"
+            screenOptions={{
+              headerStyle: { backgroundColor: '#1e293b' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="Auth" component={AuthScreen} />
+            <Stack.Screen name="Leagues" component={LeaguesScreen} />
+            <Stack.Screen name="AppDrawer" component={DashboardDrawer} />
+            <Stack.Screen name="TeamProfile" component={TeamProfileScreen} />
+            <Stack.Screen name="PlayerProfile" component={PlayerProfileScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+        <LoadingOverlay visible={isLoading} />
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
