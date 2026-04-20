@@ -141,6 +141,14 @@ export default function TournamentAdminScreen({ navigation }: any) {
             return Alert.alert('Errore', 'Età e quotazione devono essere numeri validi.');
         }
 
+        if (age < 16 || age > 50) {
+            return Alert.alert('Errore', 'L\'età deve essere tra 16 e 50 anni.');
+        }
+
+        if (price < 0) {
+            return Alert.alert('Errore', 'La quotazione non può essere negativa.');
+        }
+
         if (editingPlayer) {
             updatePlayer({
                 ...editingPlayer, name: playerName, position: playerPos, realPosition: playerRealPos,
