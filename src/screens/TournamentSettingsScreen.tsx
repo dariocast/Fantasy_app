@@ -7,7 +7,8 @@ import ColorPickerModal from '../components/ColorPickerModal';
 
 export default function TournamentSettingsScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
     const updateLeague = useStore(state => state.updateLeague);
     const currentUser = useStore((state) => state.currentUser);
@@ -53,7 +54,6 @@ export default function TournamentSettingsScreen({ navigation }: any) {
             squadSize: parseInt(squadSizeStr) || 0,
         };
         updateLeague({ ...league, settings: finalSettings });
-        Alert.alert('Successo', 'Impostazioni aggiornate!');
     };
 
     const handleAddCoAdmin = () => {

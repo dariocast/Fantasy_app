@@ -99,7 +99,6 @@ export default function TournamentAdminScreen({ navigation }: any) {
         };
         updateTeam(t);
         setTeamName(''); setTeamLogo(''); setTeamGroupId('');
-        Alert.alert('Successo', 'Squadra creata!');
     };
 
     const handleDeleteTeam = (id: string) => {
@@ -197,7 +196,6 @@ export default function TournamentAdminScreen({ navigation }: any) {
             scheduledTime: matchTime || undefined
         };
         updateMatch(newMatch);
-        Alert.alert('Successo', 'Partita creata!');
     };
 
     const handleDeleteMatch = (id: string) => { deleteMatchStore(id); };

@@ -7,7 +7,7 @@ import type { League, FantasyTeam, RealTeam, Match } from '../types';
 export default function DashboardScreen({ navigation }: any) {
   const leagues = useStore(state => state.leagues);
   const activeLeagueId = useStore(state => state.activeLeagueId);
-  const league = leagues.find(l => l.id === activeLeagueId) || (leagues.length > 0 ? leagues[0] : null);
+  const league = leagues.find(l => l.id === activeLeagueId);
   const id = league?.id;
 
   const fantasyTeams = useStore(state => state.fantasyTeams).filter(f => f.leagueId === id);

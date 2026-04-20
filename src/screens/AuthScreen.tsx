@@ -11,71 +11,38 @@ export default function AuthScreen({ navigation }: any) {
     const [lastName, setLastName] = useState('');
     const [message, setMessage] = useState('');
     const [isSuccess, setIsSuccess] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     const setCurrentUser = useStore(state => state.setCurrentUser);
-    const addUser = useStore(state => state.addUser);
+    const signIn = useStore(state => state.signIn);
+    const signUp = useStore(state => state.signUp);
+    const loading = useStore(state => state.isLoading);
+    const setLoading = useStore(state => state.setLoading);
 
     const handleLogin = async () => {
         if (!email || !password) { setMessage('Compila tutti i campi'); setIsSuccess(false); return; }
-        setLoading(true);
-        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        setLoading(false);
-        if (error) { setMessage(error.message); setIsSuccess(false); return; }
-
-        // Fetch profile
-        // AuthScreen.tsx
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-        // ← AGGIUNGI questa validazione
-        if (profileError || !profile) {
-            setMessage('Profilo non trovato. Contatta il supporto.');
+        try {
+            await signIn(email, password);
+            setMessage('');
+            navigation.replace('Leagues');
+        } catch (err: any) {
+            // Error is already handled by store's handleError, 
+            // but we might want to show a local message too
+            setMessage(err.message || 'Errore durante l\'accesso');
             setIsSuccess(false);
-            return;
         }
-
-        const user = {
-            id: data.user.id,
-            email: data.user.email || email,
-            firstName: profile.first_name || '',
-            lastName: profile.last_name || '',
-        };
-        setCurrentUser(user);
-        setMessage('');
-        navigation.replace('Leagues');
     };
 
     const handleRegister = async () => {
         if (!email || !password || !firstName || !lastName) {
             setMessage('Compila tutti i campi'); setIsSuccess(false); return;
         }
-        setLoading(true);
-        const { data, error } = await supabase.auth.signUp({
-            email: email.trim(),
-            password,
-            options: { data: { first_name: firstName, last_name: lastName } }
-        });
-        setLoading(false);
-        if (error) { setMessage(error.message); setIsSuccess(false); return; }
-
-        if (data.user) {
-            const user = {
-                id: data.user.id,
-                email: data.user.email || email,
-                firstName,
-                lastName,
-            };
-            addUser(user);
-            setCurrentUser(user);
+        try {
+            await signUp({ email, password, firstName, lastName });
             setMessage('');
             navigation.replace('Leagues');
-        } else {
-            setMessage('Controlla la tua email per confermare la registrazione.');
-            setIsSuccess(true);
+        } catch (err: any) {
+            setMessage(err.message || 'Errore durante la registrazione');
+            setIsSuccess(false);
         }
     };
 

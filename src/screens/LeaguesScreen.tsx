@@ -17,6 +17,7 @@ export default function LeaguesScreen({ navigation }: any) {
     const joinLeagueStore = useStore(state => state.joinLeague);
     const setCurrentUser = useStore(state => state.setCurrentUser);
     const setActiveLeagueId = useStore(state => state.setActiveLeagueId);
+    const isLoading = useStore(state => state.isLoading);
 
     const [mode, setMode] = useState<'list' | 'create' | 'join' | 'manage'>('list');
     const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
@@ -176,10 +177,10 @@ export default function LeaguesScreen({ navigation }: any) {
                 matchdayDeadlines: {}
             }
         };
-        addLeague(newLeague);
-        setMode('list');
-        setCreateStep(1);
-        Alert.alert('Successo', 'Torneo creato con successo!');
+        addLeague(newLeague).then(() => {
+            setMode('list');
+            setCreateStep(1);
+        });
     };
 
     const handleNextStep = () => setCreateStep(prev => (prev + 1) as 1 | 2 | 3);
@@ -210,9 +211,9 @@ export default function LeaguesScreen({ navigation }: any) {
             Alert.alert('Errore', 'Fai già parte di questa lega');
             return;
         }
-        joinLeagueStore(leagueToJoin.id, currentUser.id);
-        setMode('list');
-        Alert.alert('Successo', 'Ti sei unito al torneo!');
+        joinLeagueStore(leagueToJoin.id, currentUser.id).then(() => {
+            setMode('list');
+        });
     };
 
     const handleLogout = async () => {
@@ -339,7 +340,11 @@ export default function LeaguesScreen({ navigation }: any) {
                         )}
 
                         <View style={styles.actionsBox}>
-                            <TouchableOpacity style={styles.primaryBtn} onPress={() => { setMode('create'); setCreateStep(1); }}>
+                            <TouchableOpacity 
+                                style={[styles.primaryBtn, isLoading && { opacity: 0.6 }]} 
+                                onPress={() => { setMode('create'); setCreateStep(1); }}
+                                disabled={isLoading}
+                            >
                                 <Text style={styles.primaryBtnText}>Crea Nuovo Torneo</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('join')}>

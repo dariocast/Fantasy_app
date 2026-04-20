@@ -5,7 +5,8 @@ import { useStore } from '../store';
 export default function FantasyAdminScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
     const updateLeague = useStore(state => state.updateLeague);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
     const currentUser = useStore((state) => state.currentUser);
 
@@ -72,7 +73,6 @@ export default function FantasyAdminScreen({ navigation }: any) {
         }
 
         updateLeague({ ...league, settings: updatedSettings });
-        Alert.alert('Scadenza Salvata', 'La scadenza per le formazioni è stata aggiornata con successo.');
         setTempDeadlineStr('');
     };
 
@@ -92,7 +92,6 @@ export default function FantasyAdminScreen({ navigation }: any) {
         if (ft) {
             updateFantasyTeam({ ...ft, manualPointsAdjustment: (ft.manualPointsAdjustment || 0) + points });
         }
-        Alert.alert('Successo', `Applicati ${points} punti.`);
         setBonusPoints('');
         setSelectedFantasyTeam('');
     };
@@ -111,12 +110,10 @@ export default function FantasyAdminScreen({ navigation }: any) {
             type: 'extra'
         });
 
-        Alert.alert('Successo', `Applicato bonus/malus di ${points} al calciatore.`);
         setSelPlayerId('');
         setPBonusDesc('');
         setPBonusVal('');
     };
-
     const handleSaveScoringRules = () => {
         updateLeague({
             ...league,
@@ -125,7 +122,6 @@ export default function FantasyAdminScreen({ navigation }: any) {
                 customBonus: customBonuses
             }
         });
-        Alert.alert('Successo', 'Regolamento punteggi aggiornato correttamente.');
     };
 
     const calculateMatchday = () => {

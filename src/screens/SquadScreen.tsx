@@ -79,11 +79,7 @@ export default function SquadScreen({ navigation }: any) {
             manualPointsAdjustment: 0,
             matchdayPoints: {}
         };
-        try {
-    await updateFantasyTeam(newTeam);
-} catch (error) {
-    Alert.alert('Errore', 'Impossibile salvare la squadra.');
-}
+        updateFantasyTeam(newTeam);
     };
 
     const handleBuyPlayer = async (playerId: string) => {
@@ -116,12 +112,9 @@ export default function SquadScreen({ navigation }: any) {
             players: [...myFantasyTeamDoc.players, playerId]
         };
 
-        try {
-            await updateFantasyTeam(updatedTeam);
+        updateFantasyTeam(updatedTeam).then(() => {
             Alert.alert('Successo', 'Giocatore acquistato!');
-        } catch (error) {
-            Alert.alert('Errore', 'Impossibile acquistare il giocatore.');
-        }
+        });
     };
 
     const handleSellPlayer = async (playerId: string) => {
@@ -137,12 +130,9 @@ export default function SquadScreen({ navigation }: any) {
             players: myFantasyTeamDoc.players.filter(id => id !== playerId)
         };
 
-        try {
-            await updateFantasyTeam(updatedTeam);
+        updateFantasyTeam(updatedTeam).then(() => {
             Alert.alert('Successo', 'Giocatore venduto!');
-        } catch (error) {
-            Alert.alert('Errore', 'Impossibile vendere il giocatore.');
-        }
+        });
     };
 
     if (!league) {

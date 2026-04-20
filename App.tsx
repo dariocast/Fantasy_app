@@ -12,11 +12,13 @@ import LeaguesScreen from './src/screens/LeaguesScreen';
 import DashboardDrawer from './src/navigation/DashboardDrawer';
 import TeamProfileScreen from './src/screens/TeamProfileScreen';
 import PlayerProfileScreen from './src/screens/PlayerProfileScreen';
+import { LoadingOverlay } from './src/components/LoadingOverlay';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   const syncAllData = useStore(state => state.syncAllData);
+  const isLoading = useStore(state => state.isLoading);
 
   useEffect(() => {
     // Listen for auth changes
@@ -63,6 +65,7 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
+      <LoadingOverlay visible={isLoading} />
     </SafeAreaProvider>
   );
 }
