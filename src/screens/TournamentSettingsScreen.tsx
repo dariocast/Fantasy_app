@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, KeyboardAvoidingView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useStore } from '../store';
 import type { LeagueSettings } from '../types';
@@ -28,6 +28,19 @@ export default function TournamentSettingsScreen({ navigation }: any) {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [tempDate, setTempDate] = useState(new Date());
+
+    const scrollRef = useRef<ScrollView>(null);
+    const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+    const handleInputFocus = (inputName: string, yOffset: number) => {
+        setFocusedInput(inputName);
+        setTimeout(() => {
+            scrollRef.current?.scrollTo({ 
+                y: yOffset,
+                animated: true 
+            });
+        }, 100);
+    };
 
     const tiebreakerLabels: Record<string, string> = {
         'head_to_head': 'Scontro Diretto',
@@ -69,7 +82,7 @@ export default function TournamentSettingsScreen({ navigation }: any) {
     };
 
     const handleRemoveCategory = (idx: number) => {
-        const newRoles = (settings.customRoles || []).filter((_, i) => i !== idx);
+        const newRoles = (settings.customRoles || []).filter((_: any, i: number) => i !== idx);
         setSettings({ ...settings, customRoles: newRoles });
     };
 
@@ -111,13 +124,13 @@ export default function TournamentSettingsScreen({ navigation }: any) {
     };
 
     const handleRemoveVoteBand = (id: string) => {
-        const bands = (settings.autoVoteBands || []).filter(b => b.id !== id);
+        const bands = (settings.autoVoteBands || []).filter((b: any) => b.id !== id);
         setSettings({ ...settings, autoVoteBands: bands });
     };
 
     const updateVoteBand = (id: string, field: 'minDiff' | 'maxDiff' | 'points', val: string) => {
         const bands = [...(settings.autoVoteBands || [])];
-        const idx = bands.findIndex(b => b.id === id);
+        const idx = bands.findIndex((b: any) => b.id === id);
         if (idx !== -1) {
             bands[idx] = { ...bands[idx], [field]: parseFloat(val) || 0 };
             setSettings({ ...settings, autoVoteBands: bands });
@@ -133,307 +146,315 @@ export default function TournamentSettingsScreen({ navigation }: any) {
                 <Text style={styles.title}>Impostazioni Torneo</Text>
             </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Gestione Accessi (Co-Admin)</Text>
-                    <Text style={styles.helpText}>Aggiungi utenti tramite email per dar loro poteri amministrativi limitati.</Text>
-                    <View style={{ flexDirection: 'row', gap: 10 }}>
-                        <TextInput
-                            style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                            placeholder="Email utente..."
-                            placeholderTextColor="#94a3b8"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            value={coAdminEmail}
-                            onChangeText={setCoAdminEmail}
-                        />
-                        <TouchableOpacity style={styles.primaryBtn} onPress={handleAddCoAdmin}>
-                            <Text style={styles.primaryBtnText}>Aggiungi</Text>
-                        </TouchableOpacity>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+            >
+                <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Gestione Accessi (Co-Admin)</Text>
+                        <Text style={styles.helpText}>Aggiungi utenti tramite email per dar loro poteri amministrativi limitati.</Text>
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <TextInput
+                                style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                                placeholder="Email utente..."
+                                placeholderTextColor="#94a3b8"
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                                value={coAdminEmail}
+                                onChangeText={setCoAdminEmail}
+                            />
+                            <TouchableOpacity style={styles.primaryBtn} onPress={handleAddCoAdmin}>
+                                <Text style={styles.primaryBtnText}>Aggiungi</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
 
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Regole Torneo</Text>
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Regole Torneo</Text>
 
-                    {league.settings.hasFantasy && (
-                        <>
-                            <View style={styles.settingRow}>
-                                <Text style={styles.settingLabel}>Tipo di Rose</Text>
-                                <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    <TouchableOpacity
-                                        style={[styles.chip, settings.rosterType === 'fixed' && styles.chipActive]}
-                                        onPress={() => setSettings({ ...settings, rosterType: 'fixed' })}
-                                    >
-                                        <Text style={[styles.chipText, settings.rosterType === 'fixed' && styles.chipTextActive]}>Rose Fisse</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.chip, (settings.rosterType === 'variable' || !settings.rosterType) && styles.chipActive]}
-                                        onPress={() => setSettings({ ...settings, rosterType: 'variable' })}
-                                    >
-                                        <Text style={[styles.chipText, (settings.rosterType === 'variable' || !settings.rosterType) && styles.chipTextActive]}>Rose Variabili</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-
-                            <View style={styles.settingRow}>
-                                <Text style={styles.settingLabel}>Crediti Iniziali (Budget)</Text>
-                                <TextInput
-                                    style={[styles.input, styles.shortInput]}
-                                    keyboardType="numeric"
-                                    value={budgetStr}
-                                    onChangeText={setBudgetStr}
-                                />
-                            </View>
-
-                            <View style={styles.settingRow}>
-                                <Text style={styles.settingLabel}>Scadenza Mercato</Text>
-                                <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    <TouchableOpacity
-                                        style={[styles.input, { flex: 1, padding: 12, justifyContent: 'center' }]}
-                                        onPress={() => setShowDatePicker(true)}
-                                    >
-                                        <Text style={{ color: settings.fantasyMarketDeadline ? '#f8fafc' : '#94a3b8' }}>
-                                            {settings.fantasyMarketDeadline ? new Date(settings.fantasyMarketDeadline).toLocaleDateString('it-IT') : 'Seleziona Data'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.input, { width: 80, padding: 12, justifyContent: 'center', alignItems: 'center' }]}
-                                        onPress={() => setShowTimePicker(true)}
-                                    >
-                                        <Text style={{ color: settings.fantasyMarketDeadline ? '#f8fafc' : '#94a3b8' }}>
-                                            {settings.fantasyMarketDeadline ? new Date(settings.fantasyMarketDeadline).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : 'Ora'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.input, { width: 40, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(239, 68, 68, 0.2)' }]} onPress={() => setSettings({ ...settings, fantasyMarketDeadline: undefined })}>
-                                        <Text style={{ color: '#ef4444' }}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-
-                            {/* Base Vote */}
-                            <View style={{ marginTop: 10, marginBottom: 15 }}>
-                                <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Modalità Calcolo Voti Partita</Text>
-                                <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    <TouchableOpacity
-                                        style={[styles.chip, settings.baseVoteType === 'manual' && styles.chipActive]}
-                                        onPress={() => setSettings({ ...settings, baseVoteType: 'manual' })}
-                                    >
-                                        <Text style={[styles.chipText, settings.baseVoteType === 'manual' && styles.chipTextActive]}>🖐 Manuale</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.chip, settings.baseVoteType !== 'manual' && styles.chipActive]}
-                                        onPress={() => setSettings({ ...settings, baseVoteType: 'automatic' })}
-                                    >
-                                        <Text style={[styles.chipText, settings.baseVoteType !== 'manual' && styles.chipTextActive]}>🤖 Automatico (Fasce Gol)</Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                {settings.baseVoteType !== 'manual' && (
-                                    <View style={{ marginTop: 15, padding: 12, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12 }}>
-                                        <Text style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Imposta i punti bonus (+ o -) da associare alla differenza reti della squadra del calciatore per calcolare automaticamente il voto base.</Text>
-
-                                        {(settings.autoVoteBands || []).map((band, idx) => (
-                                            <View key={band.id} style={{ flexDirection: 'row', gap: 8, marginBottom: 10, alignItems: 'center' }}>
-                                                <TextInput
-                                                    style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]}
-                                                    keyboardType="numbers-and-punctuation"
-                                                    placeholder="Diff Min"
-                                                    placeholderTextColor="#94a3b8"
-                                                    value={band.minDiff.toString()}
-                                                    onChangeText={v => updateVoteBand(band.id, 'minDiff', v)}
-                                                />
-                                                <Text style={{ color: '#64748b' }}>a</Text>
-                                                <TextInput
-                                                    style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]}
-                                                    keyboardType="numbers-and-punctuation"
-                                                    placeholder="Diff Max"
-                                                    placeholderTextColor="#94a3b8"
-                                                    value={band.maxDiff.toString()}
-                                                    onChangeText={v => updateVoteBand(band.id, 'maxDiff', v)}
-                                                />
-                                                <Text style={{ color: '#64748b' }}>➡</Text>
-                                                <TextInput
-                                                    style={[styles.input, { flex: 1, marginBottom: 0, textAlign: 'center' }]}
-                                                    keyboardType="numbers-and-punctuation"
-                                                    placeholder="Punti (es. 4.5)"
-                                                    placeholderTextColor="#94a3b8"
-                                                    value={band.points.toString()}
-                                                    onChangeText={v => updateVoteBand(band.id, 'points', v)}
-                                                />
-                                                <TouchableOpacity onPress={() => handleRemoveVoteBand(band.id)}>
-                                                    <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        ))}
-
-                                        <TouchableOpacity style={styles.addCategoryBtn} onPress={handleAddVoteBand}>
-                                            <Text style={styles.addCategoryText}>+ Aggiungi Fascia Diff. Reti</Text>
+                        {league.settings.hasFantasy && (
+                            <>
+                                <View style={styles.settingRow}>
+                                    <Text style={styles.settingLabel}>Tipo di Rose</Text>
+                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                        <TouchableOpacity
+                                            style={[styles.chip, settings.rosterType === 'fixed' && styles.chipActive]}
+                                            onPress={() => setSettings({ ...settings, rosterType: 'fixed' })}
+                                        >
+                                            <Text style={[styles.chipText, settings.rosterType === 'fixed' && styles.chipTextActive]}>Rose Fisse</Text>
                                         </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.chip, (settings.rosterType === 'variable' || !settings.rosterType) && styles.chipActive]}
+                                            onPress={() => setSettings({ ...settings, rosterType: 'variable' })}
+                                        >
+                                            <Text style={[styles.chipText, (settings.rosterType === 'variable' || !settings.rosterType) && styles.chipTextActive]}>Rose Variabili</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+
+                                <View style={styles.settingRow}>
+                                    <Text style={styles.settingLabel}>Crediti Iniziali (Budget)</Text>
+                                    <TextInput
+                                        style={[styles.input, styles.shortInput]}
+                                        keyboardType="numeric"
+                                        value={budgetStr}
+                                        onChangeText={setBudgetStr}
+                                        onFocus={() => handleInputFocus('budget', 300)}
+                                    />
+                                </View>
+
+                                <View style={styles.settingRow}>
+                                    <Text style={styles.settingLabel}>Scadenza Mercato</Text>
+                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                        <TouchableOpacity
+                                            style={[styles.input, { flex: 1, padding: 12, justifyContent: 'center' }]}
+                                            onPress={() => setShowDatePicker(true)}
+                                        >
+                                            <Text style={{ color: settings.fantasyMarketDeadline ? '#f8fafc' : '#94a3b8' }}>
+                                                {settings.fantasyMarketDeadline ? new Date(settings.fantasyMarketDeadline).toLocaleDateString('it-IT') : 'Seleziona Data'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.input, { width: 80, padding: 12, justifyContent: 'center', alignItems: 'center' }]}
+                                            onPress={() => setShowTimePicker(true)}
+                                        >
+                                            <Text style={{ color: settings.fantasyMarketDeadline ? '#f8fafc' : '#94a3b8' }}>
+                                                {settings.fantasyMarketDeadline ? new Date(settings.fantasyMarketDeadline).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : 'Ora'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.input, { width: 40, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(239, 68, 68, 0.2)' }]} onPress={() => setSettings({ ...settings, fantasyMarketDeadline: undefined })}>
+                                            <Text style={{ color: '#ef4444' }}>✕</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+
+                                {/* Base Vote */}
+                                <View style={{ marginTop: 10, marginBottom: 15 }}>
+                                    <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Modalità Calcolo Voti Partita</Text>
+                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                        <TouchableOpacity
+                                            style={[styles.chip, settings.baseVoteType === 'manual' && styles.chipActive]}
+                                            onPress={() => setSettings({ ...settings, baseVoteType: 'manual' })}
+                                        >
+                                            <Text style={[styles.chipText, settings.baseVoteType === 'manual' && styles.chipTextActive]}>🖐 Manuale</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.chip, settings.baseVoteType !== 'manual' && styles.chipActive]}
+                                            onPress={() => setSettings({ ...settings, baseVoteType: 'automatic' })}
+                                        >
+                                            <Text style={[styles.chipText, settings.baseVoteType !== 'manual' && styles.chipTextActive]}>🤖 Automatico (Fasce Gol)</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    {settings.baseVoteType !== 'manual' && (
+                                        <View style={{ marginTop: 15, padding: 12, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12 }}>
+                                            <Text style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Imposta i punti bonus (+ o -) da associare alla differenza reti della squadra del calciatore per calcolare automaticamente il voto base.</Text>
+
+                                            {(settings.autoVoteBands || []).map((band: any, idx: number) => (
+                                                <View key={band.id} style={{ flexDirection: 'row', gap: 8, marginBottom: 10, alignItems: 'center' }}>
+                                                    <TextInput
+                                                        style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]}
+                                                        keyboardType="numbers-and-punctuation"
+                                                        placeholder="Diff Min"
+                                                        placeholderTextColor="#94a3b8"
+                                                        value={band.minDiff.toString()}
+                                                        onChangeText={v => updateVoteBand(band.id, 'minDiff', v)}
+                                                    />
+                                                    <Text style={{ color: '#64748b' }}>a</Text>
+                                                    <TextInput
+                                                        style={[styles.input, { width: 60, marginBottom: 0, textAlign: 'center' }]}
+                                                        keyboardType="numbers-and-punctuation"
+                                                        placeholder="Diff Max"
+                                                        placeholderTextColor="#94a3b8"
+                                                        value={band.maxDiff.toString()}
+                                                        onChangeText={v => updateVoteBand(band.id, 'maxDiff', v)}
+                                                    />
+                                                    <Text style={{ color: '#64748b' }}>➡</Text>
+                                                    <TextInput
+                                                        style={[styles.input, { flex: 1, marginBottom: 0, textAlign: 'center' }]}
+                                                        keyboardType="numbers-and-punctuation"
+                                                        placeholder="Punti (es. 4.5)"
+                                                        placeholderTextColor="#94a3b8"
+                                                        value={band.points.toString()}
+                                                        onChangeText={v => updateVoteBand(band.id, 'points', v)}
+                                                    />
+                                                    <TouchableOpacity onPress={() => handleRemoveVoteBand(band.id)}>
+                                                        <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            ))}
+
+                                            <TouchableOpacity style={styles.addCategoryBtn} onPress={handleAddVoteBand}>
+                                                <Text style={styles.addCategoryText}>+ Aggiungi Fascia Diff. Reti</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </View>
+                            </>
+                        )}
+
+                        <View style={styles.settingRow}>
+                            <Text style={styles.settingLabel}>Limite Calciatori in Rosa</Text>
+                            <TextInput
+                                style={[styles.input, styles.shortInput]}
+                                keyboardType="numeric"
+                                value={squadSizeStr}
+                                onChangeText={setSquadSizeStr}
+                                onFocus={() => handleInputFocus('squadSize', 1000)}
+                            />
+                        </View>
+
+                        {/* Impostazioni Rigori Gironi */}
+                        {(league.type === 'gironi' || league.type === 'gironi_eliminazione') && (
+                            <View style={{ marginTop: 20, marginBottom: 10 }}>
+                                <Text style={[styles.settingLabel, { marginBottom: 8, color: '#fbbf24' }]}>Gestione Rigori Pareggio</Text>
+                                <TouchableOpacity
+                                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+                                    onPress={() => setSettings({ ...settings, groupPenaltiesEnabled: !settings.groupPenaltiesEnabled })}
+                                >
+                                    <View style={[styles.checkbox, settings.groupPenaltiesEnabled && styles.checkboxActive]}>
+                                        {settings.groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
+                                    </View>
+                                    <Text style={[styles.settingLabel, { marginBottom: 0 }]}>Rigori se pareggio (Gironi)</Text>
+                                </TouchableOpacity>
+
+                                {settings.groupPenaltiesEnabled && (
+                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.settingLabel, { fontSize: 12 }]}>Punti al Vincitore</Text>
+                                            <TextInput
+                                                style={styles.input}
+                                                keyboardType="numeric"
+                                                value={settings.groupPenaltiesWinPoints?.toString() || '2'}
+                                                onChangeText={val => setSettings({ ...settings, groupPenaltiesWinPoints: parseInt(val) || 2 })}
+                                            />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.settingLabel, { fontSize: 12 }]}>Punti allo Sconfitto</Text>
+                                            <TextInput
+                                                style={styles.input}
+                                                keyboardType="numeric"
+                                                value={settings.groupPenaltiesLossPoints?.toString() || '1'}
+                                                onChangeText={val => setSettings({ ...settings, groupPenaltiesLossPoints: parseInt(val) || 1 })}
+                                            />
+                                        </View>
                                     </View>
                                 )}
                             </View>
-                        </>
-                    )}
+                        )}
 
-                    <View style={styles.settingRow}>
-                        <Text style={styles.settingLabel}>Limite Calciatori in Rosa</Text>
-                        <TextInput
-                            style={[styles.input, styles.shortInput]}
-                            keyboardType="numeric"
-                            value={squadSizeStr}
-                            onChangeText={setSquadSizeStr}
-                        />
-                    </View>
-
-                    {/* Impostazioni Rigori Gironi */}
-                    {(league.type === 'gironi' || league.type === 'gironi_eliminazione') && (
-                        <View style={{ marginTop: 20, marginBottom: 10 }}>
-                            <Text style={[styles.settingLabel, { marginBottom: 8, color: '#fbbf24' }]}>Gestione Rigori Pareggio</Text>
-                            <TouchableOpacity
-                                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
-                                onPress={() => setSettings({ ...settings, groupPenaltiesEnabled: !settings.groupPenaltiesEnabled })}
-                            >
-                                <View style={[styles.checkbox, settings.groupPenaltiesEnabled && styles.checkboxActive]}>
-                                    {settings.groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
-                                </View>
-                                <Text style={[styles.settingLabel, { marginBottom: 0 }]}>Rigori se pareggio (Gironi)</Text>
-                            </TouchableOpacity>
-
-                            {settings.groupPenaltiesEnabled && (
-                                <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={[styles.settingLabel, { fontSize: 12 }]}>Punti al Vincitore</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            keyboardType="numeric"
-                                            value={settings.groupPenaltiesWinPoints?.toString() || '2'}
-                                            onChangeText={val => setSettings({ ...settings, groupPenaltiesWinPoints: parseInt(val) || 2 })}
+                        {settings.useCustomRoles && (
+                            <View style={{ marginTop: 10 }}>
+                                <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Categorie Personalizzate</Text>
+                                {settings.customRoles?.map((cr: any, idx: number) => (
+                                    <View key={idx} style={styles.categoryRow}>
+                                        <TouchableOpacity
+                                            style={[styles.colorDot, { backgroundColor: cr.color || '#38bdf8' }]}
+                                            onPress={() => { setColorPickerIdx(idx); setColorPickerVisible(true); }}
                                         />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={[styles.settingLabel, { fontSize: 12 }]}>Punti allo Sconfitto</Text>
                                         <TextInput
-                                            style={styles.input}
-                                            keyboardType="numeric"
-                                            value={settings.groupPenaltiesLossPoints?.toString() || '1'}
-                                            onChangeText={val => setSettings({ ...settings, groupPenaltiesLossPoints: parseInt(val) || 1 })}
+                                            style={[styles.input, { flex: 2, marginBottom: 0 }]}
+                                            value={cr.name}
+                                            onChangeText={val => {
+                                                const newRoles = [...(settings.customRoles || [])];
+                                                newRoles[idx] = { ...newRoles[idx], name: val };
+                                                setSettings({ ...settings, customRoles: newRoles });
+                                            }}
                                         />
+                                        <TextInput
+                                            style={[styles.input, { width: 50, marginBottom: 0, textAlign: 'center' }]}
+                                            keyboardType="numeric"
+                                            placeholder="Min"
+                                            placeholderTextColor="#94a3b8"
+                                            value={cr.minLimit?.toString() || ''}
+                                            onChangeText={val => {
+                                                const newRoles = [...(settings.customRoles || [])];
+                                                newRoles[idx] = { ...newRoles[idx], minLimit: parseInt(val) || 0 };
+                                                setSettings({ ...settings, customRoles: newRoles });
+                                            }}
+                                        />
+                                        <Text style={{ color: '#64748b', fontSize: 10 }}>—</Text>
+                                        <TextInput
+                                            style={[styles.input, { width: 50, marginBottom: 0, textAlign: 'center' }]}
+                                            keyboardType="numeric"
+                                            placeholder="Max"
+                                            placeholderTextColor="#94a3b8"
+                                            value={cr.maxLimit?.toString() || ''}
+                                            onChangeText={val => {
+                                                const newRoles = [...(settings.customRoles || [])];
+                                                newRoles[idx] = { ...newRoles[idx], maxLimit: parseInt(val) || 0 };
+                                                setSettings({ ...settings, customRoles: newRoles });
+                                            }}
+                                        />
+                                        <TouchableOpacity onPress={() => handleRemoveCategory(idx)}>
+                                            <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
+                                        </TouchableOpacity>
                                     </View>
-                                </View>
-                            )}
-                        </View>
-                    )}
+                                ))}
+                                <TouchableOpacity style={styles.addCategoryBtn} onPress={handleAddCategory}>
+                                    <Text style={styles.addCategoryText}>+ Aggiungi Categoria</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
 
-                    {settings.useCustomRoles && (
-                        <View style={{ marginTop: 10 }}>
-                            <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Categorie Personalizzate</Text>
-                            {settings.customRoles?.map((cr, idx) => (
-                                <View key={idx} style={styles.categoryRow}>
-                                    <TouchableOpacity
-                                        style={[styles.colorDot, { backgroundColor: cr.color || '#38bdf8' }]}
-                                        onPress={() => { setColorPickerIdx(idx); setColorPickerVisible(true); }}
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { flex: 2, marginBottom: 0 }]}
-                                        value={cr.name}
-                                        onChangeText={val => {
-                                            const newRoles = [...(settings.customRoles || [])];
-                                            newRoles[idx] = { ...newRoles[idx], name: val };
-                                            setSettings({ ...settings, customRoles: newRoles });
-                                        }}
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { width: 50, marginBottom: 0, textAlign: 'center' }]}
-                                        keyboardType="numeric"
-                                        placeholder="Min"
-                                        placeholderTextColor="#94a3b8"
-                                        value={cr.minLimit?.toString() || ''}
-                                        onChangeText={val => {
-                                            const newRoles = [...(settings.customRoles || [])];
-                                            newRoles[idx] = { ...newRoles[idx], minLimit: parseInt(val) || 0 };
-                                            setSettings({ ...settings, customRoles: newRoles });
-                                        }}
-                                    />
-                                    <Text style={{ color: '#64748b', fontSize: 10 }}>—</Text>
-                                    <TextInput
-                                        style={[styles.input, { width: 50, marginBottom: 0, textAlign: 'center' }]}
-                                        keyboardType="numeric"
-                                        placeholder="Max"
-                                        placeholderTextColor="#94a3b8"
-                                        value={cr.maxLimit?.toString() || ''}
-                                        onChangeText={val => {
-                                            const newRoles = [...(settings.customRoles || [])];
-                                            newRoles[idx] = { ...newRoles[idx], maxLimit: parseInt(val) || 0 };
-                                            setSettings({ ...settings, customRoles: newRoles });
-                                        }}
-                                    />
-                                    <TouchableOpacity onPress={() => handleRemoveCategory(idx)}>
-                                        <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
-                                    </TouchableOpacity>
+                        {/* Tiebreaker Criteria */}
+                        <View style={{ marginTop: 20 }}>
+                            <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Criteri di Parimerito (Ordina, aggiungi o rimuovi)</Text>
+                            {(settings.tiebreakerOrder || ['head_to_head', 'goal_difference', 'goals_for']).map((crit: any, idx: number, arr: any[]) => (
+                                <View key={crit} style={styles.criteriaRow}>
+                                    <Text style={styles.criteriaText}>{idx + 1}. {tiebreakerLabels[crit] || crit}</Text>
+                                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                                        <TouchableOpacity
+                                            style={[styles.moveBtn, idx === 0 && { opacity: 0.3 }]}
+                                            disabled={idx === 0}
+                                            onPress={() => handleMoveTiebreaker(idx, 'up')}
+                                        >
+                                            <Text style={styles.moveBtnText}>↑</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.moveBtn, idx === arr.length - 1 && { opacity: 0.3 }]}
+                                            disabled={idx === arr.length - 1}
+                                            onPress={() => handleMoveTiebreaker(idx, 'down')}
+                                        >
+                                            <Text style={styles.moveBtnText}>↓</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.moveBtn, { backgroundColor: 'rgba(239,68,68,0.2)' }]}
+                                            onPress={() => handleRemoveTiebreaker(idx)}
+                                        >
+                                            <Text style={[styles.moveBtnText, { color: '#ef4444' }]}>✕</Text>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             ))}
-                            <TouchableOpacity style={styles.addCategoryBtn} onPress={handleAddCategory}>
-                                <Text style={styles.addCategoryText}>+ Aggiungi Categoria</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
 
-                    {/* Tiebreaker Criteria */}
-                    <View style={{ marginTop: 20 }}>
-                        <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Criteri di Parimerito (Ordina, aggiungi o rimuovi)</Text>
-                        {(settings.tiebreakerOrder || ['head_to_head', 'goal_difference', 'goals_for']).map((crit, idx, arr) => (
-                            <View key={crit} style={styles.criteriaRow}>
-                                <Text style={styles.criteriaText}>{idx + 1}. {tiebreakerLabels[crit] || crit}</Text>
-                                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                                    <TouchableOpacity
-                                        style={[styles.moveBtn, idx === 0 && { opacity: 0.3 }]}
-                                        disabled={idx === 0}
-                                        onPress={() => handleMoveTiebreaker(idx, 'up')}
-                                    >
-                                        <Text style={styles.moveBtnText}>↑</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.moveBtn, idx === arr.length - 1 && { opacity: 0.3 }]}
-                                        disabled={idx === arr.length - 1}
-                                        onPress={() => handleMoveTiebreaker(idx, 'down')}
-                                    >
-                                        <Text style={styles.moveBtnText}>↓</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.moveBtn, { backgroundColor: 'rgba(239,68,68,0.2)' }]}
-                                        onPress={() => handleRemoveTiebreaker(idx)}
-                                    >
-                                        <Text style={[styles.moveBtnText, { color: '#ef4444' }]}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        ))}
-
-                        {/* Add unused criteria */}
-                        {(() => {
-                            const unused = Object.keys(tiebreakerLabels).filter(k => !(settings.tiebreakerOrder || ['head_to_head', 'goal_difference', 'goals_for']).includes(k as any));
-                            if (unused.length === 0) return null;
-                            return (
-                                <View style={{ marginTop: 12 }}>
-                                    <Text style={{ color: '#94a3b8', fontSize: 13, marginBottom: 8 }}>+ Aggiungi criterio:</Text>
-                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                                        {unused.map(k => (
-                                            <TouchableOpacity key={k} style={styles.missingCriteriaChip} onPress={() => handleAddTiebreaker(k)}>
-                                                <Text style={{ color: '#ef4444', fontSize: 12 }}>{tiebreakerLabels[k]}</Text>
-                                            </TouchableOpacity>
-                                        ))}
+                            {/* Add unused criteria */}
+                            {(() => {
+                                const unused = Object.keys(tiebreakerLabels).filter(k => !(settings.tiebreakerOrder || ['head_to_head', 'goal_difference', 'goals_for']).includes(k as any));
+                                if (unused.length === 0) return null;
+                                return (
+                                    <View style={{ marginTop: 12 }}>
+                                        <Text style={{ color: '#94a3b8', fontSize: 13, marginBottom: 8 }}>+ Aggiungi criterio:</Text>
+                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                            {unused.map(k => (
+                                                <TouchableOpacity key={k} style={styles.missingCriteriaChip} onPress={() => handleAddTiebreaker(k)}>
+                                                    <Text style={{ color: '#ef4444', fontSize: 12 }}>{tiebreakerLabels[k]}</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
                                     </View>
-                                </View>
-                            );
-                        })()}
-                    </View>
+                                );
+                            })()}
+                        </View>
 
-                    <TouchableOpacity style={[styles.primaryBtn, { marginTop: 24 }]} onPress={handleSaveSettings}>
-                        <Text style={styles.primaryBtnText}>Salva Modifiche</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                        <TouchableOpacity style={[styles.primaryBtn, { marginTop: 24 }]} onPress={handleSaveSettings}>
+                            <Text style={styles.primaryBtnText}>Salva Modifiche</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Color Picker Modal */}
             <ColorPickerModal

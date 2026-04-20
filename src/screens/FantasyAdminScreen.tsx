@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, KeyboardAvoidingView } from 'react-native';
 import { useStore } from '../store';
 
 export default function FantasyAdminScreen({ navigation }: any) {
@@ -320,7 +320,12 @@ export default function FantasyAdminScreen({ navigation }: any) {
     const filteredPlayers = players.filter(p => p.name.toLowerCase().includes(searchPlayerObj.toLowerCase()));
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView 
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        >
+            <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
                     <Text style={styles.backBtnText}>&lt;</Text>
@@ -601,7 +606,8 @@ export default function FantasyAdminScreen({ navigation }: any) {
                 )}
             </ScrollView>
         </View>
-    );
+    </KeyboardAvoidingView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -619,7 +625,13 @@ const styles = StyleSheet.create({
     content: { padding: 16, paddingBottom: 60 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#f8fafc', marginVertical: 8 },
     label: { fontSize: 14, color: '#f8fafc', marginBottom: 6, fontWeight: '600' },
-    helpText: { color: '#94a3b8', fontSize: 14, marginBottom: 16 },
+    helpText: { 
+        color: '#94a3b8', 
+        fontSize: 14, 
+        marginBottom: 16,
+        lineHeight: 20,
+        flexShrink: 1,
+    },
     card: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
     cardCenter: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 30, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', alignItems: 'center' },
     cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#fbbf24', marginBottom: 12 },

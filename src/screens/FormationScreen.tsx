@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useStore } from '../store';
 import type { FantasyLineup } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -118,7 +118,12 @@ export default function FormationScreen({ navigation }: any) {
     }
 
     return (
-        <ScrollView style={styles.container}>
+        <KeyboardAvoidingView 
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        >
+            <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
             <View style={styles.header}>
                 <Text style={styles.title}>Schiera Formazione - G{currentMatchday}</Text>
                 <View style={[styles.timerBadge, isLocked && styles.timerBadgeLocked]}>
@@ -160,7 +165,7 @@ export default function FormationScreen({ navigation }: any) {
                                     }}
                                 >
                                     <View style={styles.slotOverlay}>
-                                        <Text style={styles.slotName} numberOfLines={1}>
+                                        <Text style={styles.slotName} numberOfLines={1} ellipsizeMode="tail">
                                             {p ? p.name : '+'}
                                         </Text>
                                     </View>
@@ -196,7 +201,9 @@ export default function FormationScreen({ navigation }: any) {
                         const p = players.find(x => x.id === playerId);
                         return (
                             <View key={index} style={styles.benchItem}>
-                                <Text style={styles.benchItemText}>{index + 1}. {p?.position} | {p?.name}</Text>
+                                <Text style={styles.benchItemText} numberOfLines={1} ellipsizeMode="tail">
+                                    {index + 1}. {p?.position} | {p?.name}
+                                </Text>
                                 {!isLocked && (
                                     <TouchableOpacity onPress={() => handleRemoveBench(playerId)} style={styles.removeBtn}>
                                         <Text style={styles.removeBtnText}>X</Text>
@@ -212,7 +219,9 @@ export default function FormationScreen({ navigation }: any) {
                         <Text style={styles.addBenchTitle}>Aggiungi in panchina</Text>
                         {availablePlayersForField.map(p => (
                             <TouchableOpacity key={`bench-${p.id}`} style={styles.benchAddableItem} onPress={() => handleAddBench(p.id)}>
-                                <Text style={styles.benchItemText}>{p.position} | {p.name}</Text>
+                                <Text style={styles.benchItemText} numberOfLines={1} ellipsizeMode="tail">
+                                    {p.position} | {p.name}
+                                </Text>
                                 <Text style={styles.addBtnText}>+</Text>
                             </TouchableOpacity>
                         ))}
@@ -232,7 +241,8 @@ export default function FormationScreen({ navigation }: any) {
 
             <View style={{ height: 40 }} />
         </ScrollView>
-    );
+    </KeyboardAvoidingView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -251,7 +261,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#0f172a',
+    },
+    scrollContent: {
         padding: 16,
+        paddingBottom: 40,
     },
     header: {
         marginBottom: 20,
@@ -324,20 +337,22 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-around',
+        justifyContent: 'center',
         alignContent: 'space-around',
-        paddingVertical: 20,
+        paddingVertical: 15,
+        paddingHorizontal: 10
     },
     playerSlot: {
-        width: 50,
-        height: 50,
+        width: '20%',
+        aspectRatio: 1,
+        maxWidth: 50,
         borderRadius: 25,
         backgroundColor: 'rgba(255,255,255,0.2)',
         borderWidth: 2,
         borderColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
-        margin: 5,
+        margin: '1.5%',
         overflow: 'hidden'
     },
     slotSelected: {

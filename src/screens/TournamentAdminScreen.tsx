@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useStore } from '../store';
@@ -440,65 +440,78 @@ export default function TournamentAdminScreen({ navigation }: any) {
             </ScrollView>
 
             {/* ======= PLAYER MODAL ======= */}
-            <Modal visible={isPlayerModalVisible} transparent animationType="slide" onRequestClose={() => setPlayerModalVisible(false)}>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.cardTitle}>{editingPlayer ? `Modifica ${editingPlayer.name}` : `Nuovo Giocatore in ${selectedTeam?.name}`}</Text>
-                        <TextInput style={styles.input} placeholder="Nome Cognome" placeholderTextColor="#94a3b8" value={playerName} onChangeText={setPlayerName} />
-                        {/* Category Dropdown (chips) */}
-                        <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Categoria Fantasy</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-                            {(league.settings.useCustomRoles && league.settings.customRoles && league.settings.customRoles.length > 0
-                                ? league.settings.customRoles.map(cr => ({ label: cr.name, value: cr.name, color: cr.color }))
-                                : [
-                                    { label: 'POR', value: 'POR', color: '#fbbf24' },
-                                    { label: 'DIF', value: 'DIF', color: '#3b82f6' },
-                                    { label: 'CEN', value: 'CEN', color: '#22c55e' },
-                                    { label: 'ATT', value: 'ATT', color: '#ef4444' },
-                                ]
-                            ).map(cat => (
-                                <TouchableOpacity
-                                    key={cat.value}
-                                    style={[
-                                        styles.miniChip,
-                                        playerPos === cat.value && { backgroundColor: (cat.color || '#fbbf24') + '33', borderColor: cat.color || '#fbbf24', borderWidth: 1.5 }
-                                    ]}
-                                    onPress={() => setPlayerPos(cat.value)}
-                                >
-                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat.color || '#94a3b8', marginRight: 6 }} />
-                                    <Text style={[styles.miniChipText, playerPos === cat.value && { color: cat.color || '#fbbf24' }]}>{cat.label}</Text>
+            <Modal 
+                visible={isPlayerModalVisible} 
+                transparent 
+                animationType="slide" 
+                onRequestClose={() => setPlayerModalVisible(false)}
+            >
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.modalOverlay}>
+                        <ScrollView 
+                            contentContainerStyle={styles.modalContent}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            <Text style={styles.cardTitle}>{editingPlayer ? `Modifica ${editingPlayer.name}` : `Nuovo Giocatore in ${selectedTeam?.name}`}</Text>
+                            <TextInput style={styles.input} placeholder="Nome Cognome" placeholderTextColor="#94a3b8" value={playerName} onChangeText={setPlayerName} />
+                            {/* Category Dropdown (chips) */}
+                            <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Categoria Fantasy</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+                                {(league.settings.useCustomRoles && league.settings.customRoles && league.settings.customRoles.length > 0
+                                    ? league.settings.customRoles.map(cr => ({ label: cr.name, value: cr.name, color: cr.color }))
+                                    : [
+                                        { label: 'POR', value: 'POR', color: '#fbbf24' },
+                                        { label: 'DIF', value: 'DIF', color: '#3b82f6' },
+                                        { label: 'CEN', value: 'CEN', color: '#22c55e' },
+                                        { label: 'ATT', value: 'ATT', color: '#ef4444' },
+                                    ]
+                                ).map(cat => (
+                                    <TouchableOpacity
+                                        key={cat.value}
+                                        style={[
+                                            styles.miniChip,
+                                            playerPos === cat.value && { backgroundColor: (cat.color || '#fbbf24') + '33', borderColor: cat.color || '#fbbf24', borderWidth: 1.5 }
+                                        ]}
+                                        onPress={() => setPlayerPos(cat.value)}
+                                    >
+                                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat.color || '#94a3b8', marginRight: 6 }} />
+                                        <Text style={[styles.miniChipText, playerPos === cat.value && { color: cat.color || '#fbbf24' }]}>{cat.label}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ruolo Reale" placeholderTextColor="#94a3b8" value={playerRealPos} onChangeText={setPlayerRealPos} />
+                                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Età" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerAge} onChangeText={setPlayerAge} />
+                            </View>
+                            <TextInput style={styles.input} placeholder="Quotazione" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerPrice} onChangeText={setPlayerPrice} />
+
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+                                {playerPhoto ? (
+                                    <Image source={{ uri: playerPhoto }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                                ) : (
+                                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text style={{ fontSize: 20 }}>📷</Text>
+                                    </View>
+                                )}
+                                <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => pickImage(setPlayerPhoto)}>
+                                    <Text style={styles.secondaryBtnText}>{playerPhoto ? 'Cambia Foto' : 'Aggiungi Foto'}</Text>
                                 </TouchableOpacity>
-                            ))}
+                            </View>
+
+                            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                                <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => { setPlayerModalVisible(false); setEditingPlayer(null); }}>
+                                    <Text style={styles.secondaryBtnText}>Annulla</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]} onPress={handleSavePlayer}>
+                                    <Text style={styles.primaryBtnText}>{editingPlayer ? 'Aggiorna' : 'Aggiungi'}</Text>
+                                </TouchableOpacity>
+                            </View>
                         </ScrollView>
-                        <View style={{ flexDirection: 'row', gap: 10 }}>
-                            <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ruolo Reale" placeholderTextColor="#94a3b8" value={playerRealPos} onChangeText={setPlayerRealPos} />
-                            <TextInput style={[styles.input, { flex: 1 }]} placeholder="Età" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerAge} onChangeText={setPlayerAge} />
-                        </View>
-                        <TextInput style={styles.input} placeholder="Quotazione" keyboardType="numeric" placeholderTextColor="#94a3b8" value={playerPrice} onChangeText={setPlayerPrice} />
-
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
-                            {playerPhoto ? (
-                                <Image source={{ uri: playerPhoto }} style={{ width: 40, height: 40, borderRadius: 20 }} />
-                            ) : (
-                                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 20 }}>📷</Text>
-                                </View>
-                            )}
-                            <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => pickImage(setPlayerPhoto)}>
-                                <Text style={styles.secondaryBtnText}>{playerPhoto ? 'Cambia Foto' : 'Aggiungi Foto'}</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                            <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => { setPlayerModalVisible(false); setEditingPlayer(null); }}>
-                                <Text style={styles.secondaryBtnText}>Annulla</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]} onPress={handleSavePlayer}>
-                                <Text style={styles.primaryBtnText}>{editingPlayer ? 'Aggiorna' : 'Aggiungi'}</Text>
-                            </TouchableOpacity>
-                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
             {/* ======= EDIT TEAM MODAL ======= */}
@@ -597,7 +610,13 @@ const styles = StyleSheet.create({
     itemSub: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
     iconBtn: { padding: 6, marginLeft: 4 },
     modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', padding: 20 },
-    modalContent: { backgroundColor: '#1e293b', borderRadius: 20, padding: 24 },
+    modalContent: { 
+        backgroundColor: '#1e293b', 
+        borderRadius: 20, 
+        padding: 24,
+        paddingBottom: 60,
+        maxHeight: '90%'
+    },
     miniChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.1)', marginRight: 8 },
     miniChipActiveHome: { backgroundColor: 'rgba(56, 189, 248, 0.3)', borderColor: '#38bdf8', borderWidth: 1 },
     miniChipActiveAway: { backgroundColor: 'rgba(239, 68, 68, 0.3)', borderColor: '#ef4444', borderWidth: 1 },

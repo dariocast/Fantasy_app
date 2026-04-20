@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { useStore } from '../store';
 import { v4 as uuidv4 } from 'uuid';
 import type { FantasyTeam } from '../types';
@@ -183,7 +183,11 @@ export default function SquadScreen({ navigation }: any) {
     };
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView 
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
                     <Text style={styles.backBtnText}>&lt;</Text>
@@ -212,21 +216,29 @@ export default function SquadScreen({ navigation }: any) {
                 </View>
             </View>
 
-            <View style={styles.tabsMenu}>
-                <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'market' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('market')}
+            <View style={styles.tabsMenuContainer}>
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.tabsMenu}
                 >
-                    <Text style={[styles.tabBtnText, activeTab === 'market' && styles.tabBtnTextActive]}>Listone Mercato</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'roster' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('roster')}
-                >
-                    <Text style={[styles.tabBtnText, activeTab === 'roster' && styles.tabBtnTextActive]}>
-                        Mia Rosa ({myFantasyTeamDoc.players.length}/{league.settings.squadSize})
-                    </Text>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tabBtn, activeTab === 'market' && styles.tabBtnActive]}
+                        onPress={() => setActiveTab('market')}
+                    >
+                        <Text style={[styles.tabBtnText, activeTab === 'market' && styles.tabBtnTextActive]} numberOfLines={1}>
+                            Listone Mercato
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tabBtn, activeTab === 'roster' && styles.tabBtnActive]}
+                        onPress={() => setActiveTab('roster')}
+                    >
+                        <Text style={[styles.tabBtnText, activeTab === 'roster' && styles.tabBtnTextActive]} numberOfLines={1}>
+                            Mia Rosa ({myFantasyTeamDoc.players.length}/{league.settings.squadSize})
+                        </Text>
+                    </TouchableOpacity>
+                </ScrollView>
             </View>
 
             {activeTab === 'market' && (
@@ -268,7 +280,9 @@ export default function SquadScreen({ navigation }: any) {
                                             </View>
                                         )}
                                         <View>
-                                            <Text style={styles.playerName}>{p.name}</Text>
+                                            <Text style={styles.playerName} numberOfLines={1} ellipsizeMode="tail">
+                                                {p.name}
+                                            </Text>
                                             <Text style={styles.playerTeam}>{pTeam?.name || 'Svincolato'}</Text>
                                         </View>
                                     </View>
@@ -301,7 +315,9 @@ export default function SquadScreen({ navigation }: any) {
                                             </View>
                                         )}
                                         <View>
-                                            <Text style={styles.playerName}>{p.name}</Text>
+                                            <Text style={styles.playerName} numberOfLines={1} ellipsizeMode="tail">
+                                                {p.name}
+                                            </Text>
                                             <Text style={styles.playerTeam}>{pTeam?.name || 'Svincolato'}</Text>
                                         </View>
                                     </View>
@@ -320,7 +336,8 @@ export default function SquadScreen({ navigation }: any) {
                 )}
             </ScrollView>
         </View>
-    );
+    </KeyboardAvoidingView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -343,8 +360,21 @@ const styles = StyleSheet.create({
     budgetCol: { flex: 1, alignItems: 'center' },
     budgetLabel: { color: '#94a3b8', fontSize: 11, fontWeight: 'bold', marginBottom: 2 },
     budgetText: { color: '#f8fafc', fontSize: 24, fontWeight: 'bold' },
-    tabsMenu: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
-    tabBtn: { flex: 1, paddingVertical: 16, alignItems: 'center' },
+    tabsMenuContainer: {
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: '#1e293b',
+    },
+    tabsMenu: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+    },
+    tabBtn: {
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        minWidth: 150,
+    },
     tabBtnActive: { borderBottomWidth: 2, borderBottomColor: '#38bdf8' },
     tabBtnText: { color: '#94a3b8', fontWeight: 'bold' },
     tabBtnTextActive: { color: '#38bdf8' },
@@ -358,7 +388,13 @@ const styles = StyleSheet.create({
     playerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     posBadge: { width: 36, height: 36, borderRadius: 6, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
     posText: { fontSize: 10, fontWeight: 'bold' },
-    playerName: { color: '#f8fafc', fontWeight: 'bold', fontSize: 16 },
+    playerName: { 
+        color: '#f8fafc', 
+        fontWeight: 'bold', 
+        fontSize: 16,
+        maxWidth: 200,
+        overflow: 'hidden'
+    },
     playerTeam: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
     buyBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
     buyBtnText: { color: '#0f172a', fontWeight: 'bold', fontSize: 12 },
