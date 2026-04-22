@@ -30,14 +30,42 @@ export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlic
             });
             if (error) throw error;
 
-            const { data: profile, error: profileError } = await supabase
+            let { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', data.user.id)
                 .single();
 
             if (profileError || !profile) {
-                throw new Error('Profilo non trovato coincidente con l\'account.');
+                // Auto-create profile for legacy accounts or if trigger failed
+                const { data: newProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert([{ 
+                        id: data.user.id, 
+                        first_name: data.user.user_metadata?.first_name || '',
+                        last_name: data.user.user_metadata?.last_name || '',
+                        hidden_leagues: []
+                    }])
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('ERRORE DETTAGLIATO SUPABASE:', insertError);
+                    
+                    // Ultimo tentativo: riprova a caricarlo (magari è stato creato nel frattempo o l'errore era un duplicato)
+                    const { data: retryProfile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+                    
+                    if (!retryProfile) {
+                        throw new Error(`Errore database: ${insertError.message}`);
+                    }
+                    profile = retryProfile;
+                } else {
+                    profile = newProfile;
+                }
             }
 
             const user = {

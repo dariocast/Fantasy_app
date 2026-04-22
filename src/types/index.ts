@@ -160,5 +160,4 @@ export interface PlayerBonus {
   type: 'field' | 'extra'; // campo o extra-campo
 }
 
-// Dummy export to guarantee esbuild treats this as a valid JavaScript module, overcoming an isolatedModules / Vite bug.
-export const _ModuleMarker = true;
+
