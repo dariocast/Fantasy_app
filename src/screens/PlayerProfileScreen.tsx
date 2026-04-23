@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
+import { User, Shield, Star, Award, TrendingUp, Info, ChevronLeft } from 'lucide-react-native';
 
 export default function PlayerProfileScreen({ route, navigation }: any) {
     const { playerId } = route.params;
@@ -13,7 +15,11 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
     const realTeams = useStore(s => s.realTeams);
 
     const player = allPlayers.find(p => p.id === playerId);
-    if (!player || !league) return <View style={st.center}><Text style={st.empty}>Giocatore non trovato.</Text></View>;
+    if (!player || !league) return (
+        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
+            <View style={st.center}><Text style={st.empty}>Giocatore non trovato.</Text></View>
+        </SafeAreaView>
+    );
 
     const team = realTeams.find(t => t.id === player.realTeamId);
     const careerPlayers = player.careerId ? allPlayers.filter(p => p.careerId === player.careerId) : [player];
@@ -44,46 +50,57 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
     const posColor = league.settings.customRoles?.find(r => r.name === player.position)?.color || catColors[player.position] || '#94a3b8';
 
     return (
-        <View style={st.container}>
+        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
             <View style={st.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
-                    <Text style={st.backBtn}>&lt;</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={st.backBtn}>
+                    <ChevronLeft color="#f8fafc" size={24} />
                 </TouchableOpacity>
-                <Text style={st.title} numberOfLines={1}>{player.name}</Text>
+                <Text style={st.headerTitle}>Profilo Giocatore</Text>
+                <View style={{ width: 40 }} />
             </View>
 
-            <ScrollView contentContainerStyle={st.content}>
-                {/* Hero */}
-                <View style={[st.hero, { borderBottomColor: posColor + '44' }]}>
-                    {player.photo ? (
-                        <Image source={{ uri: player.photo }} style={[st.avatar, { borderColor: posColor }]} />
-                    ) : (
-                        <View style={[st.avatar, { borderColor: posColor }]}>
-                            <Text style={[st.avatarText, { color: posColor }]}>{player.name.charAt(0)}</Text>
-                        </View>
-                    )}
-                    <Text style={st.heroName}>{player.name}</Text>
-                    <View style={st.badgeRow}>
-                        <View style={st.badge}><Text style={st.badgeText}>Età: <Text style={{ color: '#fff', fontWeight: 'bold' }}>{player.age}</Text></Text></View>
-                        <View style={st.badge}><Text style={st.badgeText}>Ruolo: <Text style={{ color: '#fff', fontWeight: 'bold' }}>{player.realPosition || '?'}</Text></Text></View>
-                        {league.settings.hasFantasy && (
-                            <View style={[st.badge, { borderColor: posColor }]}><Text style={[st.badgeText, { color: posColor }]}>Cat: <Text style={{ fontWeight: 'bold' }}>{player.position}</Text></Text></View>
+            <ScrollView contentContainerStyle={st.content} showsVerticalScrollIndicator={false}>
+                <View style={st.hero}>
+                    <View style={st.avatarContainer}>
+                        {player.photo ? (
+                            <Image source={{ uri: player.photo }} style={[st.avatar, { borderColor: posColor }]} />
+                        ) : (
+                            <View style={[st.avatar, { borderColor: posColor, backgroundColor: 'rgba(255,255,255,0.03)' }]}>
+                                <User color={posColor} size={40} />
+                            </View>
                         )}
+                        <View style={[st.posBadge, { backgroundColor: posColor }]}>
+                            <Text style={st.posBadgeText}>{player.position}</Text>
+                        </View>
                     </View>
+
+                    <Text style={st.heroName}>{player.name}</Text>
+                    
                     {team && (
-                        <TouchableOpacity onPress={() => navigation.navigate('TeamProfile', { teamId: team.id })}>
-                            <Text style={st.teamLink}>🏟️ {team.name}</Text>
+                        <TouchableOpacity style={st.teamContainer} onPress={() => navigation.navigate('TeamProfile', { teamId: team.id })}>
+                            <Shield size={14} color="#64748b" style={{ marginRight: 6 }} />
+                            <Text style={st.teamLink}>{team.name}</Text>
                         </TouchableOpacity>
                     )}
-                    {league.settings.hasFantasy && (
-                        <View style={st.priceBox}>
-                            <Text style={st.priceLabel}>QUOTAZIONE</Text>
-                            <Text style={st.priceValue}>{player.price || 1}</Text>
+
+                    <View style={st.badgeRow}>
+                        <View style={st.infoBadge}>
+                            <Text style={st.infoBadgeLabel}>ETÀ</Text>
+                            <Text style={st.infoBadgeValue}>{player.age}</Text>
                         </View>
-                    )}
+                        <View style={st.infoBadge}>
+                            <Text style={st.infoBadgeLabel}>RUOLO</Text>
+                            <Text style={st.infoBadgeValue}>{player.realPosition || '?'}</Text>
+                        </View>
+                        {league.settings.hasFantasy && (
+                            <View style={st.infoBadge}>
+                                <Text style={st.infoBadgeLabel}>QUOT.</Text>
+                                <Text style={st.infoBadgeValue}>€{player.price || 1}</Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
 
-                {/* Current Stats */}
                 <Text style={st.sectionTitle}>Statistiche Torneo Corrente</Text>
                 <View style={st.statsGrid}>
                     <StatCard label="Presenze" value={currentStats.played} />
@@ -94,7 +111,6 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
                     <StatCard label="MVP" value={currentStats.mvp} color="#fbbf24" />
                 </View>
 
-                {/* Career Stats */}
                 {player.careerId && careerPlayers.length > 1 && (
                     <>
                         <Text style={st.sectionTitle}>Statistiche di Carriera</Text>
@@ -107,7 +123,7 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
                     </>
                 )}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
@@ -121,28 +137,29 @@ function StatCard({ label, value, color = '#f8fafc' }: { label: string; value: n
 }
 
 const st = StyleSheet.create({
-    center: { flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center' },
     container: { flex: 1, backgroundColor: '#0f172a' },
-    empty: { color: '#94a3b8', fontSize: 15, textAlign: 'center' },
-    header: { flexDirection: 'row', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-    backBtn: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold' },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#f8fafc', flex: 1 },
-    content: { padding: 16, paddingBottom: 40 },
-    hero: { alignItems: 'center', paddingBottom: 20, marginBottom: 20, borderBottomWidth: 1 },
-    avatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 3 },
-    avatarText: { fontSize: 36, fontWeight: 'bold' },
-    heroName: { color: '#38bdf8', fontSize: 26, fontWeight: 'bold', marginBottom: 10 },
-    badgeRow: { flexDirection: 'row', gap: 8, marginBottom: 10, flexWrap: 'wrap', justifyContent: 'center' },
-    badge: { paddingHorizontal: 12, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-    badgeText: { color: '#94a3b8', fontSize: 13 },
-    teamLink: { color: '#94a3b8', fontSize: 14, marginBottom: 12 },
-    priceBox: { alignItems: 'center', marginTop: 4 },
-    priceLabel: { color: '#64748b', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
-    priceValue: { color: '#fbbf24', fontSize: 36, fontWeight: '900', textShadowColor: 'rgba(251,191,36,0.3)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 15 },
-    sectionTitle: { color: '#38bdf8', fontSize: 16, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)', paddingBottom: 8 },
-    careerSub: { color: '#64748b', fontSize: 12, textAlign: 'center', marginBottom: 12 },
-    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginBottom: 20 },
-    statCard: { width: '30%', backgroundColor: 'rgba(255,255,255,0.05)', padding: 14, borderRadius: 12, alignItems: 'center' },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
+    headerTitle: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold' },
+    backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' },
+    empty: { color: '#475569', fontSize: 16 },
+    content: { padding: 16, paddingBottom: 60 },
+    hero: { alignItems: 'center', marginBottom: 40, marginTop: 10 },
+    avatarContainer: { position: 'relative', marginBottom: 20 },
+    avatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, backgroundColor: 'rgba(255,255,255,0.02)' },
+    posBadge: { position: 'absolute', bottom: 0, right: 0, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 3, borderColor: '#0f172a' },
+    posBadgeText: { color: '#fff', fontSize: 12, fontWeight: '900' },
+    heroName: { color: '#f8fafc', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 5 },
+    teamContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 25, backgroundColor: 'rgba(255,255,255,0.03)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+    teamLink: { color: '#64748b', fontSize: 14, fontWeight: 'bold' },
+    badgeRow: { flexDirection: 'row', gap: 10 },
+    infoBadge: { backgroundColor: 'rgba(255,255,255,0.03)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, alignItems: 'center', minWidth: 80, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    infoBadgeLabel: { color: '#475569', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 },
+    infoBadgeValue: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold' },
+    sectionTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '900', marginBottom: 15, textTransform: 'uppercase', letterSpacing: 1, marginLeft: 4 },
+    careerSub: { color: '#475569', fontSize: 12, marginBottom: 15, marginLeft: 4, fontWeight: 'bold' },
+    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, marginBottom: 35 },
+    statCard: { width: '31%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 24, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
     statValue: { fontSize: 24, fontWeight: '900', marginBottom: 4 },
-    statLabel: { color: '#64748b', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
+    statLabel: { color: '#64748b', fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
 });

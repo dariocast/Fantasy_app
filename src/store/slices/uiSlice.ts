@@ -1,15 +1,28 @@
 import { StateCreator } from 'zustand';
 
+export interface NotificationAction {
+    text: string;
+    onPress?: () => void;
+    style?: 'default' | 'cancel' | 'destructive';
+}
+
+export interface Notification {
+    type: 'success' | 'error' | 'info' | 'confirm';
+    title: string;
+    message: string;
+    actions?: NotificationAction[];
+}
+
 export interface UISlice {
     isLoading: boolean;
-    error: string | null;
+    notification: Notification | null;
     setLoading: (loading: boolean) => void;
-    setError: (error: string | null) => void;
+    showNotification: (notification: Notification | null) => void;
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
     isLoading: false,
-    error: null,
+    notification: null,
     setLoading: (loading) => set({ isLoading: loading }),
-    setError: (error) => set({ error }),
+    showNotification: (notification) => set({ notification }),
 });

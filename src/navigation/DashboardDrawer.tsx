@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar, ScrollView, Dimensions } from 'react-native';
+import React, { useState } from 'react'; // Refreshed to detect new screens
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar, ScrollView, Dimensions, Image } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Shield, Settings, Users, ArrowLeft, Trophy, LayoutDashboard, Calendar, Flag, Eye, BarChart3, ChevronDown, ChevronUp, LogOut, X, Menu } from 'lucide-react-native';
+import { Shield, Settings, Users, ArrowLeft, Trophy, LayoutDashboard, Calendar, Flag, Eye, BarChart3, ChevronDown, ChevronUp, LogOut, X, Menu, Target } from 'lucide-react-native';
 import { useStore } from '../store';
 import { supabase } from '../lib/supabase';
 
@@ -18,6 +18,7 @@ import SquadScreen from '../screens/SquadScreen';
 import FormationScreen from '../screens/FormationScreen';
 import LineupsScreen from '../screens/LineupsScreen';
 import FantasyStandingsScreen from '../screens/FantasyStandingsScreen';
+import PredictionsScreen from '@/screens/PredictionsScreen';
 
 import TournamentAdminScreen from '../screens/TournamentAdminScreen';
 import FantasyAdminScreen from '../screens/FantasyAdminScreen';
@@ -95,7 +96,12 @@ function CustomDrawerContent(props: any) {
                         <X size={22} color="#94a3b8" />
                     </TouchableOpacity>
                 </View>
-                <Text style={styles.leagueName} numberOfLines={2}>{league.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                    {league.logo && (
+                        <Image source={{ uri: league.logo }} style={{ width: 32, height: 32, borderRadius: 8, marginRight: 10 }} />
+                    )}
+                    <Text style={[styles.leagueName, { marginBottom: 0 }]} numberOfLines={2}>{league.name}</Text>
+                </View>
                 <Text style={styles.inviteCode}>
                     Codice invito: <Text style={{ fontWeight: 'bold' }}>{league.joinCode}</Text>
                 </Text>
@@ -142,6 +148,7 @@ function CustomDrawerContent(props: any) {
                                 {navItem('Schiera Formazione', <Calendar size={18} color="#e2e8f0" />, 'Formation')}
                                 {navItem('Formazioni', <Eye size={18} color="#e2e8f0" />, 'Lineups')}
                                 {navItem('Classifica Fantasy', <Trophy size={18} color="#e2e8f0" />, 'FantasyStandings')}
+                                {league.settings.predictionsEnabled && navItem('Pronostici', <Target size={18} color="#e2e8f0" />, 'Predictions')}
                             </View>
                         )}
                     </View>
@@ -209,6 +216,7 @@ export default function DashboardDrawer() {
             <Drawer.Screen name="Formation" component={FormationScreen} options={{ title: 'Schiera Formazione' }} />
             <Drawer.Screen name="Lineups" component={LineupsScreen} options={{ title: 'Formazioni Altrui' }} />
             <Drawer.Screen name="FantasyStandings" component={FantasyStandingsScreen} options={{ title: 'Classifica Fantasy' }} />
+            <Drawer.Screen name="Predictions" component={PredictionsScreen} options={{ title: 'Pronostici' }} />
 
             <Drawer.Screen name="TournamentAdmin" component={TournamentAdminScreen} options={{ title: 'Gestione Torneo' }} />
             <Drawer.Screen name="FantasyAdmin" component={FantasyAdminScreen} options={{ title: 'Gestione Fantasy' }} />

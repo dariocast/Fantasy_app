@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
+import { Shield, Users, Calendar, ChevronLeft, Award, TrendingUp, Info, Activity } from 'lucide-react-native';
 
 export default function TeamProfileScreen({ route, navigation }: any) {
     const { teamId } = route.params;
@@ -13,12 +15,15 @@ export default function TeamProfileScreen({ route, navigation }: any) {
     const matches = useStore(s => s.matches).filter(m => m.leagueId === leagueId);
 
     const team = realTeams.find(t => t.id === teamId);
-    if (!team || !league) return <View style={st.center}><Text style={st.empty}>Squadra non trovata.</Text></View>;
+    if (!team || !league) return (
+        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
+            <View style={st.center}><Text style={st.empty}>Squadra non trovata.</Text></View>
+        </SafeAreaView>
+    );
 
     const teamPlayers = players.filter(p => p.realTeamId === teamId);
     const teamMatches = matches.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId);
 
-    // Group players by position
     const grouped = useMemo(() => {
         const g: Record<string, typeof teamPlayers> = {};
         teamPlayers.forEach(p => {
@@ -35,7 +40,6 @@ export default function TeamProfileScreen({ route, navigation }: any) {
         return cr?.color || catColors[cat] || '#9E9E9E';
     };
 
-    // Team stats
     const stats = useMemo(() => {
         let played = 0, won = 0, drawn = 0, lost = 0, gf = 0, gs = 0;
         teamMatches.filter(m => m.status === 'finished').forEach(m => {
@@ -53,27 +57,39 @@ export default function TeamProfileScreen({ route, navigation }: any) {
     }, [teamMatches, teamId]);
 
     return (
-        <View style={st.container}>
+        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
             <View style={st.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
-                    <Text style={st.backBtn}>&lt;</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={st.backBtn}>
+                    <ChevronLeft color="#f8fafc" size={24} />
                 </TouchableOpacity>
-                <Text style={st.title} numberOfLines={1}>{team.name}</Text>
+                <Text style={st.headerTitle}>Dettaglio Squadra</Text>
+                <View style={{ width: 40 }} />
             </View>
 
-            <ScrollView contentContainerStyle={st.content}>
-                {/* Hero */}
+            <ScrollView contentContainerStyle={st.content} showsVerticalScrollIndicator={false}>
                 <View style={st.hero}>
-                    {team.logo ? (
-                        <Image source={{ uri: team.logo }} style={st.heroLogo} />
-                    ) : (
-                        <View style={st.avatar}><Text style={st.avatarText}>{team.name.charAt(0)}</Text></View>
-                    )}
+                    <View style={st.logoWrapper}>
+                        {team.logo ? (
+                            <Image source={{ uri: team.logo }} style={st.heroLogo} />
+                        ) : (
+                            <View style={st.avatar}>
+                                <Shield color="#fbbf24" size={40} />
+                            </View>
+                        )}
+                    </View>
                     <Text style={st.heroName}>{team.name}</Text>
-                    <Text style={st.heroSub}>{teamPlayers.length} Giocatori · {teamMatches.length} Partite</Text>
+                    <View style={st.heroSubRow}>
+                        <View style={st.heroSubBadge}>
+                            <Users size={12} color="#64748b" style={{ marginRight: 6 }} />
+                            <Text style={st.heroSubText}>{teamPlayers.length} Giocatori</Text>
+                        </View>
+                        <View style={st.heroSubBadge}>
+                            <Activity size={12} color="#64748b" style={{ marginRight: 6 }} />
+                            <Text style={st.heroSubText}>{teamMatches.length} Partite</Text>
+                        </View>
+                    </View>
                 </View>
 
-                {/* Quick Stats */}
                 <View style={st.statsRow}>
                     <StatBox label="PT" value={stats.pts} color="#fbbf24" />
                     <StatBox label="V" value={stats.won} color="#4ade80" />
@@ -82,7 +98,6 @@ export default function TeamProfileScreen({ route, navigation }: any) {
                     <StatBox label="DR" value={stats.dr} color={stats.dr >= 0 ? '#4ade80' : '#ef4444'} />
                 </View>
 
-                {/* Rosa */}
                 <Text style={st.sectionTitle}>Rosa</Text>
                 {Object.keys(grouped).length === 0 && <Text style={st.empty}>Nessun giocatore in rosa.</Text>}
                 {Object.entries(grouped).map(([cat, pls]) => {
@@ -114,7 +129,6 @@ export default function TeamProfileScreen({ route, navigation }: any) {
                     );
                 })}
 
-                {/* Calendario */}
                 <Text style={st.sectionTitle}>Calendario</Text>
                 {teamMatches.length === 0 && <Text style={st.empty}>Nessuna partita programmata.</Text>}
                 {[...teamMatches].sort((a, b) => a.matchday - b.matchday).map(m => {
@@ -145,7 +159,7 @@ export default function TeamProfileScreen({ route, navigation }: any) {
                     );
                 })}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
@@ -159,38 +173,40 @@ function StatBox({ label, value, color = '#f8fafc' }: { label: string; value: nu
 }
 
 const st = StyleSheet.create({
-    center: { flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center' },
     container: { flex: 1, backgroundColor: '#0f172a' },
-    empty: { color: '#64748b', fontSize: 14, textAlign: 'center', fontStyle: 'italic' },
-    header: { flexDirection: 'row', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-    backBtn: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold' },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#f8fafc', flex: 1 },
-    content: { padding: 16, paddingBottom: 40 },
-    hero: { alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderColor: 'rgba(251,191,36,0.2)' },
-    avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(251,191,36,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fbbf24', marginBottom: 10 },
-    avatarText: { color: '#fbbf24', fontSize: 30, fontWeight: 'bold' },
-    heroLogo: { width: 80, height: 80, borderRadius: 40, marginBottom: 10, resizeMode: 'contain' },
-    playerPhotoImg: { width: 32, height: 32, borderRadius: 16, marginRight: 10, resizeMode: 'cover' },
-    heroName: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
-    heroSub: { color: '#94a3b8', fontSize: 14 },
-    statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 20 },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
+    headerTitle: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold' },
+    backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' },
+    empty: { color: '#475569', fontSize: 14, textAlign: 'center', marginTop: 20, fontWeight: 'bold' },
+    content: { padding: 16, paddingBottom: 60 },
+    hero: { alignItems: 'center', marginBottom: 30 },
+    logoWrapper: { marginBottom: 15, padding: 15, backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    heroLogo: { width: 90, height: 90, resizeMode: 'contain' },
+    avatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: 'rgba(251,191,36,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(251,191,36,0.2)' },
+    heroName: { color: '#f8fafc', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 10 },
+    heroSubRow: { flexDirection: 'row', gap: 10 },
+    heroSubBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.03)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 15 },
+    heroSubText: { color: '#64748b', fontSize: 12, fontWeight: 'bold' },
+    statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 35, backgroundColor: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
     statBox: { alignItems: 'center' },
-    statValue: { fontSize: 22, fontWeight: '900' },
-    statLabel: { color: '#64748b', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 },
-    sectionTitle: { color: '#f8fafc', fontSize: 17, fontWeight: 'bold', marginBottom: 12, marginTop: 8 },
-    catHeader: { borderLeftWidth: 4, paddingLeft: 10, marginBottom: 6 },
-    catName: { fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
-    playerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 4, borderLeftWidth: 3 },
-    playerAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-    playerAvatarText: { fontSize: 13, fontWeight: 'bold' },
-    playerName: { color: '#f8fafc', fontWeight: '600', fontSize: 14 },
-    playerInfo: { color: '#94a3b8', fontSize: 11 },
-    playerPrice: { color: '#fbbf24', fontWeight: 'bold', fontSize: 13 },
-    matchRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 6, borderLeftWidth: 3, gap: 6 },
-    matchDay: { color: '#64748b', fontSize: 11, width: 50 },
-    matchTeam: { flex: 1, color: '#f8fafc', fontSize: 13 },
-    matchScore: { backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-    matchScoreText: { color: '#f8fafc', fontWeight: '900', fontSize: 13 },
-    resultBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, minWidth: 26, alignItems: 'center' },
-    resultText: { fontSize: 11, fontWeight: 'bold' },
+    statValue: { fontSize: 24, fontWeight: '900' },
+    statLabel: { color: '#475569', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 },
+    sectionTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '900', marginBottom: 15, textTransform: 'uppercase', letterSpacing: 1, marginLeft: 4 },
+    catHeader: { borderLeftWidth: 4, paddingLeft: 12, marginBottom: 10, marginTop: 5 },
+    catName: { fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    playerRow: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 20, marginBottom: 8, borderLeftWidth: 3, borderWidth: 1, borderColor: 'rgba(255,255,255,0.02)' },
+    playerPhotoImg: { width: 36, height: 36, borderRadius: 18, marginRight: 12 },
+    playerAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    playerAvatarText: { fontSize: 15, fontWeight: '900' },
+    playerName: { color: '#f8fafc', fontWeight: 'bold', fontSize: 15, marginBottom: 2 },
+    playerInfo: { color: '#64748b', fontSize: 12, fontWeight: 'bold' },
+    playerPrice: { color: '#fbbf24', fontWeight: '900', fontSize: 14 },
+    matchRow: { flexDirection: 'row', alignItems: 'center', padding: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 20, marginBottom: 10, borderLeftWidth: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.02)' },
+    matchDay: { color: '#475569', fontSize: 11, fontWeight: '900', width: 55, textTransform: 'uppercase' },
+    matchTeam: { flex: 1, color: '#f8fafc', fontSize: 14 },
+    matchScore: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, minWidth: 45, alignItems: 'center' },
+    matchScoreText: { color: '#38bdf8', fontWeight: '900', fontSize: 14 },
+    resultBadge: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
+    resultText: { fontSize: 12, fontWeight: '900' },
 });

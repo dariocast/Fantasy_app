@@ -46,6 +46,10 @@ export interface LeagueSettings {
   matchdayDeadlines: Record<number, string>;
   fantasyMarketDeadline?: string;
   autoVoteBands?: { id: string; minDiff: number; maxDiff: number; points: number }[];
+  
+  // Rule: Max players from the same real team
+  maxPlayersPerRealTeamEnabled?: boolean;
+  maxPlayersPerRealTeam?: number;
 
   // Custom Default Bonus
   customBonus: {
@@ -57,6 +61,21 @@ export interface LeagueSettings {
     mvp: number;
     cleanSheet: number;
   };
+
+  // Predictions settings
+  predictionsEnabled?: boolean;
+  predictionPointsOutcome?: number; // Es. +2 per 1X2
+  predictionPointsExact?: number;   // Es. +5 per risultato esatto
+
+  // NEW: Bonus specifici per categoria (es. Goal -> Amuleto: 10, Star: 3)
+  // Mappa: bonusType (goal, assist, etc) -> categoryName -> value
+  categoryBonuses?: Record<string, Record<string, number>>;
+
+  // NEW: Definizioni Bonus Custom Strutturati
+  customBonusDefinitions?: { id: string; name: string; value: number; target: 'player' | 'team' | 'both' }[];
+
+  // NEW: Assegnazioni Bonus alle Squadre (per matchday)
+  teamBonusAssignments?: { id: string; teamId: string; definitionId: string; matchday: number }[];
 
   // Extra Bonuses mapped by matchday
   extraBonuses: Record<number, { id: string; name: string; value: number }[]>;
@@ -74,6 +93,7 @@ export interface League {
   joinCode: string;
   seriesId?: string; // NEW: To link multiple editions of the same tournament (e.g. "Champions 2025" and "Champions 2026")
   seriesName?: string;
+  logo?: string;
 }
 
 export interface RealTeam {
@@ -121,9 +141,11 @@ export interface Match {
   played?: boolean; // DEPRECATED — kept for migration only
   scheduledDate?: string; // ISO date e.g. "2026-04-15"
   scheduledTime?: string; // 24h time e.g. "20:30"
+  startTime?: string; // NEW: ISO combined date/time
   isFantasyMatchday: boolean; // if valid for fantasy points
-  matchType?: 'campionato' | 'gironi' | 'playoff' | 'playout';
+  matchType?: 'campionato' | 'gironi' | 'eliminazione' | 'playout';
   stage?: string; // e.g. 'Ottavi', 'Girone A', etc.
+  phaseNumber?: number; // 1: Playout, 2: Quarti, 3: Semis, 4: Final, etc.
   homePenalties?: number;
   awayPenalties?: number;
 }
@@ -148,13 +170,32 @@ export interface FantasyLineup {
   bench: string[]; // ordered array of playerIds
   points?: number; // Total points for this lineup at this matchday
   playerPoints?: Record<string, number>; // playerId -> points scored by this specific starter
+  playerPointsDetails?: Record<string, {
+    baseVote: number;
+    events: { type: string; value: number }[];
+    manualBonuses: { description: string; value: number }[];
+    total: number;
+  }>;
 }
 
 // NEW: Bonus assegnati ai singoli giocatori (campo o extra campo)
+export interface Prediction {
+  id: string;
+  tournamentId: string;
+  fantasyTeamId: string;
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PlayerBonus {
   id: string;
   playerId: string;
   leagueId: string;
+  matchId?: string; // Tying to a specific match
+  matchday?: number; // Or a specific matchday
   value: number;
   description: string;
   type: 'field' | 'extra'; // campo o extra-campo

@@ -24,9 +24,9 @@ export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlic
     signIn: async (email, password) => {
         get().setLoading(true);
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({ 
-                email: email.trim(), 
-                password 
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password
             });
             if (error) throw error;
 
@@ -40,8 +40,8 @@ export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlic
                 // Auto-create profile for legacy accounts or if trigger failed
                 const { data: newProfile, error: insertError } = await supabase
                     .from('profiles')
-                    .insert([{ 
-                        id: data.user.id, 
+                    .insert([{
+                        id: data.user.id,
                         first_name: data.user.user_metadata?.first_name || '',
                         last_name: data.user.user_metadata?.last_name || '',
                         hidden_leagues: []
@@ -51,14 +51,14 @@ export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlic
 
                 if (insertError) {
                     console.error('ERRORE DETTAGLIATO SUPABASE:', insertError);
-                    
+
                     // Ultimo tentativo: riprova a caricarlo (magari è stato creato nel frattempo o l'errore era un duplicato)
                     const { data: retryProfile } = await supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', data.user.id)
                         .single();
-                    
+
                     if (!retryProfile) {
                         throw new Error(`Errore database: ${insertError.message}`);
                     }
@@ -101,9 +101,9 @@ export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlic
                     firstName,
                     lastName,
                 };
-                set((state) => ({ 
+                set((state) => ({
                     users: [...state.users, user],
-                    currentUser: user 
+                    currentUser: user
                 }));
             }
         } catch (err: any) {

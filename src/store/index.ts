@@ -9,9 +9,11 @@ import { LeagueSlice, createLeagueSlice } from './slices/leagueSlice';
 import { AdminSlice, createAdminSlice } from './slices/adminSlice';
 import { FantasySlice, createFantasySlice } from './slices/fantasySlice';
 import { SyncSlice, createSyncSlice } from './slices/syncSlice';
+import { PredictionSlice, createPredictionSlice } from './slices/predictionSlice';
+import { registerNotificationFn } from '../lib/error-handler';
 
 // Combine all slice types into a single interface
-export type AppState = UISlice & AuthSlice & LeagueSlice & AdminSlice & FantasySlice & SyncSlice;
+export type AppState = UISlice & AuthSlice & LeagueSlice & AdminSlice & FantasySlice & SyncSlice & PredictionSlice;
 
 export const useStore = create<AppState>()(
     persist(
@@ -22,6 +24,7 @@ export const useStore = create<AppState>()(
             ...createAdminSlice(...a),
             ...createFantasySlice(...a),
             ...createSyncSlice(...a),
+            ...createPredictionSlice(...a),
         }),
         {
             name: 'fantalega-storage',
@@ -53,3 +56,6 @@ export const useStore = create<AppState>()(
         }
     )
 );
+
+// Initialize error handler with the store's notification function
+registerNotificationFn((n) => useStore.getState().showNotification(n));

@@ -14,6 +14,7 @@ import TeamProfileScreen from './src/screens/TeamProfileScreen';
 import PlayerProfileScreen from './src/screens/PlayerProfileScreen';
 import { LoadingOverlay } from './src/components/LoadingOverlay';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import PremiumAlert from './src/components/PremiumAlert';
 
 const Stack = createNativeStackNavigator();
 
@@ -56,6 +57,7 @@ export default function App() {
           </Stack.Navigator>
         </NavigationContainer>
         <LoadingOverlay visible={isLoading} />
+        <PremiumAlert />
       </ErrorBoundary>
     </SafeAreaProvider>
   );

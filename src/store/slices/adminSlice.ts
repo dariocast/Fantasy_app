@@ -192,6 +192,8 @@ export const createAdminSlice: StateCreator<AdminSlice & UISlice, [], [], AdminS
                 id: bonus.id,
                 league_id: bonus.leagueId,
                 player_id: bonus.playerId,
+                match_id: bonus.matchId,
+                matchday: bonus.matchday,
                 description: bonus.description,
                 value: bonus.value,
                 type: bonus.type

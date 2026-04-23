@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
+import { Shield, ChevronRight, Info } from 'lucide-react-native';
 
 export default function TeamsViewerScreen({ navigation }: any) {
     const leagues = useStore(s => s.leagues);
@@ -10,19 +12,24 @@ export default function TeamsViewerScreen({ navigation }: any) {
     const realTeams = useStore(s => s.realTeams).filter(t => t.leagueId === leagueId);
     const players = useStore(s => s.players).filter(p => p.leagueId === leagueId);
 
-    if (!league) return <View style={s.center}><Text style={s.empty}>Nessun torneo.</Text></View>;
+    if (!league) return (
+        <SafeAreaView style={s.container} edges={['bottom', 'left', 'right']}>
+            <View style={s.center}><Text style={s.empty}>Nessun torneo.</Text></View>
+        </SafeAreaView>
+    );
 
     return (
-        <View style={s.container}>
+        <SafeAreaView style={s.container} edges={['bottom', 'left', 'right']}>
             <View style={s.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 15 }}>
-                    <Text style={s.backBtn}>&lt;</Text>
-                </TouchableOpacity>
-                <Text style={s.title}>Squadre del Torneo</Text>
+                <Text style={s.headerTitle}>Squadre</Text>
             </View>
-
             <ScrollView contentContainerStyle={s.content}>
-                {realTeams.length === 0 && <Text style={s.empty}>Nessuna squadra iscritta al torneo.</Text>}
+                {realTeams.length === 0 && (
+                    <View style={s.emptyContainer}>
+                        <Info size={40} color="rgba(255,255,255,0.05)" />
+                        <Text style={s.empty}>Nessuna squadra iscritta a questo torneo.</Text>
+                    </View>
+                )}
                 <View style={s.grid}>
                     {realTeams.map(t => {
                         const count = players.filter(p => p.realTeamId === t.id).length;
@@ -42,23 +49,23 @@ export default function TeamsViewerScreen({ navigation }: any) {
                     })}
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const s = StyleSheet.create({
     center: { flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center' },
     container: { flex: 1, backgroundColor: '#0f172a' },
-    empty: { color: '#94a3b8', fontSize: 15, textAlign: 'center' },
-    header: { flexDirection: 'row', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-    backBtn: { color: '#38bdf8', fontSize: 24, fontWeight: 'bold' },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#f8fafc' },
+    header: { paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#0f172a' },
+    headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#f8fafc' },
+    emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
+    empty: { color: '#475569', fontSize: 15, textAlign: 'center', marginTop: 20, paddingHorizontal: 40 },
     content: { padding: 16, paddingBottom: 40 },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    card: { width: '48%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 20, marginBottom: 14, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-    avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(251,191,36,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 10, borderWidth: 2, borderColor: '#fbbf24' },
-    avatarText: { color: '#fbbf24', fontSize: 24, fontWeight: 'bold' },
-    logoImg: { width: 64, height: 64, borderRadius: 32, marginBottom: 10, resizeMode: 'contain' },
-    teamName: { color: '#f8fafc', fontSize: 15, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-    teamSub: { color: '#94a3b8', fontSize: 12 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 },
+    card: { width: '48%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 25, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    avatar: { width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(251,191,36,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(251,191,36,0.2)' },
+    avatarText: { color: '#fbbf24', fontSize: 24, fontWeight: '900' },
+    logoImg: { width: 70, height: 70, borderRadius: 20, marginBottom: 12, resizeMode: 'contain', backgroundColor: 'rgba(255,255,255,0.02)' },
+    teamName: { color: '#f8fafc', fontSize: 16, fontWeight: '900', textAlign: 'center', marginBottom: 4 },
+    teamSub: { color: '#64748b', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5 },
 });

@@ -1,288 +1,141 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
+import { Trophy, ChevronRight } from 'lucide-react-native';
 
 export default function StandingsScreen() {
-    const navigation = useNavigation<any>();
-    const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
-    const leagueId = league?.id || '';
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const realTeams = useStore(state => state.realTeams).filter(t => t.leagueId === activeLeagueId);
+    const matches = useStore(state => state.matches).filter(m => m.leagueId === activeLeagueId && m.status === 'finished');
 
-    if (!league) {
-        return (
-            <View style={styles.centerContainer}>
-                <Text style={styles.emptyText}>Nessun torneo trovato. Crea o unisciti a un torneo per vedere la classifica.</Text>
-            </View>
-        );
-    }
+    const calculateStandings = () => {
+        const standings = realTeams.map(team => {
+            const teamMatches = matches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id);
 
-    const realTeams = useStore(state => state.realTeams).filter(t => t.leagueId === leagueId);
-    const matches = useStore(state => state.matches).filter(m => m.leagueId === leagueId && m.status === 'finished');
+            let pts = 0, wins = 0, draws = 0, losses = 0, gf = 0, gs = 0;
 
-    const standings = useMemo(() => {
-        const stats = new Map<string, { id: string; name: string; logo?: string; played: number; won: number; drawn: number; lost: number; goalsFor: number; goalsAgainst: number; points: number, fairplayScore: number }>();
+            teamMatches.forEach(m => {
+                const isHome = m.homeTeamId === team.id;
+                const teamScore = isHome ? m.homeScore : m.awayScore;
+                const opponentScore = isHome ? m.awayScore : m.homeScore;
 
-        realTeams.forEach(t => {
-            stats.set(t.id, {
-                id: t.id,
-                name: t.name,
-                logo: t.logo,
-                played: 0,
-                won: 0,
-                drawn: 0,
-                lost: 0,
-                goalsFor: 0,
-                goalsAgainst: 0,
-                points: 0,
-                fairplayScore: 0
+                gf += teamScore;
+                gs += opponentScore;
+
+                if (teamScore > opponentScore) { pts += 3; wins++; }
+                else if (teamScore === opponentScore) { pts += 1; draws++; }
+                else { losses++; }
             });
+
+            return {
+                id: team.id,
+                name: team.name,
+                logo: team.logo,
+                played: teamMatches.length,
+                wins, draws, losses, gf, gs,
+                gd: gf - gs,
+                pts
+            };
         });
 
-        matches.forEach(m => {
-            if (!m.homeTeamId || !m.awayTeamId) return;
-            if (m.matchType && m.matchType !== 'campionato' && m.matchType !== 'gironi') return;
-
-            const home = stats.get(m.homeTeamId);
-            const away = stats.get(m.awayTeamId);
-
-            if (!home || !away) return;
-
-            home.played += 1;
-            away.played += 1;
-            home.goalsFor += m.homeScore;
-            home.goalsAgainst += m.awayScore;
-            away.goalsFor += m.awayScore;
-            away.goalsAgainst += m.homeScore;
-
-            if (m.homeScore > m.awayScore) {
-                home.points += 3;
-                home.won += 1;
-                away.lost += 1;
-            } else if (m.homeScore < m.awayScore) {
-                away.points += 3;
-                away.won += 1;
-                home.lost += 1;
-            } else {
-                // Pareggio
-                if (league.settings.groupPenaltiesEnabled && m.homePenalties !== undefined && m.awayPenalties !== undefined && m.homePenalties !== m.awayPenalties) {
-                    const winPoints = league.settings.groupPenaltiesWinPoints ?? 2;
-                    const lossPoints = league.settings.groupPenaltiesLossPoints ?? 1;
-                    if (m.homePenalties > m.awayPenalties) {
-                        home.points += winPoints;
-                        away.points += lossPoints;
-                        home.won += 1; // You mentioned 2 points for winner, but do they count as win or draw? Usually penalty win goes to "won" or "drawn" depending on rules. We'll count drawn for both, but points are adjusted.
-                        home.drawn += 1;
-                        away.drawn += 1;
-                    } else {
-                        away.points += winPoints;
-                        home.points += lossPoints;
-                        home.drawn += 1;
-                        away.drawn += 1;
-                    }
-                } else {
-                    home.points += 1;
-                    away.points += 1;
-                    home.drawn += 1;
-                    away.drawn += 1;
-                }
-            }
-
-            m.events?.forEach(ev => {
-                if (ev.type === 'yellow_card') {
-                    if (ev.teamId === m.homeTeamId) home.fairplayScore += 1;
-                    else if (ev.teamId === m.awayTeamId) away.fairplayScore += 1;
-                } else if (ev.type === 'red_card') {
-                    if (ev.teamId === m.homeTeamId) home.fairplayScore += 2;
-                    else if (ev.teamId === m.awayTeamId) away.fairplayScore += 2;
-                }
-            });
+        return standings.sort((a, b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            if (b.gd !== a.gd) return b.gd - a.gd;
+            return b.gf - a.gf;
         });
+    };
 
-        return Array.from(stats.values()).sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
+    const standings = calculateStandings();
 
-            const order = league?.settings?.tiebreakerOrder || ['head_to_head', 'goal_difference', 'goals_for'];
-
-            for (const criteria of order) {
-                if (criteria === 'head_to_head') {
-                    let aWins = 0; let bWins = 0;
-                    matches.forEach(m => {
-                        if (m.homeTeamId === a.id && m.awayTeamId === b.id) {
-                            if (m.homeScore > m.awayScore) aWins++;
-                            else if (m.homeScore < m.awayScore) bWins++;
-                        } else if (m.homeTeamId === b.id && m.awayTeamId === a.id) {
-                            if (m.homeScore > m.awayScore) bWins++;
-                            else if (m.homeScore < m.awayScore) aWins++;
-                        }
-                    });
-                    if (aWins !== bWins) return bWins - aWins;
-                } else if (criteria === 'goal_difference') {
-                    const drA = a.goalsFor - a.goalsAgainst;
-                    const drB = b.goalsFor - b.goalsAgainst;
-                    if (drB !== drA) return drB - drA;
-                } else if (criteria === 'goals_for') {
-                    if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-                } else if (criteria === 'goals_against') {
-                    if (a.goalsAgainst !== b.goalsAgainst) return a.goalsAgainst - b.goalsAgainst; // minor goals against is better
-                } else if (criteria === 'wins') {
-                    if (b.won !== a.won) return b.won - a.won;
-                } else if (criteria === 'fairplay') {
-                    if (a.fairplayScore !== b.fairplayScore) return a.fairplayScore - b.fairplayScore;
-                }
-            }
-            return 0;
-        });
-    }, [realTeams, matches, league?.settings?.tiebreakerOrder]);
-
-    if (!league) {
-        return (
-            <View style={styles.centerContainer}>
-                <Text style={styles.emptyText}>Nessun torneo selezionato.</Text>
-            </View>
-        );
-    }
+    // Costanti per le larghezze delle colonne
+    const FIXED_COL_WIDTH = 150; // Pos + Team
+    const STAT_COL_WIDTH = 50;  // PG, Pt, V, P, S, ecc.
 
     return (
-        <ScrollView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
             <View style={styles.header}>
-                <Text style={styles.title}>Classifica Torneo Reale</Text>
-                <Text style={styles.subtitle}>Basata sui risultati ufficiali.</Text>
+                <Trophy color="#fbbf24" size={24} style={{ marginRight: 12 }} />
+                <Text style={styles.headerTitle}>Classifica</Text>
             </View>
 
-            <View style={styles.card}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View>
-                        {/* Table Header */}
-                        <View style={styles.tableHeader}>
-                            <Text style={[styles.thText, { width: 30 }]}>#</Text>
-                            <Text style={[styles.thText, { width: 160, textAlign: 'left' }]}>SQUADRA</Text>
-                            <Text style={[styles.thText, { width: 40 }]}>PT</Text>
-                            <Text style={[styles.thText, { width: 30 }]}>PG</Text>
-                            <Text style={[styles.thText, { width: 30 }]}>V</Text>
-                            <Text style={[styles.thText, { width: 30 }]}>N</Text>
-                            <Text style={[styles.thText, { width: 30 }]}>P</Text>
-                            <Text style={[styles.thText, { width: 40 }]}>GF</Text>
-                            <Text style={[styles.thText, { width: 40 }]}>GS</Text>
-                            <Text style={[styles.thText, { width: 40 }]}>DR</Text>
+            <ScrollView bounces={false} contentContainerStyle={{ paddingBottom: 40 }}>
+                <View style={styles.tableContainer}>
+                    {/* PARTE FISSA: Header e Colonne Posizione/Squadra */}
+                    <View style={[styles.fixedColumn, { width: FIXED_COL_WIDTH }]}>
+                        {/* Header Fisso */}
+                        <View style={[styles.row, styles.headerRow]}>
+                            <Text style={[styles.headerText, { width: 35, textAlign: 'center' }]}>#</Text>
+                            <Text style={[styles.headerText, { flex: 1, textAlign: 'left', marginLeft: 10 }]}>Squadra</Text>
                         </View>
-
-                        {/* Table Body */}
-                        {standings.length === 0 ? (
-                            <View style={{ padding: 20 }}>
-                                <Text style={styles.emptyText}>Nessuna squadra iscritta.</Text>
+                        {/* Righe Fisse */}
+                        {standings.map((item, index) => (
+                            <View key={item.id} style={[styles.row, index % 2 === 0 ? styles.evenRow : styles.oddRow]}>
+                                <View style={[styles.rankBadge, index < 3 && styles.rankBadgeTop]}>
+                                    <Text style={[styles.rankText, index < 3 && { color: '#000' }]}>{index + 1}</Text>
+                                </View>
+                                <View style={styles.teamInfo}>
+                                    <Image source={{ uri: item.logo }} style={styles.miniLogo} />
+                                    <Text style={styles.teamName} numberOfLines={1}>{item.name}</Text>
+                                </View>
                             </View>
-                        ) : (
-                            standings.map((team, idx) => {
-                                const dr = team.goalsFor - team.goalsAgainst;
-                                const isTop = idx === 0;
-
-                                return (
-                                    <TouchableOpacity key={team.id} style={styles.tableRow} onPress={() => navigation.navigate('TeamProfile', { teamId: team.id, leagueId })} activeOpacity={0.7}>
-                                        <Text style={[styles.tdText, { width: 30 }, isTop && styles.textGold]}>{idx + 1}</Text>
-                                        <View style={{ width: 160, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                            {team.logo ? (
-                                                <Image source={{ uri: team.logo }} style={styles.teamLogo} />
-                                            ) : (
-                                                <View style={styles.teamLogoPlaceholder}>
-                                                    <Text style={{ color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>{team.name.charAt(0)}</Text>
-                                                </View>
-                                            )}
-                                            <Text style={[styles.tdText, { flex: 1, textAlign: 'left', fontWeight: 'bold', color: '#38bdf8' }]} numberOfLines={1}>{team.name}</Text>
-                                        </View>
-                                        <Text style={[styles.tdText, { width: 40, color: '#38bdf8', fontWeight: 'bold' }]}>{team.points}</Text>
-                                        <Text style={[styles.tdText, { width: 30 }]}>{team.played}</Text>
-                                        <Text style={[styles.tdText, { width: 30 }]}>{team.won}</Text>
-                                        <Text style={[styles.tdText, { width: 30 }]}>{team.drawn}</Text>
-                                        <Text style={[styles.tdText, { width: 30 }]}>{team.lost}</Text>
-                                        <Text style={[styles.tdText, { width: 40 }]}>{team.goalsFor}</Text>
-                                        <Text style={[styles.tdText, { width: 40 }]}>{team.goalsAgainst}</Text>
-                                        <Text style={[
-                                            styles.tdText,
-                                            { width: 40 },
-                                            dr > 0 ? styles.textSuccess : (dr < 0 ? styles.textError : {})
-                                        ]}>
-                                            {dr > 0 ? `+${dr}` : dr}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })
-                        )}
+                        ))}
                     </View>
-                </ScrollView>
-            </View>
 
-        </ScrollView>
+                    {/* PARTE SCORREVOLE: Header e Colonne Statistiche */}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} bounces={false}>
+                        <View>
+                            {/* Header Scorrevole */}
+                            <View style={[styles.row, styles.headerRow]}>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>PG</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH, color: '#fbbf24' }]}>Pt</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>V</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>P</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>S</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>GF</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>GS</Text>
+                                <Text style={[styles.headerText, { width: STAT_COL_WIDTH }]}>DR</Text>
+                            </View>
+                            {/* Righe Scorrevoli */}
+                            {standings.map((item, index) => (
+                                <View key={item.id} style={[styles.row, index % 2 === 0 ? styles.evenRow : styles.oddRow]}>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH }]}>{item.played}</Text>
+                                    <Text style={[styles.ptsText, { width: STAT_COL_WIDTH }]}>{item.pts}</Text>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH }]}>{item.wins}</Text>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH }]}>{item.draws}</Text>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH }]}>{item.losses}</Text>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH }]}>{item.gf}</Text>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH }]}>{item.gs}</Text>
+                                    <Text style={[styles.statText, { width: STAT_COL_WIDTH, color: item.gd >= 0 ? '#4ade80' : '#f87171' }]}>
+                                        {item.gd > 0 ? `+${item.gd}` : item.gd}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    </ScrollView>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    centerContainer: {
-        flex: 1,
-        backgroundColor: '#0f172a',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 40,
-    },
-    emptyText: {
-        color: '#94a3b8',
-        fontSize: 16,
-        textAlign: 'center',
-        lineHeight: 24,
-    },
-    container: {
-        flex: 1,
-        backgroundColor: '#0f172a',
-        padding: 16,
-    },
-    header: {
-        marginBottom: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#38bdf8',
-        marginBottom: 4,
-    },
-    subtitle: {
-        fontSize: 14,
-        color: '#94a3b8',
-    },
-    card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        marginBottom: 40,
-    },
-    tableHeader: {
-        flexDirection: 'row',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.2)',
-    },
-    thText: {
-        color: '#94a3b8',
-        fontSize: 12,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    tableRow: {
-        flexDirection: 'row',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
-        alignItems: 'center',
-    },
-    tdText: {
-        color: '#f8fafc',
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    textGold: { color: '#fbbf24', fontWeight: 'bold' },
-    textSuccess: { color: '#22c55e' },
-    textError: { color: '#ef4444' },
-    teamLogo: { width: 22, height: 22, borderRadius: 11, resizeMode: 'contain' },
-    teamLogoPlaceholder: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(251,191,36,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#fbbf24' },
+    container: { flex: 1, backgroundColor: '#0f172a' },
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#0f172a' },
+    headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#f8fafc' },
+    tableContainer: { flexDirection: 'row', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 20 },
+    fixedColumn: { zIndex: 1, backgroundColor: '#0f172a' },
+    row: { flexDirection: 'row', height: 55, alignItems: 'center' },
+    headerRow: { backgroundColor: 'rgba(255,255,255,0.03)', height: 45, borderTopLeftRadius: 12, borderBottomLeftRadius: 12 },
+    headerText: { color: '#64748b', fontSize: 11, fontWeight: '900', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 },
+    evenRow: { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
+    oddRow: { backgroundColor: 'transparent' },
+    rankBadge: { width: 30, height: 30, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', marginLeft: 5 },
+    rankBadgeTop: { backgroundColor: '#fbbf24' },
+    rankText: { color: '#94a3b8', fontSize: 13, fontWeight: 'bold' },
+    teamInfo: { flexDirection: 'row', alignItems: 'center', flex: 1, marginLeft: 12 },
+    miniLogo: { width: 32, height: 32, borderRadius: 8, marginRight: 10, backgroundColor: 'rgba(255,255,255,0.05)' },
+    teamName: { color: '#f8fafc', fontSize: 15, fontWeight: '700', flexShrink: 1 },
+    statText: { color: '#94a3b8', fontSize: 14, textAlign: 'center', fontWeight: '500' },
+    ptsText: { color: '#fbbf24', fontSize: 17, fontWeight: '900', textAlign: 'center' },
 });

@@ -9,6 +9,7 @@ export interface FantasySlice {
     fantasyLineups: FantasyLineup[];
     updateFantasyTeam: (ft: FantasyTeam) => Promise<void>;
     updateFantasyLineup: (fl: FantasyLineup) => Promise<void>;
+    deleteFantasyLineup: (lineupId: string) => Promise<void>;
 }
 
 export const createFantasySlice: StateCreator<FantasySlice & UISlice, [], [], FantasySlice> = (set, get) => ({
@@ -57,7 +58,8 @@ export const createFantasySlice: StateCreator<FantasySlice & UISlice, [], [], Fa
                 starters: fl.starters || {},
                 bench: fl.bench || [],
                 points: fl.points || 0,
-                player_points: fl.playerPoints || {}
+                player_points: fl.playerPoints || {},
+                player_points_details: fl.playerPointsDetails || {}
             });
             if (error) throw error;
             showSuccess('Formazione salvata!');
@@ -67,4 +69,42 @@ export const createFantasySlice: StateCreator<FantasySlice & UISlice, [], [], Fa
             get().setLoading(false);
         }
     },
+
+    deleteFantasyLineup: async (lineupId: string) => {
+        get().setLoading(true);
+        try {
+            const lineup = get().fantasyLineups.find(l => l.id === lineupId);
+            if (lineup) {
+                const team = get().fantasyTeams.find(t => t.id === lineup.fantasyTeamId);
+                if (team) {
+                    const newMatchdayPoints = { ...(team.matchdayPoints || {}) };
+                    delete newMatchdayPoints[lineup.matchday];
+                    const newTotal = Object.values(newMatchdayPoints).reduce((a: number, b: any) => a + (Number(b) || 0), 0) + (team.manualPointsAdjustment || 0);
+                    
+                    // Optimistically update team locally
+                    set(state => ({
+                        fantasyTeams: state.fantasyTeams.map(t => t.id === team.id ? { ...team, totalPoints: newTotal, matchdayPoints: newMatchdayPoints } : t)
+                    }));
+                    
+                    // Update team in DB
+                    await supabase.from('fantasy_teams').update({
+                        total_points: newTotal,
+                        matchday_points: newMatchdayPoints
+                    }).eq('id', team.id);
+                }
+            }
+
+            const { error } = await supabase.from('fantasy_lineups').delete().eq('id', lineupId);
+            if (error) throw error;
+            
+            set(state => ({
+                fantasyLineups: state.fantasyLineups.filter(l => l.id !== lineupId)
+            }));
+            showSuccess('Formazione rimossa e punteggi aggiornati!');
+        } catch (err: any) {
+            handleError(err, 'Rimozione Formazione');
+        } finally {
+            get().setLoading(false);
+        }
+    }
 });

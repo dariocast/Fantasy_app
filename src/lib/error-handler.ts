@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+import { Notification } from '../store/slices/uiSlice';
 
 export interface AppError {
     message: string;
@@ -6,22 +6,32 @@ export interface AppError {
     context?: string;
 }
 
+// Global reference to the store's notification function to avoid circular dependencies
+let notificationFn: ((notification: Notification | null) => void) | null = null;
+
 /**
- * Centalized error handler for the application.
- * Logs the error to console and shows a user-friendly alert.
+ * Registers the notification function from the store.
+ * This should be called once when the store is initialized.
+ */
+export const registerNotificationFn = (fn: (notification: Notification | null) => void) => {
+    notificationFn = fn;
+};
+
+/**
+ * Centralized error handler for the application.
+ * Logs the error to console and shows a user-friendly notification.
  */
 export const handleError = (err: any, context?: string) => {
     const errorMessage = err?.message || 'Si è verificato un errore imprevisto.';
-    
+
     console.error(`[Error][${context || 'Global'}]:`, {
         message: errorMessage,
         original: err,
     });
 
-    // Provide specific user-friendly messages for common Supabase/Network errors
     let userMessage = errorMessage;
     const status = err?.status || err?.code;
-    
+
     if (status === 422 || status === '23505') {
         userMessage = 'Questo elemento (o email) è già registrato nel sistema.';
     } else if (status === 401 || status === 'PGRST301') {
@@ -36,11 +46,14 @@ export const handleError = (err: any, context?: string) => {
         userMessage = 'Sessione non valida. Effettua nuovamente l\'accesso.';
     }
 
-    Alert.alert(
-        context ? `Attenzione - ${context}` : 'Attenzione',
-        userMessage,
-        [{ text: 'OK' }]
-    );
+    // Use our custom notification system if registered
+    if (notificationFn) {
+        notificationFn({
+            type: 'error',
+            title: context ? `Attenzione - ${context}` : 'Attenzione',
+            message: userMessage,
+        });
+    }
 
     return {
         message: userMessage,
@@ -53,5 +66,11 @@ export const handleError = (err: any, context?: string) => {
  * Success notification helper
  */
 export const showSuccess = (message: string, title: string = 'Successo') => {
-    Alert.alert(title, message, [{ text: 'Ottimo' }]);
+    if (notificationFn) {
+        notificationFn({
+            type: 'success',
+            title,
+            message,
+        });
+    }
 };

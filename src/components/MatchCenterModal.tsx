@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useStore } from '../store';
 import { v4 as uuidv4 } from 'uuid';
 import type { Match, MatchEvent, Player } from '../types';
@@ -15,6 +15,7 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
     const players = useStore(s => s.players);
     const leagues = useStore(s => s.leagues);
     const league = leagues.find(l => l.id === match.leagueId);
+    const showNotification = useStore(s => s.showNotification);
 
     const [activeTab, setActiveTab] = useState<'events' | 'votes'>('events');
     const [eventTeam, setEventTeam] = useState('');
@@ -51,7 +52,14 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
     };
 
     const handleAddEvent = () => {
-        if (!eventPlayer || !eventTeam) return Alert.alert('Errore', 'Seleziona squadra e giocatore.');
+        if (!eventPlayer || !eventTeam) {
+            showNotification({
+                type: 'error',
+                title: 'Errore',
+                message: 'Seleziona squadra e giocatore.'
+            });
+            return;
+        }
         let hs = liveMatch.homeScore, as2 = liveMatch.awayScore;
         if (eventType === 'goal') {
             if (eventTeam === liveMatch.homeTeamId) hs++; else as2++;
@@ -97,7 +105,11 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
             <View style={s.container}>
-                {/* Header */}
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    {/* Header */}
                 <View style={s.header}>
                     <TouchableOpacity onPress={onClose} style={s.closeBtn}>
                         <Text style={s.closeBtnText}>✕</Text>
@@ -223,6 +235,7 @@ export default function MatchCenterModal({ match, visible, onClose }: Props) {
                         </View>
                     )}
                 </ScrollView>
+                </KeyboardAvoidingView>
             </View>
         </Modal>
     );

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Dimensions, Platform, KeyboardAvoidingView, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useStore } from '../store';
 import { v4 as uuidv4 } from 'uuid';
 import type { League, TournamentType } from '../types';
-import { Trash2, Edit3, EyeOff, Eye, ChevronRight } from 'lucide-react-native';
+import { Trash2, Edit3, EyeOff, Eye, ChevronRight, Plus, LogIn, Trophy, Users, Settings, LogOut, Shield, Info, CheckCircle2, Image as ImageIcon } from 'lucide-react-native';
 import ColorPickerModal from '../components/ColorPickerModal';
+import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -18,6 +20,7 @@ export default function LeaguesScreen({ navigation }: any) {
     const setCurrentUser = useStore(state => state.setCurrentUser);
     const setActiveLeagueId = useStore(state => state.setActiveLeagueId);
     const isLoading = useStore(state => state.isLoading);
+    const showNotification = useStore(state => state.showNotification);
 
     const [mode, setMode] = useState<'list' | 'create' | 'join' | 'manage'>('list');
     const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
@@ -26,6 +29,7 @@ export default function LeaguesScreen({ navigation }: any) {
     const [leagueName, setLeagueName] = useState('');
     const [seriesName, setSeriesName] = useState('');
     const [sportType, setSportType] = useState<'c5' | 'c7' | 'c8' | 'c11'>('c11');
+    const [leagueLogo, setLeagueLogo] = useState<string | undefined>(undefined);
 
     // ═══ Step 2: Torneo Reale ═══
     const [leagueType, setLeagueType] = useState<TournamentType>('campionato');
@@ -72,6 +76,19 @@ export default function LeaguesScreen({ navigation }: any) {
         { value: 'Finale', label: 'Finale (2)' },
     ];
 
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+        });
+
+        if (!result.canceled) {
+            setLeagueLogo(result.assets[0].uri);
+        }
+    };
+
     const syncAllData = useStore(state => state.syncAllData);
 
     useEffect(() => {
@@ -103,7 +120,11 @@ export default function LeaguesScreen({ navigation }: any) {
 
     const handleCreateLeague = () => {
         if (!leagueName) {
-            Alert.alert('Errore', 'Inserisci il nome del torneo');
+            showNotification({
+                type: 'error',
+                title: 'Errore',
+                message: 'Inserisci il nome del torneo'
+            });
             return;
         }
 
@@ -134,6 +155,7 @@ export default function LeaguesScreen({ navigation }: any) {
             id: uuidv4(),
             name: leagueName,
             type: leagueType,
+            logo: leagueLogo,
             seriesId: seriesName ? seriesName.toLowerCase().replace(/\s+/g, '-') : undefined,
             seriesName: seriesName || undefined,
             roles: { [currentUser.id]: 'admin' },
@@ -204,11 +226,19 @@ export default function LeaguesScreen({ navigation }: any) {
         const trJoinCode = joinCode?.trim().toUpperCase();
         const leagueToJoin = leagues.find(l => l.joinCode?.toUpperCase() === trJoinCode);
         if (!leagueToJoin) {
-            Alert.alert('Errore', 'Codice lega non valido');
+            showNotification({
+                type: 'error',
+                title: 'Errore',
+                message: 'Codice lega non valido'
+            });
             return;
         }
         if (leagueToJoin.roles[currentUser.id]) {
-            Alert.alert('Errore', 'Fai già parte di questa lega');
+            showNotification({
+                type: 'error',
+                title: 'Errore',
+                message: 'Fai già parte di questa lega'
+            });
             return;
         }
         joinLeagueStore(leagueToJoin.id, currentUser.id).then(() => {
@@ -248,19 +278,20 @@ export default function LeaguesScreen({ navigation }: any) {
             );
         } else {
             // For Android, we could use a modal, but for now we'll just indicate how to edit
-            Alert.alert(
-                'Modifica Torneo',
-                `Il nome attuale è: ${league.name}\n\nPer modificare il nome e le altre impostazioni, entra nel torneo e vai in "Impostazioni Torneo".`,
-                [{ text: 'Ho capito', style: 'default' }]
-            );
+            showNotification({
+                type: 'info',
+                title: 'Modifica Torneo',
+                message: `Il nome attuale è: ${league.name}\n\nPer modificare il nome e le altre impostazioni, entra nel torneo e vai in "Impostazioni Torneo".`
+            });
         }
     };
 
     const handleDeleteLeague = (league: League) => {
-        Alert.alert(
-            'Elimina Torneo',
-            `Eliminare "${league.name}" e TUTTI i dati associati?`,
-            [
+        showNotification({
+            type: 'confirm',
+            title: 'Elimina Torneo',
+            message: `Eliminare "${league.name}" e TUTTI i dati associati?`,
+            actions: [
                 { text: 'Annulla', style: 'cancel' },
                 {
                     text: 'Elimina', style: 'destructive', onPress: () => {
@@ -268,23 +299,16 @@ export default function LeaguesScreen({ navigation }: any) {
                     }
                 }
             ]
-        );
+        });
     };
 
-    // ─── SPORT TYPE DATA ────
-    const sportTypes = [
-        { id: 'c5' as const, emoji: '🤾', label: 'Calcio a 5' },
-        { id: 'c7' as const, emoji: '⚽', label: 'Calcio a 7' },
-        { id: 'c8' as const, emoji: '⚽', label: 'Calcio a 8' },
-        { id: 'c11' as const, emoji: '🏟️', label: 'Calcio a 11' },
-    ];
+    // ─── SPORT TYPE DATA ──── (Removed)
 
-    // ─── TOURNAMENT TYPE DATA ────
     const tournamentTypes = [
-        { id: 'campionato' as TournamentType, emoji: '📋', label: 'Campionato', desc: 'Un unico girone all\'italiana.' },
-        { id: 'gironi' as TournamentType, emoji: '🔄', label: 'Solo Gironi', desc: 'Più gironi separati.' },
-        { id: 'gironi_eliminazione' as TournamentType, emoji: '🏆', label: 'Gironi + Eliminaz.', desc: 'Come la Champions!' },
-        { id: 'eliminazione' as TournamentType, emoji: '🎯', label: 'Solo Eliminaz.', desc: 'Chi perde va a casa!' },
+        { id: 'campionato' as TournamentType, label: 'Campionato', desc: 'Un unico girone all\'italiana.' },
+        { id: 'gironi' as TournamentType, label: 'Gironi', desc: 'Più gironi separati.' },
+        { id: 'gironi_eliminazione' as TournamentType, label: 'Gironi ed Eliminazione Diretta', desc: 'Come la Champions!' },
+        { id: 'eliminazione' as TournamentType, label: 'Eliminazione Diretta', desc: 'Chi perde va a casa!' },
     ];
 
     // ═══════════════════════════════════════════════
@@ -292,66 +316,82 @@ export default function LeaguesScreen({ navigation }: any) {
     // ═══════════════════════════════════════════════
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>FantaTorneo</Text>
-                <View style={styles.headerRight}>
-                    <Text style={styles.userName}>Ciao, {currentUser.firstName}</Text>
-                    <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-                        <Text style={styles.logoutText}>Esci</Text>
-                    </TouchableOpacity>
+                <View>
+                    <Text style={styles.headerSubtitle}>Benvenuto,</Text>
+                    <Text style={styles.headerTitle}>{currentUser.firstName}</Text>
                 </View>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+                    <LogOut size={20} color="#ef4444" />
+                </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.content} 
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
 
                 {/* ═══════ LIST MODE ═══════ */}
                 {mode === 'list' && (
                     <View>
-                        <Text style={styles.sectionTitle}>I tuoi Tornei</Text>
+                        <View style={styles.sectionHeader}>
+                            <Trophy size={20} color="#fbbf24" style={{ marginRight: 10 }} />
+                            <Text style={styles.sectionTitle}>I tuoi Tornei</Text>
+                        </View>
 
                         {visibleLeagues.length === 0 ? (
                             <View style={styles.emptyState}>
+                                <Info size={40} color="rgba(255,255,255,0.05)" />
                                 <Text style={styles.emptyText}>Non hai nessun torneo visibile al momento.</Text>
                             </View>
                         ) : (
                             visibleLeagues.map(league => (
-                                <TouchableOpacity key={league.id} style={styles.leagueCard} onPress={() => openLeague(league.id)} activeOpacity={0.7}>
+                                <TouchableOpacity key={league.id} style={styles.leagueCard} onPress={() => openLeague(league.id)} activeOpacity={0.8}>
                                     <View style={styles.cardTopRow}>
-                                        <View style={{ flex: 1 }}>
+                                        <View style={styles.leagueIconBox}>
+                                            {league.logo ? (
+                                                <Image source={{ uri: league.logo }} style={{ width: 48, height: 48, borderRadius: 15 }} />
+                                            ) : (
+                                                <Shield size={24} color="#38bdf8" />
+                                            )}
+                                        </View>
+                                        <View style={{ flex: 1, marginLeft: 15 }}>
                                             <Text style={styles.leagueName}>{league.name}</Text>
-                                            {league.seriesName && <Text style={styles.seriesBadge}>Serie: {league.seriesName}</Text>}
+                                            <View style={styles.leagueMeta}>
+                                                <Text style={styles.leagueRoleBadge}>
+                                                    {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : 'Membro'}
+                                                </Text>
+                                                {league.seriesName && <Text style={styles.seriesNameText}>· {league.seriesName}</Text>}
+                                            </View>
                                         </View>
-                                        <View style={styles.cardActions}>
-                                            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); handleEditLeague(league); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ marginRight: 12 }}>
-                                                <Edit3 size={16} color="#fbbf24" />
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); handleDeleteLeague(league); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                                                <Trash2 size={16} color="#ef4444" />
-                                            </TouchableOpacity>
-                                        </View>
+                                        <ChevronRight size={20} color="#475569" />
                                     </View>
-                                    <Text style={styles.leagueRole}>
-                                        Ruolo: {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : league.roles[currentUser.id] === 'organizer' ? 'Organizzatore' : 'Utente'}
-                                    </Text>
-                                    <Text style={styles.leagueType}>Tipo: {league.type}</Text>
                                 </TouchableOpacity>
                             ))
                         )}
 
                         <View style={styles.actionsBox}>
-                            <TouchableOpacity 
-                                style={[styles.primaryBtn, isLoading && { opacity: 0.6 }]} 
+                            <TouchableOpacity
+                                style={styles.primaryBtn}
                                 onPress={() => { setMode('create'); setCreateStep(1); }}
-                                disabled={isLoading}
+                                activeOpacity={0.8}
                             >
+                                <Plus size={20} color="#fff" style={{ marginRight: 10 }} />
                                 <Text style={styles.primaryBtnText}>Crea Nuovo Torneo</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('join')}>
+                            <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('join')} activeOpacity={0.8}>
+                                <LogIn size={20} color="#38bdf8" style={{ marginRight: 10 }} />
                                 <Text style={styles.secondaryBtnText}>Unisciti a un Torneo</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.secondaryBtn, { borderColor: '#94a3b8' }]} onPress={() => setMode('manage')}>
-                                <Text style={[styles.secondaryBtnText, { color: '#f8fafc' }]}>Gestisci i miei tornei</Text>
+                            <TouchableOpacity style={styles.manageBtn} onPress={() => setMode('manage')} activeOpacity={0.8}>
+                                <Settings size={20} color="#64748b" style={{ marginRight: 10 }} />
+                                <Text style={styles.manageBtnText}>Gestisci Tornei</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -361,12 +401,13 @@ export default function LeaguesScreen({ navigation }: any) {
                 {mode === 'manage' && (
                     <View style={styles.formCard}>
                         <View style={styles.formHeaderRow}>
-                            <Text style={styles.sectionTitle}>Gestisci Tornei</Text>
-                            <TouchableOpacity onPress={() => setMode('list')}>
-                                <Text style={{ color: '#38bdf8', fontSize: 14 }}>← Indietro</Text>
+                            <Text style={styles.wizardTitle}>Gestisci Tornei</Text>
+                            <TouchableOpacity onPress={() => setMode('list')} style={styles.backLink}>
+                                <ChevronRight size={16} color="#38bdf8" style={{ transform: [{ rotate: '180deg' }] }} />
+                                <Text style={styles.backLinkText}>Indietro</Text>
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.helpText}>Nascondi i tornei che non vuoi più vedere.</Text>
+                        <Text style={styles.helpText}>Personalizza la visibilità dei tuoi tornei.</Text>
 
                         {userLeagues.map(league => {
                             const isHidden = hiddenLeagueIds.includes(league.id);
@@ -374,19 +415,24 @@ export default function LeaguesScreen({ navigation }: any) {
                                 <View key={league.id} style={styles.manageRow}>
                                     <View style={{ flex: 1 }}>
                                         <Text style={styles.manageName}>{league.name}</Text>
-                                        <Text style={styles.manageRole}>
+                                        <Text style={styles.manageRoleLabel}>
                                             {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : 'Utente'}
                                         </Text>
                                     </View>
-                                    <TouchableOpacity
-                                        style={[styles.manageBtnToggle, isHidden && styles.manageBtnShow]}
-                                        onPress={() => toggleHideLeague(league.id)}
-                                    >
-                                        {isHidden ? <Eye size={14} color="#22c55e" /> : <EyeOff size={14} color="#ef4444" />}
-                                        <Text style={{ color: isHidden ? '#22c55e' : '#ef4444', fontSize: 12, fontWeight: 'bold', marginLeft: 4 }}>
-                                            {isHidden ? 'Mostra' : 'Nascondi'}
-                                        </Text>
-                                    </TouchableOpacity>
+                                    <View style={styles.manageActions}>
+                                        <TouchableOpacity onPress={() => handleEditLeague(league)} style={styles.miniActionBtn}>
+                                            <Edit3 size={16} color="#fbbf24" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => handleDeleteLeague(league)} style={styles.miniActionBtn}>
+                                            <Trash2 size={16} color="#ef4444" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.manageBtnToggle, isHidden && styles.manageBtnShow]}
+                                            onPress={() => toggleHideLeague(league.id)}
+                                        >
+                                            {isHidden ? <Eye size={16} color="#22c55e" /> : <EyeOff size={16} color="#ef4444" />}
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             );
                         })}
@@ -399,10 +445,10 @@ export default function LeaguesScreen({ navigation }: any) {
                         {/* Header + Step Indicator */}
                         <View style={styles.formHeaderRow}>
                             <Text style={styles.wizardTitle}>
-                                {createStep === 1 ? '⚽ Info Torneo' : createStep === 2 ? '🏆 Formula di Gioco' : '🎮 Fantacalcio'}
+                                {createStep === 1 ? 'Configurazione' : createStep === 2 ? 'Formula' : 'Fantacalcio'}
                             </Text>
                             <View style={styles.stepBadge}>
-                                <Text style={styles.stepBadgeText}>{createStep}/3</Text>
+                                <Text style={styles.stepBadgeText}>{createStep} di 3</Text>
                             </View>
                         </View>
 
@@ -425,8 +471,27 @@ export default function LeaguesScreen({ navigation }: any) {
                                     onChangeText={setLeagueName}
                                 />
 
+                                <Text style={styles.label}>Logo del Torneo</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 25, gap: 15 }}>
+                                    <TouchableOpacity 
+                                        style={[styles.secondaryBtn, { flex: 1, paddingVertical: 12, borderRadius: 15 }]} 
+                                        onPress={pickImage}
+                                    >
+                                        <ImageIcon size={18} color="#38bdf8" style={{ marginRight: 10 }} />
+                                        <Text style={[styles.secondaryBtnText, { fontSize: 14 }]}>
+                                            {leagueLogo ? 'Cambia Logo' : 'Carica Logo'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    {leagueLogo && (
+                                        <Image 
+                                            source={{ uri: leagueLogo }} 
+                                            style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)' }} 
+                                        />
+                                    )}
+                                </View>
+
                                 <View style={styles.dashedBox}>
-                                    <Text style={styles.label}>🔗 Nome Serie <Text style={styles.optionalTag}>(opzionale)</Text></Text>
+                                    <Text style={styles.label}>Nome Serie <Text style={styles.optionalTag}>(opzionale)</Text></Text>
                                     <TextInput
                                         style={styles.input}
                                         placeholder="Es. Champions degli Amici"
@@ -439,20 +504,6 @@ export default function LeaguesScreen({ navigation }: any) {
                                     </Text>
                                 </View>
 
-                                <Text style={[styles.label, { marginTop: 20 }]}>Sport / Formato</Text>
-                                <View style={styles.sportGrid}>
-                                    {sportTypes.map(st => (
-                                        <TouchableOpacity
-                                            key={st.id}
-                                            style={[styles.sportCard, sportType === st.id && styles.sportCardActive]}
-                                            onPress={() => setSportType(st.id)}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Text style={styles.sportEmoji}>{st.emoji}</Text>
-                                            <Text style={[styles.sportLabel, sportType === st.id && { fontWeight: 'bold', color: '#f8fafc' }]}>{st.label}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
 
                                 <View style={styles.btnRow}>
                                     <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={() => { setMode('list'); setCreateStep(1); }}>
@@ -478,7 +529,6 @@ export default function LeaguesScreen({ navigation }: any) {
                                             onPress={() => setLeagueType(type.id)}
                                             activeOpacity={0.7}
                                         >
-                                            <Text style={styles.typeEmoji}>{type.emoji}</Text>
                                             <Text style={[styles.typeLabel, leagueType === type.id && { color: '#fbbf24' }]}>{type.label}</Text>
                                             <Text style={styles.typeDesc}>{type.desc}</Text>
                                         </TouchableOpacity>
@@ -488,7 +538,7 @@ export default function LeaguesScreen({ navigation }: any) {
                                 {/* Gruppi config */}
                                 {(leagueType === 'gironi' || leagueType === 'gironi_eliminazione') && (
                                     <View style={styles.configBox}>
-                                        <Text style={styles.configTitle}>🔄 Impostazioni Gironi</Text>
+                                        <Text style={styles.configTitle}>Impostazioni Gironi</Text>
                                         <View style={styles.configRow}>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.configLabel}>Numero di Gironi</Text>
@@ -549,7 +599,7 @@ export default function LeaguesScreen({ navigation }: any) {
                                 {/* Eliminazione config */}
                                 {(leagueType === 'gironi_eliminazione' || leagueType === 'eliminazione') && (
                                     <View style={[styles.configBox, { borderColor: '#fbbf24', borderLeftWidth: 3 }]}>
-                                        <Text style={[styles.configTitle, { color: '#fbbf24' }]}>🎯 Eliminazione Diretta</Text>
+                                        <Text style={[styles.configTitle, { color: '#fbbf24' }]}>Eliminazione Diretta</Text>
                                         <Text style={styles.hintText}>Le partite le creerai dalla sezione "Calendario Partite" selezionando il tipo "Playoff".</Text>
                                         <View style={styles.configRow}>
                                             <View style={{ flex: 1 }}>
@@ -587,14 +637,14 @@ export default function LeaguesScreen({ navigation }: any) {
                                 <View style={styles.configBox}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={styles.configTitle}>🛡️ Playout</Text>
+                                            <Text style={styles.configTitle}>Playoff/Playout</Text>
                                             <Text style={styles.hintText}>Mini-torneo tra le ultime classificate.</Text>
                                         </View>
                                         <Switch value={playoutEnabled} onValueChange={setPlayoutEnabled} trackColor={{ false: "#1e293b", true: "#0ea5e9" }} />
                                     </View>
                                     {playoutEnabled && (
                                         <View style={{ marginTop: 10 }}>
-                                            <Text style={styles.configLabel}>Squadre nel Playout</Text>
+                                            <Text style={styles.configLabel}>Squadre nel Playoff/Playout</Text>
                                             <TextInput style={[styles.configInput, { width: 80 }]} keyboardType="numeric" value={playoutTeamsCount} onChangeText={setPlayoutTeamsCount} />
                                         </View>
                                     )}
@@ -618,7 +668,7 @@ export default function LeaguesScreen({ navigation }: any) {
                                 <View style={styles.fantasyToggleBox}>
                                     <Switch value={hasFantasy} onValueChange={setHasFantasy} trackColor={{ false: "#1e293b", true: "#0ea5e9" }} />
                                     <View style={{ marginLeft: 12, flex: 1 }}>
-                                        <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16 }}>🎮 Modalità Fantacalcio</Text>
+                                        <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16 }}>Modalità Fantacalcio</Text>
                                         <Text style={styles.hintText}>
                                             {hasFantasy ? 'Attiva — I partecipanti potranno creare le loro squadre fantasy.' : 'Disattivata — Solo torneo reale.'}
                                         </Text>
@@ -627,7 +677,7 @@ export default function LeaguesScreen({ navigation }: any) {
 
                                 {hasFantasy && (
                                     <View style={styles.fantasyRulesBox}>
-                                        <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16, marginBottom: 16 }}>💰 Regole Fantasy</Text>
+                                        <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16, marginBottom: 16 }}>Regole Fantasy</Text>
 
                                         <View style={styles.rulesGrid}>
                                             <View style={styles.ruleItem}>
@@ -650,20 +700,20 @@ export default function LeaguesScreen({ navigation }: any) {
                                                 <Text style={styles.ruleLabel}>Sost. Max</Text>
                                                 <TextInput style={styles.ruleInput} keyboardType="numeric" value={maxSubstitutions} onChangeText={setMaxSubstitutions} />
                                             </View>
-                                            <View style={styles.ruleItem}>
+                                            <View style={[styles.ruleItem, { minWidth: '100%', marginTop: 10 }]}>
                                                 <Text style={styles.ruleLabel}>Tipo Rosa</Text>
-                                                <View style={{ flexDirection: 'row', gap: 4 }}>
+                                                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                                                     <TouchableOpacity
-                                                        style={[styles.miniToggle, rosterType === 'fixed' && styles.miniToggleActive]}
+                                                        style={[styles.miniToggle, rosterType === 'fixed' && styles.miniToggleActive, { flex: 1 }]}
                                                         onPress={() => setRosterType('fixed')}
                                                     >
-                                                        <Text style={[styles.miniToggleText, rosterType === 'fixed' && { color: '#0ea5e9' }]}>Fissa</Text>
+                                                        <Text style={[styles.miniToggleText, rosterType === 'fixed' && { color: '#0ea5e9' }, { fontSize: 12 }]}>Fissa</Text>
                                                     </TouchableOpacity>
                                                     <TouchableOpacity
-                                                        style={[styles.miniToggle, rosterType === 'variable' && styles.miniToggleActive]}
+                                                        style={[styles.miniToggle, rosterType === 'variable' && styles.miniToggleActive, { flex: 1 }]}
                                                         onPress={() => setRosterType('variable')}
                                                     >
-                                                        <Text style={[styles.miniToggleText, rosterType === 'variable' && { color: '#0ea5e9' }]}>Variab.</Text>
+                                                        <Text style={[styles.miniToggleText, rosterType === 'variable' && { color: '#0ea5e9' }, { fontSize: 12 }]}>Variabile</Text>
                                                     </TouchableOpacity>
                                                 </View>
                                             </View>
@@ -672,7 +722,7 @@ export default function LeaguesScreen({ navigation }: any) {
                                         {/* Custom Roles */}
                                         <View style={styles.customRolesSection}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <Text style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 14 }}>🎨 Categorie Personalizzate</Text>
+                                                <Text style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 14 }}>Categorie Personalizzate</Text>
                                                 <Switch value={useCustomRoles} onValueChange={setUseCustomRoles} trackColor={{ false: "#1e293b", true: "#fbbf24" }} />
                                             </View>
 
@@ -720,10 +770,11 @@ export default function LeaguesScreen({ navigation }: any) {
 
                                 <View style={styles.btnRow}>
                                     <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={handlePrevStep}>
-                                        <Text style={styles.secondaryBtnText}>← Indietro</Text>
+                                        <Text style={styles.secondaryBtnText}>Indietro</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.createBtn, styles.btnFlex]} onPress={handleCreateLeague}>
-                                        <Text style={styles.createBtnText}>🚀 Crea Torneo</Text>
+                                    <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex]} onPress={handleCreateLeague}>
+                                        <CheckCircle2 size={20} color="#fff" style={{ marginRight: 10 }} />
+                                        <Text style={styles.primaryBtnText}>Crea</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -734,29 +785,36 @@ export default function LeaguesScreen({ navigation }: any) {
                 {/* ═══════ JOIN MODE ═══════ */}
                 {mode === 'join' && (
                     <View style={styles.formCard}>
-                        <Text style={styles.sectionTitle}>Unisciti a un Torneo</Text>
-                        <Text style={styles.label}>Codice Invito (6 caratteri)</Text>
-                        <TextInput
-                            style={[styles.input, { textAlign: 'center', fontSize: 24, letterSpacing: 4, textTransform: 'uppercase' }]}
-                            placeholder="ABCDEF"
-                            placeholderTextColor="#64748b"
-                            value={joinCode}
-                            onChangeText={setJoinCode}
-                            maxLength={6}
-                            autoCapitalize="characters"
-                        />
-
-                        <View style={styles.btnRow}>
-                            <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={() => setMode('list')}>
-                                <Text style={styles.secondaryBtnText}>Annulla</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex]} onPress={handleJoinLeague}>
-                                <Text style={styles.primaryBtnText}>Partecipa</Text>
+                        <View style={styles.formHeaderRow}>
+                            <Text style={styles.wizardTitle}>Unisciti</Text>
+                            <TouchableOpacity onPress={() => setMode('list')} style={styles.backLink}>
+                                <ChevronRight size={16} color="#38bdf8" style={{ transform: [{ rotate: '180deg' }] }} />
+                                <Text style={styles.backLinkText}>Indietro</Text>
                             </TouchableOpacity>
                         </View>
+                        
+                        <View style={styles.joinInputBox}>
+                            <Text style={styles.label}>Codice Invito</Text>
+                            <TextInput
+                                style={styles.joinInput}
+                                placeholder="ABCDEF"
+                                placeholderTextColor="rgba(255,255,255,0.1)"
+                                value={joinCode}
+                                onChangeText={setJoinCode}
+                                maxLength={6}
+                                autoCapitalize="characters"
+                            />
+                            <Text style={styles.hintText}>Inserisci il codice di 6 caratteri ricevuto dall'amministratore.</Text>
+                        </View>
+
+                        <TouchableOpacity style={styles.primaryBtn} onPress={handleJoinLeague}>
+                            <LogIn size={20} color="#fff" style={{ marginRight: 10 }} />
+                            <Text style={styles.primaryBtnText}>Partecipa al Torneo</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Color Picker Modal for Custom Roles */}
             <ColorPickerModal
@@ -769,105 +827,94 @@ export default function LeaguesScreen({ navigation }: any) {
                 }}
                 onClose={() => { setRoleColorPickerVisible(false); setRoleColorPickerIdx(-1); }}
             />
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#0f172a' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#38bdf8' },
-    headerRight: { flexDirection: 'row', alignItems: 'center' },
-    userName: { color: '#f8fafc', marginRight: 10 },
-    logoutBtn: { backgroundColor: 'rgba(239, 68, 68, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-    logoutText: { color: '#ef4444', fontWeight: 'bold' },
-    content: { padding: 20, paddingBottom: 40 },
-    sectionTitle: { fontSize: 24, fontWeight: 'bold', color: '#f8fafc', marginBottom: 20 },
-    emptyState: { padding: 40, alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, marginBottom: 20 },
-    emptyText: { color: '#94a3b8' },
-
-    // ─── League Cards ────
-    leagueCard: { backgroundColor: '#1e293b', padding: 16, borderRadius: 12, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#38bdf8' },
-    cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    cardActions: { flexDirection: 'row', gap: 8 },
-    leagueName: { fontSize: 18, fontWeight: 'bold', color: '#f8fafc', marginBottom: 4 },
-    seriesBadge: { color: '#fbbf24', fontSize: 12, marginBottom: 4 },
-    leagueRole: { color: '#94a3b8', fontSize: 14 },
-    leagueType: { color: '#94a3b8', fontSize: 14 },
-
-    // ─── Buttons ────
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 25 },
+    headerSubtitle: { color: '#64748b', fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
+    headerTitle: { fontSize: 32, fontWeight: '900', color: '#f8fafc', letterSpacing: -1 },
+    logoutBtn: { width: 45, height: 45, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.1)' },
+    content: { padding: 16, paddingBottom: 60 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, marginLeft: 4 },
+    sectionTitle: { fontSize: 20, fontWeight: '900', color: '#f8fafc', letterSpacing: -0.5 },
+    emptyState: { padding: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 30, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    emptyText: { color: '#64748b', fontSize: 14, textAlign: 'center', marginTop: 15, paddingHorizontal: 20 },
+    leagueCard: { backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: 20, borderRadius: 25, marginBottom: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    cardTopRow: { flexDirection: 'row', alignItems: 'center' },
+    leagueIconBox: { width: 48, height: 48, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.05)', alignItems: 'center', justifyContent: 'center' },
+    leagueName: { fontSize: 18, fontWeight: '900', color: '#f8fafc', marginBottom: 4 },
+    leagueMeta: { flexDirection: 'row', alignItems: 'center' },
+    leagueRoleBadge: { color: '#38bdf8', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+    seriesNameText: { color: '#64748b', fontSize: 11, fontWeight: 'bold', marginLeft: 6 },
     actionsBox: { marginTop: 20, gap: 12 },
-    primaryBtn: { backgroundColor: '#0ea5e9', padding: 16, borderRadius: 12, alignItems: 'center' },
-    primaryBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-    secondaryBtn: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#38bdf8', padding: 16, borderRadius: 12, alignItems: 'center' },
-    secondaryBtnText: { color: '#38bdf8', fontWeight: 'bold', fontSize: 16 },
-    createBtn: { padding: 16, borderRadius: 12, alignItems: 'center', backgroundColor: '#fbbf24' },
-    createBtnText: { color: '#0f172a', fontWeight: 'bold', fontSize: 16 },
-    btnRow: { flexDirection: 'row', marginTop: 24, gap: 10 },
+    primaryBtn: { backgroundColor: '#38bdf8', padding: 18, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+    primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    secondaryBtn: { backgroundColor: 'rgba(56, 189, 248, 0.05)', padding: 18, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' },
+    secondaryBtnText: { color: '#38bdf8', fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    manageBtn: { backgroundColor: 'rgba(255, 255, 255, 0.02)', padding: 18, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' },
+    manageBtnText: { color: '#64748b', fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    formCard: { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 30, padding: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    formHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
+    wizardTitle: { fontSize: 24, fontWeight: '900', color: '#f8fafc', letterSpacing: -0.5 },
+    stepBadge: { backgroundColor: 'rgba(56, 189, 248, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+    stepBadgeText: { color: '#38bdf8', fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
+    backLink: { flexDirection: 'row', alignItems: 'center' },
+    backLinkText: { color: '#38bdf8', fontSize: 14, fontWeight: 'bold', marginLeft: 4 },
+    helpText: { color: '#94a3b8', fontSize: 14, marginBottom: 25, fontWeight: '500' },
+    manageRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: 15, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)' },
+    manageName: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold', marginBottom: 2 },
+    manageRoleLabel: { color: '#64748b', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase' },
+    manageActions: { flexDirection: 'row', gap: 10 },
+    miniActionBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' },
+    manageBtnToggle: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' },
+    manageBtnShow: { backgroundColor: 'rgba(34, 197, 94, 0.1)' },
+    label: { color: '#f8fafc', fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginLeft: 4 },
+    input: { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 15, padding: 15, color: '#f8fafc', fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 20 },
+    dashedBox: { padding: 20, borderRadius: 20, backgroundColor: 'rgba(56, 189, 248, 0.02)', borderStyle: 'dashed', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)', marginBottom: 20 },
+    optionalTag: { color: '#64748b', fontSize: 10, fontWeight: 'normal' },
+    hintText: { color: '#94a3b8', fontSize: 12, lineHeight: 18, marginTop: 4 },
+    progressBar: { flexDirection: 'row', gap: 6, marginBottom: 30 },
+    progressSegment: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.05)' },
+    progressSegmentActive: { backgroundColor: '#38bdf8' },
+    sportGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 30 },
+    sportCard: { flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 20, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    sportCardActive: { borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.05)' },
+    sportEmoji: { fontSize: 24, marginBottom: 8 },
+    sportLabel: { color: '#94a3b8', fontSize: 13, fontWeight: 'bold' },
+    btnRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
     btnFlex: { flex: 1 },
-
-    // ─── Form ────
-    formCard: { backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-    formHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    label: { color: '#f8fafc', fontWeight: 'bold', marginBottom: 8, marginTop: 16, fontSize: 15 },
-    optionalTag: { color: '#64748b', fontWeight: 'normal', fontSize: 13 },
-    helpText: { color: '#94a3b8', fontSize: 13, marginBottom: 12, lineHeight: 18 },
-    hintText: { color: '#64748b', fontSize: 12, marginTop: 6, lineHeight: 16 },
-    input: { backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 14, fontSize: 16, marginBottom: 8 },
-
-    // ─── Wizard ────
-    wizardTitle: { color: '#38bdf8', fontSize: 18, fontWeight: 'bold' },
-    stepBadge: { backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-    stepBadgeText: { color: '#94a3b8', fontSize: 13 },
-    progressBar: { flexDirection: 'row', gap: 4, marginBottom: 20 },
-    progressSegment: { height: 4, flex: 1, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.1)' },
-    progressSegmentActive: { backgroundColor: '#fbbf24' },
-
-    // ─── Step 1 ────
-    dashedBox: { backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.15)', marginTop: 16 },
-    sportGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    sportCard: { width: (SCREEN_WIDTH - 72) / 4, paddingVertical: 12, alignItems: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 },
-    sportCardActive: { borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.1)' },
-    sportEmoji: { fontSize: 24, marginBottom: 4 },
-    sportLabel: { fontSize: 10, color: '#94a3b8', textAlign: 'center' },
-
-    // ─── Step 2 ────
-    typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-    typeCard: { width: (SCREEN_WIDTH - 68) / 2, padding: 14, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 },
-    typeCardActive: { borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.06)' },
-    typeEmoji: { fontSize: 24, marginBottom: 6 },
-    typeLabel: { fontWeight: 'bold', color: '#f8fafc', marginBottom: 4, fontSize: 13 },
-    typeDesc: { fontSize: 11, color: '#64748b', lineHeight: 15 },
-    configBox: { backgroundColor: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', marginBottom: 12 },
-    configTitle: { fontWeight: 'bold', color: '#f8fafc', fontSize: 14, marginBottom: 8 },
-    configLabel: { color: '#94a3b8', fontSize: 12, marginBottom: 4 },
-    configInput: { backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, fontSize: 14 },
-    configRow: { flexDirection: 'row', marginTop: 8 },
-    stageOption: { padding: 8, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', marginBottom: 4 },
-    stageOptionActive: { borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.08)' },
-    stageOptionText: { color: '#94a3b8', fontSize: 12 },
-
-    // ─── Step 3 ────
-    fantasyToggleBox: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, marginBottom: 16 },
-    fantasyRulesBox: { padding: 16, backgroundColor: 'rgba(15, 23, 42, 0.6)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 30 },
+    typeCard: { flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 15, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    typeCardActive: { borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.05)' },
+    typeEmoji: { fontSize: 24, marginBottom: 10 },
+    typeLabel: { color: '#f8fafc', fontSize: 14, fontWeight: '900', marginBottom: 4 },
+    typeDesc: { color: '#94a3b8', fontSize: 13, lineHeight: 18 },
+    configBox: { backgroundColor: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 25, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    configTitle: { color: '#f8fafc', fontSize: 15, fontWeight: '900', marginBottom: 15 },
+    configRow: { flexDirection: 'row', gap: 12, marginBottom: 15 },
+    configLabel: { color: '#64748b', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 },
+    configInput: { flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, color: '#f8fafc', fontSize: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 2, borderColor: '#475569', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+    checkboxActive: { backgroundColor: '#38bdf8', borderColor: '#38bdf8' },
+    checkmark: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+    stageOption: { padding: 12, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.02)', marginBottom: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)' },
+    stageOptionActive: { borderColor: 'rgba(251, 191, 36, 0.2)', backgroundColor: 'rgba(251, 191, 36, 0.05)' },
+    stageOptionText: { color: '#94a3b8', fontSize: 13, fontWeight: 'bold' },
+    fantasyToggleBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(14, 165, 233, 0.05)', padding: 20, borderRadius: 25, marginBottom: 25, borderWidth: 1, borderColor: 'rgba(14, 165, 233, 0.1)' },
+    fantasyRulesBox: { gap: 20 },
     rulesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    ruleItem: { width: (SCREEN_WIDTH - 100) / 3, marginBottom: 12 },
-    ruleLabel: { color: '#94a3b8', fontSize: 11, marginBottom: 4, fontWeight: '600' },
-    ruleInput: { backgroundColor: 'rgba(15, 23, 42, 0.8)', color: '#f8fafc', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, fontSize: 14, textAlign: 'center' },
-    miniToggle: { paddingVertical: 6, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-    miniToggleActive: { borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.1)' },
-    miniToggleText: { color: '#94a3b8', fontSize: 11, fontWeight: 'bold' },
-    customRolesSection: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
-    customRoleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, backgroundColor: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 8 },
-    roleColorDot: { width: 16, height: 16, borderRadius: 8 },
-
-    // ─── Manage ────
-    manageRow: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 8 },
-    manageName: { color: '#f8fafc', fontWeight: 'bold', fontSize: 14 },
-    manageRole: { color: '#94a3b8', fontSize: 12 },
-    manageBtnToggle: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#ef4444' },
-    manageBtnShow: { borderColor: '#22c55e' },
-    checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: '#64748b', marginRight: 10, justifyContent: 'center', alignItems: 'center' },
-    checkboxActive: { backgroundColor: '#fbbf24', borderColor: '#fbbf24' },
-    checkmark: { color: 'white', fontSize: 14, fontWeight: 'bold' },
+    ruleItem: { flex: 1, minWidth: '30%', backgroundColor: 'rgba(255,255,255,0.02)', padding: 15, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)' },
+    ruleLabel: { color: '#64748b', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 },
+    ruleInput: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold', padding: 0 },
+    miniToggle: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)' },
+    miniToggleActive: { backgroundColor: 'rgba(14, 165, 233, 0.1)' },
+    miniToggleText: { fontSize: 10, fontWeight: 'bold', color: '#94a3b8' },
+    customRolesSection: { marginTop: 10, padding: 20, backgroundColor: 'rgba(251, 191, 36, 0.02)', borderRadius: 25, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.05)' },
+    customRoleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+    roleColorDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)' },
+    joinInputBox: { marginBottom: 30 },
+    joinInput: { fontSize: 40, fontWeight: '900', color: '#38bdf8', textAlign: 'center', letterSpacing: 10, paddingVertical: 20, textTransform: 'uppercase' }
 });

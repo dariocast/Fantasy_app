@@ -1,13 +1,16 @@
-import React, { useState, useCallback } from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    Modal, 
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Modal,
     TouchableOpacity,
+    PanResponder,
     Dimensions,
-    GestureResponderEvent,
+    ScrollView,
+    Platform
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface Props {
     visible: boolean;
@@ -16,245 +19,202 @@ interface Props {
     onClose: () => void;
 }
 
-export default function ColorPickerModal({ 
-    visible, 
-    currentColor, 
-    onSelect, 
-    onClose 
-}: Props) {
-    const [selectedColor, setSelectedColor] = useState(currentColor);
-    const [saturation, setSaturation] = useState(100);
-    const [brightness, setBrightness] = useState(100);
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const PICKER_WIDTH = SCREEN_WIDTH - 48;
+const PANEL_HEIGHT = 200;
+const HUE_HEIGHT = 20;
 
-    // Predefined colors palette (più affidabile)
-    const presetColors = [
-        '#FFD700', '#00E5FF', '#4CAF50', '#ef4444',
-        '#8b5cf6', '#f97316', '#ec4899', '#14b8a6',
-        '#3b82f6', '#a855f7', '#f43f5e', '#84cc16',
-        '#06b6d4', '#f59e0b', '#10b981', '#6366f1',
-    ];
+// Utility per conversione colori
+const hexToRgb = (hex: string) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return { r, g, b };
+};
 
-    // HSL to RGB converter
-    const hslToRgb = (h: number, s: number, l: number): string => {
-        const c = (1 - Math.abs(2 * l - 1)) * s;
-        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-        const m = l - c / 2;
-        let r = 0, g = 0, b = 0;
-
-        if (h >= 0 && h < 60) [r, g, b] = [c, x, 0];
-        else if (h >= 60 && h < 120) [r, g, b] = [x, c, 0];
-        else if (h >= 120 && h < 180) [r, g, b] = [0, c, x];
-        else if (h >= 180 && h < 240) [r, g, b] = [0, x, c];
-        else if (h >= 240 && h < 300) [r, g, b] = [x, 0, c];
-        else if (h >= 300 && h < 360) [r, g, b] = [c, 0, x];
-
-        const toHex = (val: number) => {
-            const hex = Math.round((val + m) * 255).toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        };
-
-        return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
-    };
-
-    // RGB to HSL converter
-    const rgbToHsl = (hex: string): [number, number, number] => {
-        if (!hex) return [0, 0, 100];
-        const r = parseInt(hex.slice(1, 3), 16) / 255;
-        const g = parseInt(hex.slice(3, 5), 16) / 255;
-        const b = parseInt(hex.slice(5, 7), 16) / 255;
-
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const l = (max + min) / 2;
-
-        if (max === min) return [0, 0, l * 100];
-
-        const d = max - min;
-        const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-        let h = 0;
+const rgbToHsv = (r: number, g: number, b: number) => {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s, v = max;
+    const d = max - min;
+    s = max === 0 ? 0 : d / max;
+    if (max !== min) {
         switch (max) {
-            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-            case g: h = ((b - r) / d + 2) / 6; break;
-            case b: h = ((r - g) / d + 4) / 6; break;
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
         }
+        h /= 6;
+    }
+    return { h: h * 360, s, v };
+};
 
-        return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+const hsvToRgb = (h: number, s: number, v: number) => {
+    let r = 0, g = 0, b = 0;
+    const i = Math.floor(h / 60);
+    const f = h / 60 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        case 5: r = v; g = p; b = q; break;
+    }
+    return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255)
+    };
+};
+
+const rgbToHex = (r: number, g: number, b: number) => {
+    const toHex = (n: number) => n.toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+};
+
+export default function ColorPickerModal({ visible, currentColor, onSelect, onClose }: Props) {
+    // Stato HSV
+    const [hsv, setHsv] = useState({ h: 0, s: 1, v: 1 });
+
+    // Sincronizza lo stato iniziale SOLO quando il modal viene aperto
+    useEffect(() => {
+        if (visible) {
+            if (currentColor) {
+                try {
+                    const { r, g, b } = hexToRgb(currentColor);
+                    setHsv(rgbToHsv(r, g, b));
+                } catch (e) {
+                    setHsv({ h: 0, s: 1, v: 1 });
+                }
+            } else {
+                setHsv({ h: 0, s: 1, v: 1 });
+            }
+        }
+    }, [visible]);
+
+    const hexColor = useMemo(() => {
+        const { r, g, b } = hsvToRgb(hsv.h, hsv.s, hsv.v);
+        return rgbToHex(r, g, b);
+    }, [hsv]);
+
+    // Colore di base per il gradiente (piena saturazione e luminosità)
+    const baseHueColor = useMemo(() => {
+        const { r, g, b } = hsvToRgb(hsv.h, 1, 1);
+        return rgbToHex(r, g, b);
+    }, [hsv.h]);
+
+    // PAN RESPONDER: Pannello 2D (Saturation & Value)
+    const panPanel = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderGrant: (evt) => handlePanelMove(evt.nativeEvent.locationX, evt.nativeEvent.locationY),
+            onPanResponderMove: (evt) => handlePanelMove(evt.nativeEvent.locationX, evt.nativeEvent.locationY),
+        })
+    ).current;
+
+    const handlePanelMove = (x: number, y: number) => {
+        const s = Math.max(0, Math.min(1, x / PICKER_WIDTH));
+        const v = Math.max(0, Math.min(1, 1 - (y / PANEL_HEIGHT)));
+        setHsv(prev => ({ ...prev, s, v }));
     };
 
-    const handleConfirm = useCallback(() => {
-        try {
-            if (!selectedColor || selectedColor.length === 0) {
-                onSelect(currentColor);
-            } else {
-                onSelect(selectedColor);
-            }
-            onClose();
-        } catch (error) {
-            console.error('Color selection error:', error);
-            onClose();
-        }
-    }, [selectedColor, currentColor, onSelect, onClose]);
+    // PAN RESPONDER: Hue Slider
+    const panHue = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderGrant: (evt) => handleHueMove(evt.nativeEvent.locationX),
+            onPanResponderMove: (evt) => handleHueMove(evt.nativeEvent.locationX),
+        })
+    ).current;
 
-    const handleHueChange = useCallback((event: GestureResponderEvent) => {
-        try {
-            const { locationX, locationY } = event.nativeEvent;
-            const centerX = 120;
-            const centerY = 120;
-            const radius = 110;
-
-            const dx = locationX - centerX;
-            const dy = locationY - centerY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < radius) {
-                let hue = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-                if (hue < 0) hue += 360;
-
-                const [, s, l] = rgbToHsl(selectedColor);
-                const newColor = hslToRgb(hue, s / 100, l / 100);
-                setSelectedColor(newColor);
-            }
-        } catch (error) {
-            console.error('Hue change error:', error);
-        }
-    }, [selectedColor]);
-
-    const handleSaturationChange = useCallback((event: GestureResponderEvent) => {
-        try {
-            const { locationX } = event.nativeEvent;
-            const width = Dimensions.get('window').width - 80;
-            const sat = Math.max(0, Math.min(100, (locationX / width) * 100));
-            setSaturation(sat);
-
-            const [h, , l] = rgbToHsl(selectedColor);
-            const newColor = hslToRgb(h, sat / 100, l / 100);
-            setSelectedColor(newColor);
-        } catch (error) {
-            console.error('Saturation change error:', error);
-        }
-    }, [selectedColor]);
-
-    const handleBrightnessChange = useCallback((event: GestureResponderEvent) => {
-        try {
-            const { locationX } = event.nativeEvent;
-            const width = Dimensions.get('window').width - 80;
-            const bright = Math.max(0, Math.min(100, (locationX / width) * 100));
-            setBrightness(bright);
-
-            const [h, s] = rgbToHsl(selectedColor);
-            const newColor = hslToRgb(h, s / 100, bright / 100);
-            setSelectedColor(newColor);
-        } catch (error) {
-            console.error('Brightness change error:', error);
-        }
-    }, [selectedColor]);
+    const handleHueMove = (x: number) => {
+        const h = Math.max(0, Math.min(360, (x / PICKER_WIDTH) * 360));
+        setHsv(prev => ({ ...prev, h }));
+    };
 
     if (!visible) return null;
 
-    const [hue] = rgbToHsl(selectedColor);
-
     return (
-        <Modal 
-            visible={visible} 
-            transparent 
-            animationType="fade" 
-            onRequestClose={onClose}
-        >
+        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
             <View style={s.overlay}>
                 <View style={s.container}>
-                    <Text style={s.title}>Scegli un Colore</Text>
-
-                    {/* Color Preview */}
-                    <View 
-                        style={[
-                            s.preview, 
-                            { backgroundColor: selectedColor }
-                        ]} 
-                    />
-                    <Text style={s.colorText}>{selectedColor}</Text>
-
-                    {/* Hue Circle Picker */}
-                    <TouchableOpacity 
-                        style={s.hueContainer}
-                        onPress={handleHueChange}
-                        activeOpacity={1}
-                    >
-                        <View 
-                            style={[
-                                s.hueCircle,
-                                { 
-                                    backgroundColor: `hsl(${hue}, 100%, 50%)`,
-                                }
-                            ]} 
-                        />
-                    </TouchableOpacity>
-
-                    {/* Saturation Slider */}
-                    <View style={s.sliderContainer}>
-                        <Text style={s.sliderLabel}>Saturazione</Text>
-                        <TouchableOpacity 
-                            style={s.slider}
-                            onPress={handleSaturationChange}
-                            activeOpacity={0.8}
-                        >
-                            <View 
-                                style={[
-                                    s.sliderThumb,
-                                    { left: `${saturation}%` }
-                                ]} 
-                            />
-                        </TouchableOpacity>
+                    <View style={s.header}>
+                        <View style={s.headerAccent} />
+                        <Text style={s.title}>Seleziona Colore</Text>
                     </View>
 
-                    {/* Brightness Slider */}
-                    <View style={s.sliderContainer}>
-                        <Text style={s.sliderLabel}>Luminosità</Text>
-                        <TouchableOpacity 
-                            style={s.slider}
-                            onPress={handleBrightnessChange}
-                            activeOpacity={0.8}
-                        >
-                            <View 
-                                style={[
-                                    s.sliderThumb,
-                                    { left: `${brightness}%` }
-                                ]} 
+                    <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
+                        {/* 1. PANNELLO 2D (SATURAZIONE & LUMINOSITÀ) */}
+                        <Text style={s.label}>Saturazione e Luminosità</Text>
+                        <View style={[s.panelContainer, { backgroundColor: baseHueColor }]} {...panPanel.panHandlers}>
+                            <LinearGradient
+                                colors={['#FFFFFF', 'transparent']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={StyleSheet.absoluteFill}
+                                pointerEvents="none"
                             />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Preset Colors */}
-                    <View style={s.presetsContainer}>
-                        <Text style={s.presetsTitle}>Colori Suggeriti</Text>
-                        <View style={s.presetsGrid}>
-                            {presetColors.map((color, idx) => (
-                                <TouchableOpacity
-                                    key={idx}
-                                    style={[
-                                        s.presetColor,
-                                        { backgroundColor: color },
-                                        selectedColor === color && s.presetColorSelected
-                                    ]}
-                                    onPress={() => setSelectedColor(color)}
-                                />
-                            ))}
+                            <LinearGradient
+                                colors={['transparent', '#000000']}
+                                style={StyleSheet.absoluteFill}
+                                pointerEvents="none"
+                            />
+                            {/* Cursore del Pannello - pointerEvents="none" evita il salto delle coordinate */}
+                            <View 
+                                pointerEvents="none"
+                                style={[s.cursor, {
+                                    left: hsv.s * PICKER_WIDTH - 10,
+                                    top: (1 - hsv.v) * PANEL_HEIGHT - 10,
+                                    backgroundColor: hexColor
+                                }]} 
+                            />
                         </View>
-                    </View>
 
-                    {/* Buttons */}
-                    <View style={s.btnRow}>
-                        <TouchableOpacity 
-                            style={s.cancelBtn} 
-                            onPress={onClose}
-                        >
+                        {/* 2. SLIDER TONALITÀ (HUE) */}
+                        <Text style={s.label}>Tonalità (Hue)</Text>
+                        <View style={s.hueSliderContainer} {...panHue.panHandlers}>
+                            <LinearGradient
+                                colors={['#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={s.hueGradient}
+                                pointerEvents="none"
+                            />
+                            {/* Cursore della Tonalità - pointerEvents="none" evita il salto delle coordinate */}
+                            <View 
+                                pointerEvents="none"
+                                style={[s.hueCursor, {
+                                    left: (hsv.h / 360) * PICKER_WIDTH - 10,
+                                    backgroundColor: baseHueColor
+                                }]} 
+                            />
+                        </View>
+
+                        {/* 3. PREVIEW & HEX */}
+                        <View style={s.previewCard}>
+                            <View style={[s.colorPreview, { backgroundColor: hexColor }]} />
+                            <View style={s.hexInfo}>
+                                <Text style={s.hexTitle}>COLORE SELEZIONATO</Text>
+                                <Text style={s.hexValue}>{hexColor}</Text>
+                            </View>
+                        </View>
+
+                        <View style={{ height: 40 }} />
+                    </ScrollView>
+
+                    {/* 4. BOTTONI FISSI */}
+                    <View style={s.footer}>
+                        <TouchableOpacity style={s.cancelBtn} onPress={onClose}>
                             <Text style={s.cancelBtnText}>Annulla</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={s.confirmBtn} 
-                            onPress={handleConfirm}
-                        >
-                            <Text style={s.confirmBtnText}>Conferma</Text>
+                        <TouchableOpacity style={s.confirmBtn} onPress={() => { onSelect(hexColor); onClose(); }}>
+                            <Text style={s.confirmBtnText}>Salva Colore</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -266,139 +226,151 @@ export default function ColorPickerModal({
 const s = StyleSheet.create({
     overlay: {
         flex: 1,
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        padding: 20,
-        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        justifyContent: 'flex-end',
     },
     container: {
-        backgroundColor: '#1e293b',
-        borderRadius: 20,
-        padding: 24,
-        alignItems: 'center',
+        backgroundColor: '#0f172a',
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        height: SCREEN_HEIGHT * 0.8,
         width: '100%',
-        maxWidth: 400,
+        paddingTop: 8,
+    },
+    header: {
+        alignItems: 'center',
+        paddingBottom: 16,
+    },
+    headerAccent: {
+        width: 40,
+        height: 4,
+        backgroundColor: '#334155',
+        borderRadius: 2,
+        marginVertical: 12,
     },
     title: {
         color: '#f8fafc',
         fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 16,
     },
-    preview: {
-        width: '100%',
-        height: 50,
-        borderRadius: 12,
-        marginBottom: 8,
-        borderWidth: 2,
-        borderColor: '#94a3b8',
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 24,
     },
-    colorText: {
-        color: '#94a3b8',
-        fontSize: 13,
-        marginBottom: 16,
-        fontWeight: 'bold',
-    },
-    hueContainer: {
-        width: 240,
-        height: 240,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-        borderRadius: 120,
-        overflow: 'hidden',
-    },
-    hueCircle: {
-        width: 240,
-        height: 240,
-        borderRadius: 120,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.2)',
-    },
-    sliderContainer: {
-        width: '100%',
-        marginBottom: 16,
-    },
-    sliderLabel: {
+    label: {
         color: '#94a3b8',
         fontSize: 12,
-        marginBottom: 8,
         fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 12,
+        marginTop: 20,
     },
-    slider: {
-        width: '100%',
-        height: 30,
-        backgroundColor: '#334155',
-        borderRadius: 15,
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: '#475569',
+    panelContainer: {
+        width: PICKER_WIDTH,
+        height: PANEL_HEIGHT,
+        borderRadius: 12,
+        overflow: 'hidden',
+        position: 'relative',
     },
-    sliderThumb: {
+    cursor: {
+        position: 'absolute',
         width: 20,
         height: 20,
         borderRadius: 10,
-        backgroundColor: '#fff',
-        borderWidth: 2,
-        borderColor: '#38bdf8',
-        position: 'absolute',
+        borderWidth: 3,
+        borderColor: '#ffffff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.5,
+        shadowRadius: 2,
+        elevation: 3,
     },
-    presetsContainer: {
-        width: '100%',
-        marginBottom: 20,
-    },
-    presetsTitle: {
-        color: '#f8fafc',
-        fontSize: 13,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    presetsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
+    hueSliderContainer: {
+        width: PICKER_WIDTH,
+        height: HUE_HEIGHT,
+        position: 'relative',
         justifyContent: 'center',
     },
-    presetColor: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: 'transparent',
-    },
-    presetColorSelected: {
-        borderColor: '#38bdf8',
-        borderWidth: 3,
-    },
-    btnRow: {
-        flexDirection: 'row',
-        gap: 12,
+    hueGradient: {
         width: '100%',
+        height: '100%',
+        borderRadius: 10,
+    },
+    hueCursor: {
+        position: 'absolute',
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 3,
+        borderColor: '#ffffff',
+        top: 0,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.5,
+        shadowRadius: 2,
+        elevation: 3,
+    },
+    previewCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        padding: 16,
+        borderRadius: 16,
+        marginTop: 30,
+        gap: 16,
+    },
+    colorPreview: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    hexInfo: {
+        flex: 1,
+    },
+    hexTitle: {
+        color: '#64748b',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    hexValue: {
+        color: '#f1f5f9',
+        fontSize: 22,
+        fontWeight: '800',
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    },
+    footer: {
+        flexDirection: 'row',
+        padding: 24,
+        gap: 12,
+        backgroundColor: '#1e293b',
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.1)',
     },
     cancelBtn: {
         flex: 1,
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: '#94a3b8',
-        padding: 12,
+        paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#475569',
     },
     cancelBtnText: {
         color: '#94a3b8',
         fontWeight: 'bold',
-        fontSize: 15,
     },
     confirmBtn: {
-        flex: 1,
+        flex: 2,
         backgroundColor: '#0ea5e9',
-        padding: 12,
+        paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
     },
     confirmBtnText: {
-        color: '#fff',
+        color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 15,
     },
 });
