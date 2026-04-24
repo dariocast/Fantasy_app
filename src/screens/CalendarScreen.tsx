@@ -9,7 +9,8 @@ const { width } = Dimensions.get('window');
 
 export default function CalendarScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const matches = useStore(state => state.matches).filter(m => m.leagueId === leagueId);

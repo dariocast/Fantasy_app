@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; // Refreshed to detect new screens
-import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar, ScrollView, Dimensions, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar, ScrollView, Dimensions, Image, Linking } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -177,6 +177,21 @@ function CustomDrawerContent(props: any) {
                 <View style={styles.footerUserInfo}>
                     <Text style={styles.footerName} numberOfLines={1}>{currentUser.firstName} {currentUser.lastName}</Text>
                     <Text style={styles.footerRole}>{userRole}</Text>
+                </View>
+                <View style={styles.legalLinksRow}>
+                    <TouchableOpacity 
+                        onPress={() => Linking.openURL('https://www.iubenda.com/privacy-policy/75178620')}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.legalLinkText}>Privacy Policy</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.legalDot}>•</Text>
+                    <TouchableOpacity 
+                        onPress={() => Linking.openURL('https://docs.google.com/document/d/1vi0dHfxkSuaKGzhaaWpvcXPejp_qZppY3WwOjUzXSWw/edit?usp=sharing')}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.legalLinkText}>Termini</Text>
+                    </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
                     <LogOut size={16} color="#ef4444" />
@@ -360,5 +375,21 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         fontWeight: '600',
         fontSize: 14,
+    },
+    legalLinksRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 15,
+        gap: 8,
+    },
+    legalLinkText: {
+        color: '#64748b',
+        fontSize: 11,
+        textDecorationLine: 'underline',
+    },
+    legalDot: {
+        color: '#475569',
+        fontSize: 10,
     },
 });

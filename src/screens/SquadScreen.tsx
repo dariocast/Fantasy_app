@@ -14,8 +14,8 @@ export default function SquadScreen({ navigation }: any) {
     const fantasyTeams = useStore(state => state.fantasyTeams);
     const updateFantasyTeam = useStore(state => state.updateFantasyTeam);
 
-    const leagueIdStore = useStore(state => state.activeLeagueId);
-    const league = leagues.find(l => l.id === leagueIdStore) || (leagues.length > 0 ? leagues[0] : null);
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const myFantasyTeamDoc = fantasyTeams.find(f => f.leagueId === leagueId && f.userId === currentUser?.id);

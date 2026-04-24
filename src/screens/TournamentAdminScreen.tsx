@@ -18,7 +18,7 @@ const { width } = Dimensions.get('window');
 export default function TournamentAdminScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
     const activeLeagueId = useStore(state => state.activeLeagueId);
-    const league = leagues.find(l => l.id === activeLeagueId) || (leagues.length > 0 ? leagues[0] : null);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
     const currentUser = useStore((state) => state.currentUser);
     const showNotification = useStore(state => state.showNotification);
@@ -95,7 +95,7 @@ export default function TournamentAdminScreen({ navigation }: any) {
     // ---- HANDLERS ----
     const pickImage = async (setter: (uri: string) => void) => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: 'images',
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.5,

@@ -7,7 +7,8 @@ import { Shield, Users, Award, ChevronRight, Info, Calendar } from 'lucide-react
 
 export default function LineupsScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const fantasyTeams = useStore(state => state.fantasyTeams).filter(f => f.leagueId === leagueId);

@@ -26,7 +26,8 @@ interface PlayerStats {
 
 export default function StatsViewerScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const players = useStore(state => state.players).filter(p => p.leagueId === leagueId);

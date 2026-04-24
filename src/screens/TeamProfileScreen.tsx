@@ -7,7 +7,8 @@ import { Shield, Users, Calendar, ChevronLeft, Award, TrendingUp, Info, Activity
 export default function TeamProfileScreen({ route, navigation }: any) {
     const { teamId } = route.params;
     const leagues = useStore(s => s.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(s => s.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const realTeams = useStore(s => s.realTeams);

@@ -15,7 +15,9 @@ const SportShoe = ({ size = 24, color = '#000', style }: { size?: number; color?
 
 export default function FantasyStandingsScreen({ navigation }: any) {
     const leagues = useStore(state => state.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(state => state.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
+
     const leagueId = league?.id || '';
 
     const users = useStore(state => state.users);
@@ -54,7 +56,8 @@ export default function FantasyStandingsScreen({ navigation }: any) {
     });
 
     const playerFantasyLeaderboard = useMemo(() => {
-        const customBonus = league?.settings?.customBonus || { goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1 };
+        if (!league) return [];
+        const customBonus = league.settings.customBonus || { goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1, cleanSheet: 1 };
         const pStats = new Map<string, number>();
         
         allPlayers.forEach(p => {
@@ -68,12 +71,12 @@ export default function FantasyStandingsScreen({ navigation }: any) {
             
             matchPlayers.forEach(p => {
                 let baseVote = 0;
-                if (league?.settings?.baseVoteType === 'manual') {
+                if (league.settings.baseVoteType === 'manual') {
                     baseVote = m.playerVotes?.[p.id] || 0;
                 } else {
                     const isHome = p.realTeamId === m.homeTeamId;
                     const diff = isHome ? (m.homeScore - m.awayScore) : (m.awayScore - m.homeScore);
-                    const bands = league?.settings?.autoVoteBands || [];
+                    const bands = league.settings.autoVoteBands || [];
                     const matchedBand = bands.find(b => diff >= b.minDiff && diff <= b.maxDiff);
                     baseVote = matchedBand ? matchedBand.points : 6;
                 }
@@ -92,7 +95,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
 
                 let val = 0;
                 // Try to get category-specific bonus first
-                if (league?.settings?.categoryBonuses?.[type]?.[category] !== undefined) {
+                if (league.settings.categoryBonuses?.[type]?.[category] !== undefined) {
                     val = league.settings.categoryBonuses[type][category];
                 } else {
                     if (type === 'goal') val = (customBonus.goal ?? 3);
@@ -115,7 +118,17 @@ export default function FantasyStandingsScreen({ navigation }: any) {
         return sorted.filter(p => p.position === playerRoleFilter);
     }, [matches, allPlayers, playerBonuses, league?.settings?.customBonus, playerRoleFilter]);
 
-    const roleOptions = ['TUTTI', ...(league?.settings?.useCustomRoles ? (league.settings.customRoles?.map(r => r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])];
+    if (!league) {
+        return (
+            <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+                <View style={styles.centerContainer}>
+                    <Text style={styles.emptyText}>Torneo non trovato.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    const roleOptions = ['TUTTI', ...(league.settings.useCustomRoles ? (league.settings.customRoles?.map(r => r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])];
 
     const getPosColor = (pos: string) => {
         if (league.settings.useCustomRoles && league.settings.customRoles) {
@@ -146,7 +159,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
         
         // Calculate detailed history
         const history: { matchday: number; match: string; base: number; bonus: number; total: number; events: any[] }[] = [];
-        const customBonus = league.settings.customBonus || { goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1 };
+        const customBonus = league.settings.customBonus || { goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1, cleanSheet: 1 };
 
         matches.forEach(m => {
             if (player.realTeamId !== m.homeTeamId && player.realTeamId !== m.awayTeamId) return;
@@ -380,7 +393,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
         );
     };
 
-    if (!league || !league.settings.hasFantasy) {
+    if (!league.settings.hasFantasy) {
         return (
             <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
                 <View style={styles.centerContainer}>

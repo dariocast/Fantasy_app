@@ -7,7 +7,8 @@ import { User, Shield, Star, Award, TrendingUp, Info, ChevronLeft } from 'lucide
 export default function PlayerProfileScreen({ route, navigation }: any) {
     const { playerId } = route.params;
     const leagues = useStore(s => s.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(s => s.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const allPlayers = useStore(s => s.players);

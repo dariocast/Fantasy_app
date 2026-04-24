@@ -3,8 +3,8 @@
 Questa checklist contiene le azioni manuali e gli elementi "non-codice" che devi preparare per pubblicare l'app sugli Store Apple e Google.
 
 ## Documentazione Legale
-- [ ] **Privacy Policy URL**: Devi creare una pagina web che descriva come i dati degli utenti (email, nome, ecc.) vengono trattati.
-- [ ] **Terms of Service URL**: I termini e condizioni del servizio (spesso uniti alla privacy o in una pagina separata).
+- [x] **Privacy Policy URL**: [Visualizza Privacy Policy](https://www.iubenda.com/privacy-policy/75178620) (Completato)
+- [x] **Terms of Service URL**: [Visualizza Terms of Service](https://docs.google.com/document/d/1vi0dHfxkSuaKGzhaaWpvcXPejp_qZppY3WwOjUzXSWw/edit?usp=sharing) (Completato)
 
 ## Store Listing (Scheda App)
 - [ ] **Icona ad alta risoluzione**: Prepara un'icona di dimensioni esatte `1024x1024` pixel (senza trasparenze per iOS).

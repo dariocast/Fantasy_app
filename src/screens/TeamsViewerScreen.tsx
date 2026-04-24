@@ -6,7 +6,8 @@ import { Shield, ChevronRight, Info } from 'lucide-react-native';
 
 export default function TeamsViewerScreen({ navigation }: any) {
     const leagues = useStore(s => s.leagues);
-    const league = leagues.length > 0 ? leagues[0] : null;
+    const activeLeagueId = useStore(s => s.activeLeagueId);
+    const league = leagues.find(l => l.id === activeLeagueId);
     const leagueId = league?.id || '';
 
     const realTeams = useStore(s => s.realTeams).filter(t => t.leagueId === leagueId);

@@ -7,9 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#070c1f"
     },
     "ios": {
       "supportsTablet": true,
@@ -23,7 +23,7 @@
       "package": "com.fantalega.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#070c1f"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
