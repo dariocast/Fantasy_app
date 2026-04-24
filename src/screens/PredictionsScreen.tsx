@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Platform, KeyboardAvoidingView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
@@ -22,6 +22,7 @@ export default function PredictionsScreen() {
     const [viewType, setViewType] = useState<'list' | 'bracket'>('list');
     const [activeMatchday, setActiveMatchday] = useState(1);
     const [localPreds, setLocalPreds] = useState<Record<string, { home: string, away: string }>>({});
+    const initialMatchdaySet = useRef(false);
 
     const getTeamData = (teamId: string) => {
         return realTeams.find(rt => rt.id === teamId);
@@ -40,11 +41,12 @@ export default function PredictionsScreen() {
     const matchdays = Array.from(new Set(leagueMatches.map(m => m.matchday))).sort((a, b) => a - b);
     
     useEffect(() => {
-        if (matchdays.length > 0 && activeMatchday === 1) {
+        if (matchdays.length > 0 && !initialMatchdaySet.current) {
             // Find first matchday with at least one scheduled match
             const upcoming = matchdays.find(md => leagueMatches.filter(m => m.matchday === md).some(m => m.status === 'scheduled'));
             if (upcoming) setActiveMatchday(upcoming);
             else setActiveMatchday(matchdays[matchdays.length - 1]);
+            initialMatchdaySet.current = true;
         }
     }, [matchdays, leagueMatches]);
 
@@ -121,6 +123,11 @@ export default function PredictionsScreen() {
                     pointsEarned = league.settings.predictionPointsOutcome || 0;
                 }
             }
+        }
+
+        // Hide finished matches where prediction was lost (0 points)
+        if (match.status === 'finished' && pointsEarned === 0) {
+            return null;
         }
 
         return (
@@ -225,17 +232,17 @@ export default function PredictionsScreen() {
             {viewType === 'list' && (
                 <View style={styles.matchdaySelector}>
                     <TouchableOpacity 
-                        onPress={() => setActiveMatchday(prev => Math.max(1, prev - 1))}
-                        disabled={activeMatchday === 1}
+                        onPress={() => setActiveMatchday(prev => Math.max(matchdays[0] || 1, prev - 1))}
+                        disabled={activeMatchday <= (matchdays[0] || 1)}
                     >
-                        <ChevronLeft color={activeMatchday === 1 ? '#475569' : '#fbbf24'} size={24} />
+                        <ChevronLeft color={activeMatchday <= (matchdays[0] || 1) ? '#475569' : '#fbbf24'} size={24} />
                     </TouchableOpacity>
                     <Text style={styles.matchdayLabel}>GIORNATA {activeMatchday}</Text>
                     <TouchableOpacity 
                         onPress={() => setActiveMatchday(prev => Math.min(matchdays[matchdays.length - 1], prev + 1))}
-                        disabled={matchdays.length > 0 && activeMatchday === matchdays[matchdays.length - 1]}
+                        disabled={matchdays.length === 0 || activeMatchday >= matchdays[matchdays.length - 1]}
                     >
-                        <ChevronRight color={matchdays.length > 0 && activeMatchday === matchdays[matchdays.length - 1] ? '#475569' : '#fbbf24'} size={24} />
+                        <ChevronRight color={matchdays.length === 0 || activeMatchday >= matchdays[matchdays.length - 1] ? '#475569' : '#fbbf24'} size={24} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -265,13 +272,23 @@ export default function PredictionsScreen() {
                         <Text style={styles.emptyText}>Nessuna partita ad eliminazione diretta programmata.</Text>
                     )}
 
-                    {viewType === 'list' ? currentMatches.map(match => renderMatchCard(match)) : (
-                        Object.entries(groupedKnockout).map(([stage, phaseMatches]) => (
-                            <View key={stage} style={{ marginBottom: 20 }}>
-                                <Text style={styles.stageTitle}>{stage.toUpperCase()}</Text>
-                                {phaseMatches.map(match => renderMatchCard(match))}
-                            </View>
-                        ))
+                    {viewType === 'list' ? currentMatches.map(match => {
+                        const card = renderMatchCard(match);
+                        if (!card) return null;
+                        return card;
+                    }) : (
+                        Object.entries(groupedKnockout)
+                            .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+                            .map(([stage, phaseMatches]) => {
+                                const renderedMatches = phaseMatches.map(m => renderMatchCard(m)).filter(Boolean);
+                                if (renderedMatches.length === 0) return null;
+                                return (
+                                    <View key={stage} style={{ marginBottom: 20 }}>
+                                        <Text style={styles.stageTitle}>{stage.toUpperCase()}</Text>
+                                        {renderedMatches}
+                                    </View>
+                                );
+                            })
                     )}
                 </ScrollView>
             </KeyboardAvoidingView>
