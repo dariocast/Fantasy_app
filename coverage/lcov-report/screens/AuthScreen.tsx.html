@@ -1,0 +1,868 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for screens/AuthScreen.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">screens</a> AuthScreen.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/81</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/56</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/14</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/66</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import Svg, { Path, Circle, G } from 'react-native-svg';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '../lib/supabase';
+import { useStore } from '../store';
+import { isValidEmail, isNonEmptyString } from '../lib/validation';
+import { logger } from '../utils/logger';
+import { Mail, Lock, User, ArrowRight, ShieldCheck, ChevronLeft, Info, CheckCircle2, Star, Hexagon } from 'lucide-react-native';
+&nbsp;
+const SoccerBallLogo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    return (</span>
+        &lt;View style={styles.logoContainer}&gt;
+            &lt;View style={styles.ballOuter}&gt;
+                &lt;Svg width="160" height="160" viewBox="0 0 100 100"&gt;
+                    &lt;Circle cx="50" cy="50" r="49.5" fill="#0f172a" stroke="#ffffff" strokeWidth="1.5" /&gt;
+                    &lt;G transform="translate(50, 50) scale(1.20) translate(-95.5, -52)"&gt;
+                        &lt;G fill="#ffffff" fillRule="evenodd" clipRule="evenodd"&gt;
+                            &lt;Path d="M83.924 25.642c-4.657.951-9.611 3.037-9.611 3.037 2.453-3.341 7.432-7.434 7.432-7.434-1.37-2.574-2.583-6.385-2.583-6.385s5.758.316 10.265 1.779c0 0 7.657-4.197 15.591-4.326 0 0-5.783 3.339-8.24 6.448.652.343 5.277 1.727 8.879 3.85 0 0-6.512.184-12.488 1.002 0 0-2.104 2.968-3.883 9.723-.001 0-3.065-3.375-5.362-7.694z" /&gt;
+                            &lt;Path d="M114.861 31.235c-3.943-4.386-9.205-8.624-9.205-8.624 4.84.069 12.023 2.925 12.023 2.925 1.404-2.654 2.387-6.306 2.387-6.306s2.748 4.651 3.996 9.794c0 0 5.705 3.416 10.01 9.133 0 0-4.492-.937-7.799-.921-.01.738 1.213 6.806.947 10.978 0 0-3.662-5.951-7.098-10.908 0 0-5.523.1-11.326 1.686.001 0 3.251-3.754 6.065-7.757zM121.18 59.824c2.908-4.903 6.041-11.609 6.041-11.609.961 4.485 1.047 10.207 1.047 10.207 2.885-.608 7.992-3.058 7.992-3.058s-2.275 6.06-7.375 10.707c0 0 .516 3.631.576 8.422 0 0-3.607-1.607-6.598-3.404-.637.371-4.252 2.83-10.359 4.094 0 0 2.586-4.04 4.725-7.986 0 0-4.258-2.805-7.631-7.402 0-.001 6.558.827 11.582.029z" /&gt;
+                            &lt;Path d="M100.609 49.819c4.461 5.526 8.988 9.976 8.988 9.976-7.396-1.099-13.401-3.173-13.401-3.173-3.004 4.816-6.282 10.415-6.282 10.415s-1.833-6.074-2.143-12.968c0 0-3.715-1.3-10.562-3.996 0 0 4.723-2.932 10.439-4.531-.334-.659.542-8.855 1.638-12.205 0 0 3.333 5.403 6.047 9.375 0 0 5.312-1.802 13.465-3.72-.001 0-4.462 5.661-8.189 10.827zM60 70.721a39.903 39.903 0 0 1-1.255-2.581c.078-2.931.34-6.706 1.09-9.634 0 0-2.149-1.491-4.371-3.429-.025-.337-.054-.677-.073-1.018 1.276-.476 3.985-1.433 6.351-1.981.271-.689 1.744-5.436 4.591-8.711 0 0 .192 3.227.966 7.523 0 0 4.494-1.018 9.909-.819 0 0-5.018 3.952-8.178 7.967 1.146 4.629 3.452 9.072 3.452 9.072-3.446-1.95-7.091-4.533-7.091-4.533-1.28 1.522-3.853 5.628-5.391 8.144zM88.667 91.74a34.091 34.091 0 0 1-1.665-.343c-1.881-2.017-4.75-5.31-6.941-8.771 0 0-8.082-.652-13.777-3.146 0 0 4.71-.885 9.882-3.552-.334-.659-2.306-4.295-3.685-8.816 0 0 4.94 3.991 8.6 6.327 0 0 4.651-2.676 8.832-6.402 0 0-1.06 5.15-1.647 11.032a319.505 319.505 0 0 0 8.17 4.509c-4.217.614-8.368.485-8.368.485-.164 3.266.275 6.699.599 8.677zM123.828 81.238s-5.574 1.473-11.014 1.677c0 0-.041-3.711-.311-7.732 0 0-2.889 4.1-6.66 8.043-4.453-.064-9.407-.647-9.407-.647a127.8 127.8 0 0 0 5.241 5.039c-3.354 2.851-6.454 4.756-6.454 4.756.44.006.888.009 1.331.003 10.587-.173 20.155-4.387 27.274-11.139z" /&gt;&lt;Path d="M55.881 45.093s2.978-3.714 6.454-6.73c0 0 1.162 2.146 3.998 5.005 0 0 .021-3.494.427-8.976 3.176-2.808 7.553-5.713 7.553-5.713-3.63-.231-6.339-.054-6.339-.054.842-4.16 2.744-8.624 2.744-8.624-7.718 6.12-13.15 14.991-14.837 25.092z" /&gt;
+                        &lt;/G&gt;
+                    &lt;/G&gt;
+                &lt;/Svg&gt;
+            &lt;/View&gt;
+        &lt;/View&gt;
+    );
+};
+&nbsp;
+export default function <span class="fstat-no" title="function not covered" >AuthScreen(</span>{ navigation }: any) {
+    const [mode, setMode] = <span class="cstat-no" title="statement not covered" >useState&lt;'login' | 'register' | 'forgot'&gt;('login');</span>
+    const [email, setEmail] = <span class="cstat-no" title="statement not covered" >useState('');</span>
+    const [password, setPassword] = <span class="cstat-no" title="statement not covered" >useState('');</span>
+    const [firstName, setFirstName] = <span class="cstat-no" title="statement not covered" >useState('');</span>
+    const [lastName, setLastName] = <span class="cstat-no" title="statement not covered" >useState('');</span>
+    const [message, setMessage] = <span class="cstat-no" title="statement not covered" >useState('');</span>
+    const [isSuccess, setIsSuccess] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
+&nbsp;
+    const setCurrentUser = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >st</span>ate =&gt; <span class="cstat-no" title="statement not covered" >state.setCurrentUser)</span>;</span>
+    const signIn = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >st</span>ate =&gt; <span class="cstat-no" title="statement not covered" >state.signIn)</span>;</span>
+    const signUp = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >st</span>ate =&gt; <span class="cstat-no" title="statement not covered" >state.signUp)</span>;</span>
+    const loading = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >st</span>ate =&gt; <span class="cstat-no" title="statement not covered" >state.isLoading)</span>;</span>
+    const setLoading = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >st</span>ate =&gt; <span class="cstat-no" title="statement not covered" >state.setLoading)</span>;</span>
+&nbsp;
+    const handleLogin = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        if (!isValidEmail(email)) {</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('Inserisci un indirizzo email valido');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
+<span class="cstat-no" title="statement not covered" >        if (!password || password.length &lt; 6) {</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('La password deve essere di almeno 6 caratteri');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        try {</span>
+<span class="cstat-no" title="statement not covered" >            logger.debug('Attempting login for:', email);</span>
+<span class="cstat-no" title="statement not covered" >            await signIn(email, password);</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('');</span>
+<span class="cstat-no" title="statement not covered" >            navigation.replace('Leagues');</span>
+        } catch (err: any) {
+            // Error is already handled by store's handleError, 
+            // but we might want to show a local message too
+<span class="cstat-no" title="statement not covered" >            setMessage(err.message || 'Errore durante l\'accesso');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+        }
+    };
+&nbsp;
+    const handleRegister = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        if (!isValidEmail(email)) {</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('Inserisci un indirizzo email valido');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
+<span class="cstat-no" title="statement not covered" >        if (password.length &lt; 8) {</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('La password deve essere di almeno 8 caratteri per la registrazione');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
+<span class="cstat-no" title="statement not covered" >        if (!isNonEmptyString(firstName) || !isNonEmptyString(lastName)) {</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('Nome e Cognome sono richiesti');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        try {</span>
+<span class="cstat-no" title="statement not covered" >            logger.debug('Attempting registration for:', email);</span>
+<span class="cstat-no" title="statement not covered" >            await signUp({ email, password, firstName, lastName });</span>
+<span class="cstat-no" title="statement not covered" >            setMessage('');</span>
+<span class="cstat-no" title="statement not covered" >            navigation.replace('Leagues');</span>
+        } catch (err: any) {
+<span class="cstat-no" title="statement not covered" >            setMessage(err.message || 'Errore durante la registrazione');</span>
+<span class="cstat-no" title="statement not covered" >            setIsSuccess(false);</span>
+        }
+    };
+&nbsp;
+    const handleRecover = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        if (!email) { <span class="cstat-no" title="statement not covered" >setMessage("Inserisci un'email valida"); <span class="cstat-no" title="statement not covered" ></span>setIsSuccess(false); <span class="cstat-no" title="statement not covered" ></span>return; </span>}</span>
+<span class="cstat-no" title="statement not covered" >        setLoading(true);</span>
+        const { error } = <span class="cstat-no" title="statement not covered" >await supabase.auth.resetPasswordForEmail(email.trim());</span>
+<span class="cstat-no" title="statement not covered" >        setLoading(false);</span>
+<span class="cstat-no" title="statement not covered" >        if (error) { <span class="cstat-no" title="statement not covered" >setMessage(error.message); <span class="cstat-no" title="statement not covered" ></span>setIsSuccess(false); <span class="cstat-no" title="statement not covered" ></span>return; </span>}</span>
+<span class="cstat-no" title="statement not covered" >        setMessage('Email di recupero inviata! Controlla la tua casella.');</span>
+<span class="cstat-no" title="statement not covered" >        setIsSuccess(true);</span>
+<span class="cstat-no" title="statement not covered" >        setMode('login');</span>
+    };
+&nbsp;
+    const isError = <span class="cstat-no" title="statement not covered" >!isSuccess &amp;&amp; message.length &gt; 0;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    return (</span>
+        &lt;SafeAreaView style={styles.container}&gt;
+            &lt;KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}&gt;
+                &lt;ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                &gt;
+                    &lt;View style={styles.card}&gt;
+                        &lt;View style={styles.heroSection}&gt;
+                            &lt;SoccerBallLogo /&gt;
+                            &lt;Text style={styles.title}&gt;Fantasy&lt;/Text&gt;
+                            &lt;Text style={styles.subtitle}&gt;
+                                {mode === 'login' ? "L'app per creare il tuo fantacalcio" : mode === 'register' ? 'Inizia la tua sfida oggi.' : 'Reimposta la tua password.'}
+                            &lt;/Text&gt;
+                        &lt;/View&gt;
+&nbsp;
+                        {message ? (
+                            &lt;View style={[styles.messageBox, isError ? styles.messageError : styles.messageSuccess]}&gt;
+                                {isError ? &lt;Info size={16} color="#ef4444" /&gt; : &lt;CheckCircle2 size={16} color="#22c55e" /&gt;}
+                                &lt;Text style={[styles.messageText, isError ? styles.messageTextError : styles.messageTextSuccess]}&gt;{message}&lt;/Text&gt;
+                            &lt;/View&gt;
+                        ) : null}
+&nbsp;
+                        {mode === 'login' &amp;&amp; (
+                            &lt;View style={styles.form}&gt;
+                                &lt;View style={styles.inputWrapper}&gt;
+                                    &lt;Mail size={18} color="#64748b" style={styles.inputIcon} /&gt;
+                                    &lt;TextInput
+                                        style={styles.input}
+                                        placeholder="Email"
+                                        placeholderTextColor="#475569"
+                                        value={email}
+                                        onChangeText={setEmail}
+                                        autoCapitalize="none"
+                                        keyboardType="email-address"
+                                    /&gt;
+                                &lt;/View&gt;
+                                &lt;View style={styles.inputWrapper}&gt;
+                                    &lt;Lock size={18} color="#64748b" style={styles.inputIcon} /&gt;
+                                    &lt;TextInput
+                                        style={styles.input}
+                                        placeholder="Password"
+                                        placeholderTextColor="#475569"
+                                        value={password}
+                                        onChangeText={setPassword}
+                                        secureTextEntry
+                                    /&gt;
+                                &lt;/View&gt;
+                                &lt;TouchableOpacity style={[styles.primaryButton, loading &amp;&amp; { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}&gt;
+                                    {loading ? &lt;ActivityIndicator color="#fff" /&gt; : (
+                                        &lt;&gt;
+                                            &lt;Text style={styles.primaryButtonText}&gt;Accedi&lt;/Text&gt;
+                                            &lt;ArrowRight size={18} color="#fff" style={{ marginLeft: 10 }} /&gt;
+                                        &lt;/&gt;
+                                    )}
+                                &lt;/TouchableOpacity&gt;
+                                &lt;View style={styles.linksContainer}&gt;
+                                    &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >setMode('register'); <span class="cstat-no" title="statement not covered" ></span>setMessage(''); </span>}}&gt;
+                                        &lt;Text style={styles.linkText}&gt;Non hai un account? &lt;Text style={styles.linkTextHighlight}&gt;Registrati&lt;/Text&gt;&lt;/Text&gt;
+                                    &lt;/TouchableOpacity&gt;
+                                    &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >setMode('forgot'); <span class="cstat-no" title="statement not covered" ></span>setMessage(''); </span>}}&gt;
+                                        &lt;Text style={styles.forgotText}&gt;Hai dimenticato la password?&lt;/Text&gt;
+                                    &lt;/TouchableOpacity&gt;
+                                &lt;/View&gt;
+                            &lt;/View&gt;
+                        )}
+&nbsp;
+                        {mode === 'register' &amp;&amp; (
+                            &lt;View style={styles.form}&gt;
+                                &lt;View style={styles.nameRow}&gt;
+                                    &lt;View style={[styles.inputWrapper, { flex: 1, marginBottom: 0 }]}&gt;
+                                        &lt;User size={18} color="#64748b" style={styles.inputIcon} /&gt;
+                                        &lt;TextInput style={styles.input} placeholder="Nome" placeholderTextColor="#475569" value={firstName} onChangeText={setFirstName} /&gt;
+                                    &lt;/View&gt;
+                                    &lt;View style={[styles.inputWrapper, { flex: 1, marginBottom: 0, marginLeft: 10 }]}&gt;
+                                        &lt;TextInput style={styles.input} placeholder="Cognome" placeholderTextColor="#475569" value={lastName} onChangeText={setLastName} /&gt;
+                                    &lt;/View&gt;
+                                &lt;/View&gt;
+                                &lt;View style={styles.inputWrapper}&gt;
+                                    &lt;Mail size={18} color="#64748b" style={styles.inputIcon} /&gt;
+                                    &lt;TextInput style={styles.input} placeholder="Email" placeholderTextColor="#475569" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" /&gt;
+                                &lt;/View&gt;
+                                &lt;View style={styles.inputWrapper}&gt;
+                                    &lt;Lock size={18} color="#64748b" style={styles.inputIcon} /&gt;
+                                    &lt;TextInput style={styles.input} placeholder="Password (min. 8 car.)" placeholderTextColor="#475569" value={password} onChangeText={setPassword} secureTextEntry /&gt;
+                                &lt;/View&gt;
+                                &lt;TouchableOpacity style={[styles.primaryButton, loading &amp;&amp; { opacity: 0.6 }]} onPress={handleRegister} disabled={loading}&gt;
+                                    {loading ? &lt;ActivityIndicator color="#fff" /&gt; : &lt;Text style={styles.primaryButtonText}&gt;Crea Account&lt;/Text&gt;}
+                                &lt;/TouchableOpacity&gt;
+                                &lt;View style={styles.linksContainer}&gt;
+                                    &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >setMode('login'); <span class="cstat-no" title="statement not covered" ></span>setMessage(''); </span>}}&gt;
+                                        &lt;Text style={styles.linkText}&gt;Hai già un account? &lt;Text style={styles.linkTextHighlight}&gt;Accedi&lt;/Text&gt;&lt;/Text&gt;
+                                    &lt;/TouchableOpacity&gt;
+                                &lt;/View&gt;
+                            &lt;/View&gt;
+                        )}
+&nbsp;
+                        {mode === 'forgot' &amp;&amp; (
+                            &lt;View style={styles.form}&gt;
+                                &lt;Text style={styles.helperText}&gt;Inserisci la tua email e ti invieremo un link per il ripristino.&lt;/Text&gt;
+                                &lt;View style={styles.inputWrapper}&gt;
+                                    &lt;Mail size={18} color="#64748b" style={styles.inputIcon} /&gt;
+                                    &lt;TextInput style={styles.input} placeholder="Email" placeholderTextColor="#475569" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" /&gt;
+                                &lt;/View&gt;
+                                &lt;TouchableOpacity style={[styles.primaryButton, loading &amp;&amp; { opacity: 0.6 }]} onPress={handleRecover} disabled={loading}&gt;
+                                    {loading ? &lt;ActivityIndicator color="#fff" /&gt; : &lt;Text style={styles.primaryButtonText}&gt;Invia Link&lt;/Text&gt;}
+                                &lt;/TouchableOpacity&gt;
+                                &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >setMode('login'); <span class="cstat-no" title="statement not covered" ></span>setMessage(''); </span>}} style={styles.backLink}&gt;
+                                    &lt;ChevronLeft size={16} color="#64748b" /&gt;
+                                    &lt;Text style={styles.backLinkText}&gt;Torna al Login&lt;/Text&gt;
+                                &lt;/TouchableOpacity&gt;
+                            &lt;/View&gt;
+                        )}
+                    &lt;/View&gt;
+                &lt;/ScrollView&gt;
+            &lt;/KeyboardAvoidingView&gt;
+        &lt;/SafeAreaView&gt;
+    );
+}
+&nbsp;
+const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.create({</span>
+    container: { flex: 1, backgroundColor: '#0f172a' },
+    scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 10 },
+    card: { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 30, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', width: '100%', maxWidth: 500, alignSelf: 'center' },
+    heroSection: { alignItems: 'center', marginBottom: 35 },
+    logoContainer: { marginBottom: 20, alignItems: 'center', justifyContent: 'center' },
+    ballOuter: { width: 160, height: 160, borderRadius: 80, alignItems: 'center', justifyContent: 'center', position: 'relative', shadowColor: '#38bdf8', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20 },
+    title: { fontSize: 42, fontWeight: '900', color: '#f8fafc', textAlign: 'center', marginBottom: 8, letterSpacing: -1 },
+    subtitle: { fontSize: 15, color: '#64748b', textAlign: 'center', fontWeight: '500', lineHeight: 22 },
+    messageBox: { flexDirection: 'row', alignItems: 'center', padding: 15, borderRadius: 15, marginBottom: 25, borderWidth: 1 },
+    messageError: { backgroundColor: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.2)' },
+    messageSuccess: { backgroundColor: 'rgba(34,197,94,0.05)', borderColor: 'rgba(34,197,94,0.2)' },
+    messageText: { flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 'bold', marginLeft: 10 },
+    messageTextError: { color: '#ef4444' },
+    messageTextSuccess: { color: '#22c55e' },
+    form: { width: '100%' },
+    inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 15, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 15 },
+    inputIcon: { marginRight: 12 },
+    input: { flex: 1, color: '#f8fafc', paddingVertical: 16, fontSize: 16, fontWeight: '500' },
+    nameRow: { flexDirection: 'row', marginBottom: 16 },
+    primaryButton: { backgroundColor: '#38bdf8', padding: 18, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+    primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    linksContainer: { marginTop: 25, alignItems: 'center', gap: 15 },
+    linkText: { color: '#64748b', fontSize: 14, fontWeight: '500' },
+    linkTextHighlight: { color: '#38bdf8', fontWeight: '900' },
+    forgotText: { color: '#475569', fontSize: 13, fontWeight: 'bold' },
+    helperText: { color: '#64748b', textAlign: 'center', marginBottom: 25, lineHeight: 22, fontSize: 14 },
+    backLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 25 },
+    backLinkText: { color: '#64748b', fontSize: 14, fontWeight: 'bold', marginLeft: 6 }
+});
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-04-24T14:28:12.787Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
+</html>
+    

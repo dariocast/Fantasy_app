@@ -1,5 +1,18 @@
 import { renderHook, act } from '@testing-library/react-native';
+
+jest.mock('../lib/supabase', () => ({
+  supabase: {
+    auth: { 
+      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null })
+    }
+  }
+}));
 import { useStore } from '../store';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
 
 /**
  * Basic integration test for the Zustand store.

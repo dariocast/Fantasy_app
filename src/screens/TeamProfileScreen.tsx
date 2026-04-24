@@ -15,11 +15,7 @@ export default function TeamProfileScreen({ route, navigation }: any) {
     const matches = useStore(s => s.matches).filter(m => m.leagueId === leagueId);
 
     const team = realTeams.find(t => t.id === teamId);
-    if (!team || !league) return (
-        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
-            <View style={st.center}><Text style={st.empty}>Squadra non trovata.</Text></View>
-        </SafeAreaView>
-    );
+
 
     const teamPlayers = players.filter(p => p.realTeamId === teamId);
     const teamMatches = matches.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId);
@@ -55,6 +51,12 @@ export default function TeamProfileScreen({ route, navigation }: any) {
         });
         return { played, won, drawn, lost, gf, gs, pts: won * 3 + drawn, dr: gf - gs };
     }, [teamMatches, teamId]);
+
+    if (!team || !league) return (
+        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
+            <View style={st.center}><Text style={st.empty}>Squadra non trovata.</Text></View>
+        </SafeAreaView>
+    );
 
     return (
         <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>

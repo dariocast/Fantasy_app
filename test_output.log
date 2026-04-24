@@ -1,0 +1,95 @@
+
+> fantalega-mobile@1.0.0 test
+> jest
+
+FAIL src/__tests__/store.test.ts
+  ● Test suite failed to run
+
+    [@RNC/AsyncStorage]: NativeModule: AsyncStorage is null.
+
+    To fix this issue try these steps:
+
+      • Uninstall, rebuild and restart the app.
+
+      • Run the packager with `--reset-cache` flag.
+
+      • If you are using CocoaPods on iOS, run `pod install` in the `ios` directory, then rebuild and re-run the app.
+
+      • Make sure your project's `package.json` depends on `@react-native-async-storage/async-storage`, even if you only depend on it indirectly through other dependencies. CLI only autolinks native modules found in your `package.json`.
+
+      • If this happens while testing with Jest, check out how to integrate AsyncStorage here: https://react-native-async-storage.github.io/async-storage/docs/advanced/jest
+
+    If none of these fix the issue, please open an issue on the GitHub repository: https://github.com/react-native-async-storage/async-storage/issues
+
+      1 | import { create } from 'zustand';
+      2 | import { persist, createJSONStorage } from 'zustand/middleware';
+    > 3 | import AsyncStorage from '@react-native-async-storage/async-storage';
+        | ^
+      4 |
+      5 | // Import slices
+      6 | import { UISlice, createUISlice } from './slices/uiSlice';
+
+      at Object.<anonymous> (node_modules/@react-native-async-storage/async-storage/src/AsyncStorage.native.ts:23:9)
+      at Object.require (node_modules/@react-native-async-storage/async-storage/src/index.ts:1:1)
+      at Object.require (src/store/index.ts:3:1)
+      at Object.require (src/__tests__/store.test.ts:2:1)
+
+-------------------------------|---------|----------|---------|---------|-------------------
+File                           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------------------|---------|----------|---------|---------|-------------------
+All files                      |       0 |        0 |       0 |       0 |                   
+ components                    |       0 |        0 |       0 |       0 |                   
+  ColorPickerModal.tsx         |       0 |        0 |       0 |       0 | 22-226            
+  ErrorBoundary.tsx            |       0 |        0 |       0 |       0 | 19-67             
+  LoadingOverlay.tsx           |       0 |        0 |       0 |       0 | 12-27             
+  MatchCenterModal.tsx         |       0 |        0 |       0 |       0 | 14-264            
+  PremiumAlert.tsx             |       0 |        0 |       0 |       0 | 8-91              
+ config                        |       0 |        0 |       0 |       0 |                   
+  environment.ts               |       0 |        0 |       0 |       0 | 5-29              
+ lib                           |       0 |        0 |       0 |       0 |                   
+  api.ts                       |       0 |        0 |       0 |       0 | 17-43             
+  error-handler.ts             |       0 |        0 |       0 |       0 | 10-70             
+  supabase.ts                  |       0 |        0 |     100 |       0 | 5-12              
+  validation.ts                |       0 |        0 |       0 |       0 | 5-37              
+ navigation                    |       0 |        0 |       0 |       0 |                   
+  DashboardDrawer.tsx          |       0 |        0 |       0 |       0 | 28-228            
+ screens                       |       0 |        0 |       0 |       0 |                   
+  AuthScreen.tsx               |       0 |        0 |       0 |       0 | 11-232            
+  CalendarScreen.tsx           |       0 |        0 |       0 |       0 | 8-250             
+  DashboardScreen.tsx          |       0 |        0 |       0 |       0 | 9-304             
+  FantasyAdminScreen.tsx       |       0 |        0 |       0 |       0 | 11-1256           
+  FantasyStandingsScreen.tsx   |       0 |        0 |       0 |       0 | 8-525             
+  FormationScreen.tsx          |       0 |        0 |       0 |       0 | 8-462             
+  LeaguesScreen.tsx            |       0 |        0 |       0 |       0 | 13-905            
+  LineupsScreen.tsx            |       0 |        0 |       0 |       0 | 9-197             
+  PlayerProfileScreen.tsx      |       0 |        0 |       0 |       0 | 8-138             
+  PredictionsScreen.tsx        |       0 |        0 |       0 |       0 | 9-242             
+  SquadScreen.tsx              |       0 |        0 |       0 |       0 | 10-421            
+  StandingsScreen.tsx          |       0 |        0 |       0 |       0 | 8-122             
+  StatsViewerScreen.tsx        |       0 |        0 |       0 |       0 | 9-161             
+  TeamProfileScreen.tsx        |       0 |        0 |       0 |       0 | 8-177             
+  TeamsViewerScreen.tsx        |       0 |        0 |       0 |       0 | 8-56              
+  TournamentAdminScreen.tsx    |       0 |        0 |       0 |       0 | 16-775            
+  TournamentSettingsScreen.tsx |       0 |        0 |       0 |       0 | 10-532            
+ store                         |       0 |        0 |       0 |       0 |                   
+  index.ts                     |       0 |        0 |       0 |       0 | 18-61             
+ store/slices                  |       0 |        0 |       0 |       0 |                   
+  adminSlice.ts                |       0 |        0 |       0 |       0 | 23-217            
+  authSlice.ts                 |       0 |        0 |       0 |       0 | 18-164            
+  fantasySlice.ts              |       0 |        0 |       0 |       0 | 15-107            
+  leagueSlice.ts               |       0 |        0 |       0 |       0 | 20-155            
+  predictionSlice.ts           |       0 |        0 |       0 |       0 | 17-99             
+  syncSlice.ts                 |       0 |        0 |       0 |       0 | 22-148            
+  uiSlice.ts                   |       0 |      100 |       0 |       0 | 23-27             
+ styles                        |       0 |      100 |     100 |       0 |                   
+  commonStyles.ts              |       0 |      100 |     100 |       0 | 3                 
+ types                         |       0 |        0 |       0 |       0 |                   
+  index.ts                     |       0 |        0 |       0 |       0 |                   
+ utils                         |       0 |        0 |       0 |       0 |                   
+  logger.ts                    |       0 |        0 |       0 |       0 | 6-30              
+-------------------------------|---------|----------|---------|---------|-------------------
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.208 s
+Ran all test suites.

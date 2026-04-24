@@ -31,15 +31,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
     const [selectedTeamForDetail, setSelectedTeamForDetail] = useState<any>(null);
     const [selectedPlayerForDetail, setSelectedPlayerForDetail] = useState<any>(null);
 
-    if (!league || !league.settings.hasFantasy) {
-        return (
-            <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-                <View style={styles.centerContainer}>
-                    <Text style={styles.emptyText}>Torneo non impostato o Fantacalcio disabilitato.</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
+
 
     const playedMatchdaysSet = new Set<number>();
     fantasyTeams.forEach(ft => {
@@ -62,7 +54,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
     });
 
     const playerFantasyLeaderboard = useMemo(() => {
-        const customBonus = league.settings.customBonus || { goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1 };
+        const customBonus = league?.settings?.customBonus || { goal: 3, assist: 1, yellowCard: -0.5, redCard: -1, ownGoal: -2, mvp: 1 };
         const pStats = new Map<string, number>();
         
         allPlayers.forEach(p => {
@@ -76,12 +68,12 @@ export default function FantasyStandingsScreen({ navigation }: any) {
             
             matchPlayers.forEach(p => {
                 let baseVote = 0;
-                if (league.settings.baseVoteType === 'manual') {
+                if (league?.settings?.baseVoteType === 'manual') {
                     baseVote = m.playerVotes?.[p.id] || 0;
                 } else {
                     const isHome = p.realTeamId === m.homeTeamId;
                     const diff = isHome ? (m.homeScore - m.awayScore) : (m.awayScore - m.homeScore);
-                    const bands = league.settings.autoVoteBands || [];
+                    const bands = league?.settings?.autoVoteBands || [];
                     const matchedBand = bands.find(b => diff >= b.minDiff && diff <= b.maxDiff);
                     baseVote = matchedBand ? matchedBand.points : 6;
                 }
@@ -100,7 +92,7 @@ export default function FantasyStandingsScreen({ navigation }: any) {
 
                 let val = 0;
                 // Try to get category-specific bonus first
-                if (league.settings.categoryBonuses?.[type]?.[category] !== undefined) {
+                if (league?.settings?.categoryBonuses?.[type]?.[category] !== undefined) {
                     val = league.settings.categoryBonuses[type][category];
                 } else {
                     if (type === 'goal') val = (customBonus.goal ?? 3);
@@ -121,9 +113,9 @@ export default function FantasyStandingsScreen({ navigation }: any) {
             .sort((a, b) => b.fantasyPoints - a.fantasyPoints);
         if (playerRoleFilter === 'TUTTI') return sorted;
         return sorted.filter(p => p.position === playerRoleFilter);
-    }, [matches, allPlayers, playerBonuses, league.settings.customBonus, playerRoleFilter]);
+    }, [matches, allPlayers, playerBonuses, league?.settings?.customBonus, playerRoleFilter]);
 
-    const roleOptions = ['TUTTI', ...(league.settings.useCustomRoles ? (league.settings.customRoles?.map(r => r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])];
+    const roleOptions = ['TUTTI', ...(league?.settings?.useCustomRoles ? (league.settings.customRoles?.map(r => r.name) || []) : ['POR', 'DIF', 'CEN', 'ATT'])];
 
     const getPosColor = (pos: string) => {
         if (league.settings.useCustomRoles && league.settings.customRoles) {
@@ -387,6 +379,16 @@ export default function FantasyStandingsScreen({ navigation }: any) {
             </Modal>
         );
     };
+
+    if (!league || !league.settings.hasFantasy) {
+        return (
+            <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+                <View style={styles.centerContainer}>
+                    <Text style={styles.emptyText}>Torneo non impostato o Fantacalcio disabilitato.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>

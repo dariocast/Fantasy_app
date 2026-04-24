@@ -14,15 +14,8 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
     const matches = useStore(s => s.matches);
     const realTeams = useStore(s => s.realTeams);
 
-    const player = allPlayers.find(p => p.id === playerId);
-    if (!player || !league) return (
-        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
-            <View style={st.center}><Text style={st.empty}>Giocatore non trovato.</Text></View>
-        </SafeAreaView>
-    );
-
-    const team = realTeams.find(t => t.id === player.realTeamId);
-    const careerPlayers = player.careerId ? allPlayers.filter(p => p.careerId === player.careerId) : [player];
+    const player = allPlayers.find(p => p.id === playerId);    const team = player ? realTeams.find(t => t.id === player.realTeamId) : null;
+    const careerPlayers = player?.careerId ? allPlayers.filter(p => p.careerId === player.careerId) : (player ? [player] : []);
     const currentMatches = matches.filter(m => m.leagueId === leagueId && m.status === 'finished');
 
     const calcStats = (targetPlayers: typeof allPlayers, targetMatches: typeof matches) => {
@@ -43,8 +36,14 @@ export default function PlayerProfileScreen({ route, navigation }: any) {
         return { played, goals, assists, yellows, reds, mvp };
     };
 
-    const currentStats = useMemo(() => calcStats([player], currentMatches), [player, currentMatches]);
+    const currentStats = useMemo(() => player ? calcStats([player], currentMatches) : calcStats([], []), [player, currentMatches]);
     const careerStats = useMemo(() => calcStats(careerPlayers, matches.filter(m => m.status === 'finished')), [careerPlayers, matches]);
+
+    if (!player || !league) return (
+        <SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}>
+            <View style={st.center}><Text style={st.empty}>Giocatore non trovato.</Text></View>
+        </SafeAreaView>
+    );
 
     const catColors: Record<string, string> = { POR: '#FF9800', DIF: '#2196F3', CEN: '#4CAF50', ATT: '#F44336' };
     const posColor = league.settings.customRoles?.find(r => r.name === player.position)?.color || catColors[player.position] || '#94a3b8';

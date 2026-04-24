@@ -1,0 +1,81 @@
+
+> fantalega-mobile@1.0.0 test
+> jest
+
+FAIL src/__tests__/store.test.ts
+  ● Test suite failed to run
+
+    Mancano le variabili d'ambiente di Supabase. Controlla il file .env
+
+       7 |
+       8 | if (!supabaseUrl || !supabaseAnonKey) {
+    >  9 |     throw new Error('Mancano le variabili d\'ambiente di Supabase. Controlla il file .env');
+         |           ^
+      10 | }
+      11 |
+      12 | export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+
+      at Object.<anonymous> (src/lib/supabase.ts:9:11)
+      at Object.require (src/store/slices/authSlice.ts:2:1)
+      at Object.require (src/store/index.ts:7:1)
+      at Object.require (src/__tests__/store.test.ts:5:1)
+
+-------------------------------|---------|----------|---------|---------|-------------------
+File                           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------------------|---------|----------|---------|---------|-------------------
+All files                      |       0 |        0 |       0 |       0 |                   
+ components                    |       0 |        0 |       0 |       0 |                   
+  ColorPickerModal.tsx         |       0 |        0 |       0 |       0 | 22-226            
+  ErrorBoundary.tsx            |       0 |        0 |       0 |       0 | 19-67             
+  LoadingOverlay.tsx           |       0 |        0 |       0 |       0 | 12-27             
+  MatchCenterModal.tsx         |       0 |        0 |       0 |       0 | 14-264            
+  PremiumAlert.tsx             |       0 |        0 |       0 |       0 | 8-91              
+ config                        |       0 |        0 |       0 |       0 |                   
+  environment.ts               |       0 |        0 |       0 |       0 | 5-29              
+ lib                           |       0 |        0 |       0 |       0 |                   
+  api.ts                       |       0 |        0 |       0 |       0 | 17-43             
+  error-handler.ts             |       0 |        0 |       0 |       0 | 10-70             
+  supabase.ts                  |       0 |        0 |     100 |       0 | 5-12              
+  validation.ts                |       0 |        0 |       0 |       0 | 5-37              
+ navigation                    |       0 |        0 |       0 |       0 |                   
+  DashboardDrawer.tsx          |       0 |        0 |       0 |       0 | 28-228            
+ screens                       |       0 |        0 |       0 |       0 |                   
+  AuthScreen.tsx               |       0 |        0 |       0 |       0 | 11-232            
+  CalendarScreen.tsx           |       0 |        0 |       0 |       0 | 8-250             
+  DashboardScreen.tsx          |       0 |        0 |       0 |       0 | 9-304             
+  FantasyAdminScreen.tsx       |       0 |        0 |       0 |       0 | 11-1256           
+  FantasyStandingsScreen.tsx   |       0 |        0 |       0 |       0 | 8-525             
+  FormationScreen.tsx          |       0 |        0 |       0 |       0 | 8-462             
+  LeaguesScreen.tsx            |       0 |        0 |       0 |       0 | 13-905            
+  LineupsScreen.tsx            |       0 |        0 |       0 |       0 | 9-197             
+  PlayerProfileScreen.tsx      |       0 |        0 |       0 |       0 | 8-138             
+  PredictionsScreen.tsx        |       0 |        0 |       0 |       0 | 9-242             
+  SquadScreen.tsx              |       0 |        0 |       0 |       0 | 10-421            
+  StandingsScreen.tsx          |       0 |        0 |       0 |       0 | 8-122             
+  StatsViewerScreen.tsx        |       0 |        0 |       0 |       0 | 9-161             
+  TeamProfileScreen.tsx        |       0 |        0 |       0 |       0 | 8-177             
+  TeamsViewerScreen.tsx        |       0 |        0 |       0 |       0 | 8-56              
+  TournamentAdminScreen.tsx    |       0 |        0 |       0 |       0 | 16-775            
+  TournamentSettingsScreen.tsx |       0 |        0 |       0 |       0 | 10-532            
+ store                         |       0 |        0 |       0 |       0 |                   
+  index.ts                     |       0 |        0 |       0 |       0 | 18-61             
+ store/slices                  |       0 |        0 |       0 |       0 |                   
+  adminSlice.ts                |       0 |        0 |       0 |       0 | 23-217            
+  authSlice.ts                 |       0 |        0 |       0 |       0 | 18-164            
+  fantasySlice.ts              |       0 |        0 |       0 |       0 | 15-107            
+  leagueSlice.ts               |       0 |        0 |       0 |       0 | 20-155            
+  predictionSlice.ts           |       0 |        0 |       0 |       0 | 17-99             
+  syncSlice.ts                 |       0 |        0 |       0 |       0 | 22-148            
+  uiSlice.ts                   |       0 |      100 |       0 |       0 | 23-27             
+ styles                        |       0 |      100 |     100 |       0 |                   
+  commonStyles.ts              |       0 |      100 |     100 |       0 | 3                 
+ types                         |       0 |        0 |       0 |       0 |                   
+  index.ts                     |       0 |        0 |       0 |       0 |                   
+ utils                         |       0 |        0 |       0 |       0 |                   
+  logger.ts                    |       0 |        0 |       0 |       0 | 6-30              
+-------------------------------|---------|----------|---------|---------|-------------------
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.262 s
+Ran all test suites.

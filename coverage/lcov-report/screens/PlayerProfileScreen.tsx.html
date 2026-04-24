@@ -1,0 +1,577 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for screens/PlayerProfileScreen.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">screens</a> PlayerProfileScreen.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/62</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/54</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/22</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/34</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useStore } from '../store';
+import { User, Shield, Star, Award, TrendingUp, Info, ChevronLeft } from 'lucide-react-native';
+&nbsp;
+export default function <span class="fstat-no" title="function not covered" >PlayerProfileScreen(</span>{ route, navigation }: any) {
+    const { playerId } = <span class="cstat-no" title="statement not covered" >route.params;</span>
+    const leagues = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >s </span>=&gt; <span class="cstat-no" title="statement not covered" >s.leagues)</span>;</span>
+    const league = <span class="cstat-no" title="statement not covered" >leagues.length &gt; 0 ? leagues[0] : null;</span>
+    const leagueId = <span class="cstat-no" title="statement not covered" >league?.id || '';</span>
+&nbsp;
+    const allPlayers = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >s </span>=&gt; <span class="cstat-no" title="statement not covered" >s.players)</span>;</span>
+    const matches = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >s </span>=&gt; <span class="cstat-no" title="statement not covered" >s.matches)</span>;</span>
+    const realTeams = <span class="cstat-no" title="statement not covered" >useStore(<span class="fstat-no" title="function not covered" >s </span>=&gt; <span class="cstat-no" title="statement not covered" >s.realTeams)</span>;</span>
+&nbsp;
+    const player = <span class="cstat-no" title="statement not covered" >allPlayers.find(<span class="fstat-no" title="function not covered" >p </span>=&gt; <span class="cstat-no" title="statement not covered" >p.id === playerId)</span>;</span>    const team = <span class="cstat-no" title="statement not covered" >player ? realTeams.find(<span class="fstat-no" title="function not covered" >t </span>=&gt; <span class="cstat-no" title="statement not covered" >t.id === player.realTeamId)</span> : null;</span>
+    const careerPlayers = <span class="cstat-no" title="statement not covered" >player?.careerId ? allPlayers.filter(<span class="fstat-no" title="function not covered" >p </span>=&gt; <span class="cstat-no" title="statement not covered" >p.careerId === player.careerId)</span> : (player ? [player] : []);</span>
+    const currentMatches = <span class="cstat-no" title="statement not covered" >matches.filter(<span class="fstat-no" title="function not covered" >m </span>=&gt; <span class="cstat-no" title="statement not covered" >m.leagueId === leagueId &amp;&amp; m.status === 'finished')</span>;</span>
+&nbsp;
+    const calcStats = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>argetPlayers: typeof allPlayers, targetMatches: typeof matches) =&gt; {</span>
+        const ids = <span class="cstat-no" title="statement not covered" >targetPlayers.map(<span class="fstat-no" title="function not covered" >p </span>=&gt; <span class="cstat-no" title="statement not covered" >p.id)</span>;</span>
+        let played = <span class="cstat-no" title="statement not covered" >0,</span> goals = <span class="cstat-no" title="statement not covered" >0,</span> assists = <span class="cstat-no" title="statement not covered" >0,</span> yellows = <span class="cstat-no" title="statement not covered" >0,</span> reds = <span class="cstat-no" title="statement not covered" >0,</span> mvp = <span class="cstat-no" title="statement not covered" >0;</span>
+<span class="cstat-no" title="statement not covered" >        targetMatches.forEach(<span class="fstat-no" title="function not covered" >m </span>=&gt; {</span>
+            const pEvents = <span class="cstat-no" title="statement not covered" >(m.events || []).filter(<span class="fstat-no" title="function not covered" >e </span>=&gt; <span class="cstat-no" title="statement not covered" >ids.includes(e.playerId))</span>;</span>
+            const hasVote = <span class="cstat-no" title="statement not covered" >ids.some(<span class="fstat-no" title="function not covered" >id</span> =&gt; <span class="cstat-no" title="statement not covered" >m.playerVotes &amp;&amp; typeof m.playerVotes[id] === 'number' &amp;&amp; m.playerVotes[id] &gt; 0)</span>;</span>
+<span class="cstat-no" title="statement not covered" >            if (pEvents.length &gt; 0 || hasVote) <span class="cstat-no" title="statement not covered" >played++;</span></span>
+<span class="cstat-no" title="statement not covered" >            pEvents.forEach(<span class="fstat-no" title="function not covered" >e </span>=&gt; {</span>
+<span class="cstat-no" title="statement not covered" >                if (e.type === 'goal') <span class="cstat-no" title="statement not covered" >goals++;</span></span>
+<span class="cstat-no" title="statement not covered" >                if (e.type === 'assist') <span class="cstat-no" title="statement not covered" >assists++;</span></span>
+<span class="cstat-no" title="statement not covered" >                if (e.type === 'yellow_card') <span class="cstat-no" title="statement not covered" >yellows++;</span></span>
+<span class="cstat-no" title="statement not covered" >                if (e.type === 'red_card') <span class="cstat-no" title="statement not covered" >reds++;</span></span>
+<span class="cstat-no" title="statement not covered" >                if (e.type === 'mvp') <span class="cstat-no" title="statement not covered" >mvp++;</span></span>
+            });
+        });
+<span class="cstat-no" title="statement not covered" >        return { played, goals, assists, yellows, reds, mvp };</span>
+    };
+&nbsp;
+    const currentStats = <span class="cstat-no" title="statement not covered" >useMemo(<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >player ? calcStats([player], currentMatches) : calcStats([], []),</span> [player, currentMatches]);</span>
+    const careerStats = <span class="cstat-no" title="statement not covered" >useMemo(<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >calcStats(careerPlayers, matches.filter(<span class="fstat-no" title="function not covered" >m </span>=&gt; <span class="cstat-no" title="statement not covered" >m.status === 'finished')</span>),</span> [careerPlayers, matches]);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    if (!player || !league) <span class="cstat-no" title="statement not covered" >return (</span></span>
+        &lt;SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}&gt;
+            &lt;View style={st.center}&gt;&lt;Text style={st.empty}&gt;Giocatore non trovato.&lt;/Text&gt;&lt;/View&gt;
+        &lt;/SafeAreaView&gt;
+    );
+&nbsp;
+    const catColors: Record&lt;string, string&gt; = <span class="cstat-no" title="statement not covered" >{ POR: '#FF9800', DIF: '#2196F3', CEN: '#4CAF50', ATT: '#F44336' };</span>
+    const posColor = <span class="cstat-no" title="statement not covered" >league.settings.customRoles?.find(<span class="fstat-no" title="function not covered" >r </span>=&gt; <span class="cstat-no" title="statement not covered" >r.name === player.position)</span>?.color || catColors[player.position] || '#94a3b8';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    return (</span>
+        &lt;SafeAreaView style={st.container} edges={['bottom', 'left', 'right']}&gt;
+            &lt;View style={st.header}&gt;
+                &lt;TouchableOpacity onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >navigation.goBack()}</span> style={st.backBtn}&gt;
+                    &lt;ChevronLeft color="#f8fafc" size={24} /&gt;
+                &lt;/TouchableOpacity&gt;
+                &lt;Text style={st.headerTitle}&gt;Profilo Giocatore&lt;/Text&gt;
+                &lt;View style={{ width: 40 }} /&gt;
+            &lt;/View&gt;
+&nbsp;
+            &lt;ScrollView contentContainerStyle={st.content} showsVerticalScrollIndicator={false}&gt;
+                &lt;View style={st.hero}&gt;
+                    &lt;View style={st.avatarContainer}&gt;
+                        {player.photo ? (
+                            &lt;Image source={{ uri: player.photo }} style={[st.avatar, { borderColor: posColor }]} /&gt;
+                        ) : (
+                            &lt;View style={[st.avatar, { borderColor: posColor, backgroundColor: 'rgba(255,255,255,0.03)' }]}&gt;
+                                &lt;User color={posColor} size={40} /&gt;
+                            &lt;/View&gt;
+                        )}
+                        &lt;View style={[st.posBadge, { backgroundColor: posColor }]}&gt;
+                            &lt;Text style={st.posBadgeText}&gt;{player.position}&lt;/Text&gt;
+                        &lt;/View&gt;
+                    &lt;/View&gt;
+&nbsp;
+                    &lt;Text style={st.heroName}&gt;{player.name}&lt;/Text&gt;
+                    
+                    {team &amp;&amp; (
+                        &lt;TouchableOpacity style={st.teamContainer} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >navigation.navigate('TeamProfile', { teamId: team.id })}</span>&gt;
+                            &lt;Shield size={14} color="#64748b" style={{ marginRight: 6 }} /&gt;
+                            &lt;Text style={st.teamLink}&gt;{team.name}&lt;/Text&gt;
+                        &lt;/TouchableOpacity&gt;
+                    )}
+&nbsp;
+                    &lt;View style={st.badgeRow}&gt;
+                        &lt;View style={st.infoBadge}&gt;
+                            &lt;Text style={st.infoBadgeLabel}&gt;ETÀ&lt;/Text&gt;
+                            &lt;Text style={st.infoBadgeValue}&gt;{player.age}&lt;/Text&gt;
+                        &lt;/View&gt;
+                        &lt;View style={st.infoBadge}&gt;
+                            &lt;Text style={st.infoBadgeLabel}&gt;RUOLO&lt;/Text&gt;
+                            &lt;Text style={st.infoBadgeValue}&gt;{player.realPosition || '?'}&lt;/Text&gt;
+                        &lt;/View&gt;
+                        {league.settings.hasFantasy &amp;&amp; (
+                            &lt;View style={st.infoBadge}&gt;
+                                &lt;Text style={st.infoBadgeLabel}&gt;QUOT.&lt;/Text&gt;
+                                &lt;Text style={st.infoBadgeValue}&gt;€{player.price || 1}&lt;/Text&gt;
+                            &lt;/View&gt;
+                        )}
+                    &lt;/View&gt;
+                &lt;/View&gt;
+&nbsp;
+                &lt;Text style={st.sectionTitle}&gt;Statistiche Torneo Corrente&lt;/Text&gt;
+                &lt;View style={st.statsGrid}&gt;
+                    &lt;StatCard label="Presenze" value={currentStats.played} /&gt;
+                    &lt;StatCard label="Gol" value={currentStats.goals} /&gt;
+                    &lt;StatCard label="Assist" value={currentStats.assists} /&gt;
+                    &lt;StatCard label="Amm." value={currentStats.yellows} color="#FFEB3B" /&gt;
+                    &lt;StatCard label="Esp." value={currentStats.reds} color="#F44336" /&gt;
+                    &lt;StatCard label="MVP" value={currentStats.mvp} color="#fbbf24" /&gt;
+                &lt;/View&gt;
+&nbsp;
+                {player.careerId &amp;&amp; careerPlayers.length &gt; 1 &amp;&amp; (
+                    &lt;&gt;
+                        &lt;Text style={st.sectionTitle}&gt;Statistiche di Carriera&lt;/Text&gt;
+                        &lt;Text style={st.careerSub}&gt;Aggregato da {careerPlayers.length} edizioni.&lt;/Text&gt;
+                        &lt;View style={st.statsGrid}&gt;
+                            &lt;StatCard label="Presenze" value={careerStats.played} /&gt;
+                            &lt;StatCard label="Gol Totali" value={careerStats.goals} /&gt;
+                            &lt;StatCard label="Assist Totali" value={careerStats.assists} /&gt;
+                        &lt;/View&gt;
+                    &lt;/&gt;
+                )}
+            &lt;/ScrollView&gt;
+        &lt;/SafeAreaView&gt;
+    );
+}
+&nbsp;
+function <span class="fstat-no" title="function not covered" >StatCard(</span>{ label, value, color = <span class="branch-0 cbranch-no" title="branch not covered" >'#f8fafc' </span>}: { label: string; value: number; color?: string }) {
+<span class="cstat-no" title="statement not covered" >    return (</span>
+        &lt;View style={st.statCard}&gt;
+            &lt;Text style={[st.statValue, { color }]}&gt;{value}&lt;/Text&gt;
+            &lt;Text style={st.statLabel}&gt;{label}&lt;/Text&gt;
+        &lt;/View&gt;
+    );
+}
+&nbsp;
+const st = <span class="cstat-no" title="statement not covered" >StyleSheet.create({</span>
+    container: { flex: 1, backgroundColor: '#0f172a' },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
+    headerTitle: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold' },
+    backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' },
+    empty: { color: '#475569', fontSize: 16 },
+    content: { padding: 16, paddingBottom: 60 },
+    hero: { alignItems: 'center', marginBottom: 40, marginTop: 10 },
+    avatarContainer: { position: 'relative', marginBottom: 20 },
+    avatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, backgroundColor: 'rgba(255,255,255,0.02)' },
+    posBadge: { position: 'absolute', bottom: 0, right: 0, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 3, borderColor: '#0f172a' },
+    posBadgeText: { color: '#fff', fontSize: 12, fontWeight: '900' },
+    heroName: { color: '#f8fafc', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 5 },
+    teamContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 25, backgroundColor: 'rgba(255,255,255,0.03)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+    teamLink: { color: '#64748b', fontSize: 14, fontWeight: 'bold' },
+    badgeRow: { flexDirection: 'row', gap: 10 },
+    infoBadge: { backgroundColor: 'rgba(255,255,255,0.03)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, alignItems: 'center', minWidth: 80, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    infoBadgeLabel: { color: '#475569', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 },
+    infoBadgeValue: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold' },
+    sectionTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '900', marginBottom: 15, textTransform: 'uppercase', letterSpacing: 1, marginLeft: 4 },
+    careerSub: { color: '#475569', fontSize: 12, marginBottom: 15, marginLeft: 4, fontWeight: 'bold' },
+    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, marginBottom: 35 },
+    statCard: { width: '31%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 24, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    statValue: { fontSize: 24, fontWeight: '900', marginBottom: 4 },
+    statLabel: { color: '#64748b', fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+});
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-04-24T14:28:12.787Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
+</html>
+    
