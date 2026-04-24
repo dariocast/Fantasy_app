@@ -12,21 +12,39 @@
       "backgroundColor": "#0f172a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fantalega.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "L'app ha bisogno della fotocamera per farti scattare una foto per il profilo e per il logo della squadra.",
+        "NSPhotoLibraryUsageDescription": "L'app ha bisogno di accedere alla galleria per permetterti di caricare il logo della tua squadra e la foto profilo."
+      }
     },
     "android": {
+      "package": "com.fantalega.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'app ha bisogno di accedere alla galleria per permetterti di caricare il logo della tua squadra.",
+          "cameraPermission": "L'app ha bisogno della fotocamera per farti scattare una foto per il profilo."
+        }
+      ]
     ]
   }
 }

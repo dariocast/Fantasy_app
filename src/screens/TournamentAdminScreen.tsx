@@ -336,7 +336,12 @@ export default function TournamentAdminScreen({ navigation }: any) {
         const eliminazioneMatches = sortedMatches.filter(m => m.matchType === 'eliminazione');
 
         // Group matches by phase number for bracket
-        const phaseGroups = Array.from(new Set(eliminazioneMatches.filter(m => m.phaseNumber).map(m => m.phaseNumber!))).sort((a, b) => a - b);
+        const groupedKnockout = eliminazioneMatches.reduce((acc, m) => {
+            const key = m.stage || `Fase ${m.phaseNumber || '?'}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(m);
+            return acc;
+        }, {} as Record<string, Match[]>);
 
         return (
             <View>
@@ -416,16 +421,15 @@ export default function TournamentAdminScreen({ navigation }: any) {
                             <Text style={styles.sectionTitle}>Tabellone Eliminazione Diretta</Text>
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bracketScroll}>
-                            {phaseGroups.length === 0 && <Text style={styles.emptyInfo}>Nessuna partita a eliminazione diretta creata.</Text>}
-                            {phaseGroups.map(pNum => (
-                                <View key={pNum} style={styles.bracketColumn}>
+                            {Object.keys(groupedKnockout).length === 0 && <Text style={styles.emptyInfo}>Nessuna partita a eliminazione diretta creata.</Text>}
+                            {Object.entries(groupedKnockout).map(([stage, phaseMatches]) => (
+                                <View key={stage} style={styles.bracketColumn}>
                                     <View style={styles.bracketColHeader}>
                                         <Text style={[styles.bracketColTitle, { fontSize: 16 }]}>
-                                            {eliminazioneMatches.find(m => m.phaseNumber === pNum)?.stage?.toUpperCase() || 'ELIMINAZIONE'}
+                                            {stage.toUpperCase()}
                                         </Text>
-                                        <Text style={[styles.bracketColSub, { fontSize: 9, opacity: 0.7 }]}>FASE {pNum}</Text>
                                     </View>
-                                    {eliminazioneMatches.filter(m => m.phaseNumber === pNum).map(m => (
+                                    {phaseMatches.map(m => (
                                         <View key={m.id} style={styles.bracketMatch}>
                                             <View style={styles.bracketMatchTeam}>
                                                 <Text style={styles.bracketTeamName} numberOfLines={1}>{realTeams.find(t => t.id === m.homeTeamId)?.name}</Text>

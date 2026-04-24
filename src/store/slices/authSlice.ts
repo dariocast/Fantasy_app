@@ -12,6 +12,7 @@ export interface AuthSlice {
     updateUser: (user: User) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (params: { email: string; password: string; firstName: string; lastName: string }) => Promise<void>;
+    deleteAccount: () => Promise<void>;
 }
 
 export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlice> = (set, get) => ({
@@ -129,6 +130,36 @@ export const createAuthSlice: StateCreator<AuthSlice & UISlice, [], [], AuthSlic
             if (error) throw error;
         } catch (err: any) {
             handleError(err, 'Aggiornamento profilo');
+        } finally {
+            get().setLoading(false);
+        }
+    },
+
+    deleteAccount: async () => {
+        get().setLoading(true);
+        try {
+            const user = get().currentUser;
+            if (!user) throw new Error('Nessun utente autenticato');
+
+            // 1. Prova a chiamare l'RPC per eliminare l'utente da auth.users
+            const { error: rpcError } = await supabase.rpc('delete_user');
+
+            // 2. Se l'RPC fallisce (magari non è stata ancora creata su Supabase),
+            // eliminiamo almeno il record del profilo e scolleghiamo l'utente
+            if (rpcError) {
+                console.warn('RPC delete_user failed or not found, falling back to profile deletion:', rpcError);
+                await supabase.from('profiles').delete().eq('id', user.id);
+            }
+
+            // 3. Logout locale
+            await supabase.auth.signOut();
+            set({ currentUser: null });
+
+            // Note: DashboardDrawer already handles navigating to Auth screen
+            // and resetting the rest of the store.
+        } catch (err: any) {
+            handleError(err, 'Eliminazione Account');
+            throw err;
         } finally {
             get().setLoading(false);
         }

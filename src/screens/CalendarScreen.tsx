@@ -139,7 +139,12 @@ export default function CalendarScreen({ navigation }: any) {
 
     const renderBracketView = () => {
         const knockoutMatches = matches.filter(m => m.matchType === 'eliminazione' || m.matchType === 'playout');
-        const phaseGroups = Array.from(new Set(knockoutMatches.filter(m => m.phaseNumber).map(m => m.phaseNumber!))).sort((a, b) => a - b);
+        const groupedKnockout = knockoutMatches.reduce((acc, m) => {
+            const key = m.stage || `Fase ${m.phaseNumber || '?'}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(m);
+            return acc;
+        }, {} as Record<string, Match[]>);
 
         if (knockoutMatches.length === 0) {
             return <Text style={styles.emptyText}>Nessuna partita ad eliminazione diretta programmata.</Text>;
@@ -147,14 +152,12 @@ export default function CalendarScreen({ navigation }: any) {
 
         return (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bracketScroll}>
-                {phaseGroups.map(pNum => (
-                    <View key={pNum} style={styles.bracketColumn}>
+                {Object.entries(groupedKnockout).map(([stage, phaseMatches]) => (
+                    <View key={stage} style={styles.bracketColumn}>
                         <View style={styles.bracketColHeader}>
-                            <Text style={styles.bracketColTitle}>
-                                {knockoutMatches.find(m => m.phaseNumber === pNum)?.stage?.toUpperCase() || `FASE ${pNum}`}
-                            </Text>
+                            <Text style={styles.bracketColTitle}>{stage.toUpperCase()}</Text>
                         </View>
-                        {knockoutMatches.filter(m => m.phaseNumber === pNum).map(m => {
+                        {phaseMatches.map(m => {
                             const home = realTeams.find(t => t.id === m.homeTeamId);
                             const away = realTeams.find(t => t.id === m.awayTeamId);
                             return (

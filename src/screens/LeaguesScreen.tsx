@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Dimensions, Platform, KeyboardAvoidingView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Dimensions, Platform, KeyboardAvoidingView, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useStore } from '../store';
 import { v4 as uuidv4 } from 'uuid';
 import type { League, TournamentType } from '../types';
-import { Trash2, Edit3, EyeOff, Eye, ChevronRight, Plus, LogIn, Trophy, Users, Settings, LogOut, Shield, Info, CheckCircle2, Image as ImageIcon } from 'lucide-react-native';
+import { Trash2, Edit3, EyeOff, Eye, ChevronRight, Plus, LogIn, Trophy, Users, Settings, LogOut, Shield, Info, CheckCircle2, Image as ImageIcon, User as UserIcon, X } from 'lucide-react-native';
 import ColorPickerModal from '../components/ColorPickerModal';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
@@ -21,8 +21,10 @@ export default function LeaguesScreen({ navigation }: any) {
     const setActiveLeagueId = useStore(state => state.setActiveLeagueId);
     const isLoading = useStore(state => state.isLoading);
     const showNotification = useStore(state => state.showNotification);
+    const deleteAccount = useStore(state => state.deleteAccount);
 
     const [mode, setMode] = useState<'list' | 'create' | 'join' | 'manage'>('list');
+    const [profileModalVisible, setProfileModalVisible] = useState(false);
     const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
 
     // ═══ Step 1: Info Base ═══
@@ -253,6 +255,29 @@ export default function LeaguesScreen({ navigation }: any) {
         navigation.replace('Auth');
     };
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            "Elimina Account",
+            "Sei sicuro di voler eliminare permanentemente il tuo account? Questa azione è irreversibile e perderai l'accesso a tutti i tuoi tornei.",
+            [
+                { text: "Annulla", style: "cancel" },
+                {
+                    text: "Elimina",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setProfileModalVisible(false);
+                            await deleteAccount();
+                            navigation.replace('Auth');
+                        } catch (e) {
+                            // Errore gestito dallo slice
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const openLeague = (leagueId: string) => {
         setActiveLeagueId(leagueId);
         navigation.replace('AppDrawer', { leagueId });
@@ -318,503 +343,549 @@ export default function LeaguesScreen({ navigation }: any) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <View>
-                    <Text style={styles.headerSubtitle}>Benvenuto,</Text>
-                    <Text style={styles.headerTitle}>{currentUser.firstName}</Text>
-                </View>
+                <TouchableOpacity onPress={() => setProfileModalVisible(true)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(56, 189, 248, 0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                        <UserIcon size={20} color="#38bdf8" />
+                    </View>
+                    <View>
+                        <Text style={styles.headerSubtitle}>Benvenuto,</Text>
+                        <Text style={styles.headerTitle}>{currentUser.firstName}</Text>
+                    </View>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
                     <LogOut size={20} color="#ef4444" />
                 </TouchableOpacity>
             </View>
 
-            <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <ScrollView 
-                    contentContainerStyle={styles.content} 
+                <ScrollView
+                    contentContainerStyle={styles.content}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
 
-                {/* ═══════ LIST MODE ═══════ */}
-                {mode === 'list' && (
-                    <View>
-                        <View style={styles.sectionHeader}>
-                            <Trophy size={20} color="#fbbf24" style={{ marginRight: 10 }} />
-                            <Text style={styles.sectionTitle}>I tuoi Tornei</Text>
-                        </View>
-
-                        {visibleLeagues.length === 0 ? (
-                            <View style={styles.emptyState}>
-                                <Info size={40} color="rgba(255,255,255,0.05)" />
-                                <Text style={styles.emptyText}>Non hai nessun torneo visibile al momento.</Text>
+                    {/* ═══════ LIST MODE ═══════ */}
+                    {mode === 'list' && (
+                        <View>
+                            <View style={styles.sectionHeader}>
+                                <Trophy size={20} color="#fbbf24" style={{ marginRight: 10 }} />
+                                <Text style={styles.sectionTitle}>I tuoi Tornei</Text>
                             </View>
-                        ) : (
-                            visibleLeagues.map(league => (
-                                <TouchableOpacity key={league.id} style={styles.leagueCard} onPress={() => openLeague(league.id)} activeOpacity={0.8}>
-                                    <View style={styles.cardTopRow}>
-                                        <View style={styles.leagueIconBox}>
-                                            {league.logo ? (
-                                                <Image source={{ uri: league.logo }} style={{ width: 48, height: 48, borderRadius: 15 }} />
-                                            ) : (
-                                                <Shield size={24} color="#38bdf8" />
-                                            )}
-                                        </View>
-                                        <View style={{ flex: 1, marginLeft: 15 }}>
-                                            <Text style={styles.leagueName}>{league.name}</Text>
-                                            <View style={styles.leagueMeta}>
-                                                <Text style={styles.leagueRoleBadge}>
-                                                    {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : 'Membro'}
-                                                </Text>
-                                                {league.seriesName && <Text style={styles.seriesNameText}>· {league.seriesName}</Text>}
+
+                            {visibleLeagues.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Info size={40} color="rgba(255,255,255,0.05)" />
+                                    <Text style={styles.emptyText}>Non hai nessun torneo visibile al momento.</Text>
+                                </View>
+                            ) : (
+                                visibleLeagues.map(league => (
+                                    <TouchableOpacity key={league.id} style={styles.leagueCard} onPress={() => openLeague(league.id)} activeOpacity={0.8}>
+                                        <View style={styles.cardTopRow}>
+                                            <View style={styles.leagueIconBox}>
+                                                {league.logo ? (
+                                                    <Image source={{ uri: league.logo }} style={{ width: 48, height: 48, borderRadius: 15 }} />
+                                                ) : (
+                                                    <Shield size={24} color="#38bdf8" />
+                                                )}
                                             </View>
+                                            <View style={{ flex: 1, marginLeft: 15 }}>
+                                                <Text style={styles.leagueName}>{league.name}</Text>
+                                                <View style={styles.leagueMeta}>
+                                                    <Text style={styles.leagueRoleBadge}>
+                                                        {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : 'Membro'}
+                                                    </Text>
+                                                    {league.seriesName && <Text style={styles.seriesNameText}>· {league.seriesName}</Text>}
+                                                </View>
+                                            </View>
+                                            <ChevronRight size={20} color="#475569" />
                                         </View>
-                                        <ChevronRight size={20} color="#475569" />
-                                    </View>
+                                    </TouchableOpacity>
+                                ))
+                            )}
+
+                            <View style={styles.actionsBox}>
+                                <TouchableOpacity
+                                    style={styles.primaryBtn}
+                                    onPress={() => { setMode('create'); setCreateStep(1); }}
+                                    activeOpacity={0.8}
+                                >
+                                    <Plus size={20} color="#fff" style={{ marginRight: 10 }} />
+                                    <Text style={styles.primaryBtnText}>Crea Nuovo Torneo</Text>
                                 </TouchableOpacity>
-                            ))
-                        )}
-
-                        <View style={styles.actionsBox}>
-                            <TouchableOpacity
-                                style={styles.primaryBtn}
-                                onPress={() => { setMode('create'); setCreateStep(1); }}
-                                activeOpacity={0.8}
-                            >
-                                <Plus size={20} color="#fff" style={{ marginRight: 10 }} />
-                                <Text style={styles.primaryBtnText}>Crea Nuovo Torneo</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('join')} activeOpacity={0.8}>
-                                <LogIn size={20} color="#38bdf8" style={{ marginRight: 10 }} />
-                                <Text style={styles.secondaryBtnText}>Unisciti a un Torneo</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.manageBtn} onPress={() => setMode('manage')} activeOpacity={0.8}>
-                                <Settings size={20} color="#64748b" style={{ marginRight: 10 }} />
-                                <Text style={styles.manageBtnText}>Gestisci Tornei</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
-
-                {/* ═══════ MANAGE MODE ═══════ */}
-                {mode === 'manage' && (
-                    <View style={styles.formCard}>
-                        <View style={styles.formHeaderRow}>
-                            <Text style={styles.wizardTitle}>Gestisci Tornei</Text>
-                            <TouchableOpacity onPress={() => setMode('list')} style={styles.backLink}>
-                                <ChevronRight size={16} color="#38bdf8" style={{ transform: [{ rotate: '180deg' }] }} />
-                                <Text style={styles.backLinkText}>Indietro</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <Text style={styles.helpText}>Personalizza la visibilità dei tuoi tornei.</Text>
-
-                        {userLeagues.map(league => {
-                            const isHidden = hiddenLeagueIds.includes(league.id);
-                            return (
-                                <View key={league.id} style={styles.manageRow}>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.manageName}>{league.name}</Text>
-                                        <Text style={styles.manageRoleLabel}>
-                                            {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : 'Utente'}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.manageActions}>
-                                        <TouchableOpacity onPress={() => handleEditLeague(league)} style={styles.miniActionBtn}>
-                                            <Edit3 size={16} color="#fbbf24" />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => handleDeleteLeague(league)} style={styles.miniActionBtn}>
-                                            <Trash2 size={16} color="#ef4444" />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.manageBtnToggle, isHidden && styles.manageBtnShow]}
-                                            onPress={() => toggleHideLeague(league.id)}
-                                        >
-                                            {isHidden ? <Eye size={16} color="#22c55e" /> : <EyeOff size={16} color="#ef4444" />}
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            );
-                        })}
-                    </View>
-                )}
-
-                {/* ═══════ CREATE MODE ═══════ */}
-                {mode === 'create' && (
-                    <View style={styles.formCard}>
-                        {/* Header + Step Indicator */}
-                        <View style={styles.formHeaderRow}>
-                            <Text style={styles.wizardTitle}>
-                                {createStep === 1 ? 'Configurazione' : createStep === 2 ? 'Formula' : 'Fantacalcio'}
-                            </Text>
-                            <View style={styles.stepBadge}>
-                                <Text style={styles.stepBadgeText}>{createStep} di 3</Text>
+                                <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('join')} activeOpacity={0.8}>
+                                    <LogIn size={20} color="#38bdf8" style={{ marginRight: 10 }} />
+                                    <Text style={styles.secondaryBtnText}>Unisciti a un Torneo</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.manageBtn} onPress={() => setMode('manage')} activeOpacity={0.8}>
+                                    <Settings size={20} color="#64748b" style={{ marginRight: 10 }} />
+                                    <Text style={styles.manageBtnText}>Gestisci Tornei</Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
+                    )}
 
-                        {/* Progress Bar */}
-                        <View style={styles.progressBar}>
-                            {[1, 2, 3].map(step => (
-                                <View key={step} style={[styles.progressSegment, step <= createStep && styles.progressSegmentActive]} />
-                            ))}
-                        </View>
-
-                        {/* ─── STEP 1 ─── */}
-                        {createStep === 1 && (
-                            <View>
-                                <Text style={styles.label}>Nome del Torneo *</Text>
-                                <TextInput
-                                    style={[styles.input, { fontSize: 18 }]}
-                                    placeholder="Es. Champions degli Amici 2026"
-                                    placeholderTextColor="#64748b"
-                                    value={leagueName}
-                                    onChangeText={setLeagueName}
-                                />
-
-                                <Text style={styles.label}>Logo del Torneo</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 25, gap: 15 }}>
-                                    <TouchableOpacity 
-                                        style={[styles.secondaryBtn, { flex: 1, paddingVertical: 12, borderRadius: 15 }]} 
-                                        onPress={pickImage}
-                                    >
-                                        <ImageIcon size={18} color="#38bdf8" style={{ marginRight: 10 }} />
-                                        <Text style={[styles.secondaryBtnText, { fontSize: 14 }]}>
-                                            {leagueLogo ? 'Cambia Logo' : 'Carica Logo'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    {leagueLogo && (
-                                        <Image 
-                                            source={{ uri: leagueLogo }} 
-                                            style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)' }} 
-                                        />
-                                    )}
-                                </View>
-
-                                <View style={styles.dashedBox}>
-                                    <Text style={styles.label}>Nome Serie <Text style={styles.optionalTag}>(opzionale)</Text></Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Es. Champions degli Amici"
-                                        placeholderTextColor="#64748b"
-                                        value={seriesName}
-                                        onChangeText={setSeriesName}
-                                    />
-                                    <Text style={styles.hintText}>
-                                        Se crei più tornei con lo stesso Nome Serie, i giocatori verranno collegati per <Text style={{ color: '#fbbf24', fontWeight: 'bold' }}>statistiche di carriera</Text> congiunte.
-                                    </Text>
-                                </View>
-
-
-                                <View style={styles.btnRow}>
-                                    <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={() => { setMode('list'); setCreateStep(1); }}>
-                                        <Text style={styles.secondaryBtnText}>Annulla</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex, !leagueName && { opacity: 0.5 }]} onPress={handleNextStep} disabled={!leagueName}>
-                                        <Text style={styles.primaryBtnText}>Avanti →</Text>
-                                    </TouchableOpacity>
-                                </View>
+                    {/* ═══════ MANAGE MODE ═══════ */}
+                    {mode === 'manage' && (
+                        <View style={styles.formCard}>
+                            <View style={styles.formHeaderRow}>
+                                <Text style={styles.wizardTitle}>Gestisci Tornei</Text>
+                                <TouchableOpacity onPress={() => setMode('list')} style={styles.backLink}>
+                                    <ChevronRight size={16} color="#38bdf8" style={{ transform: [{ rotate: '180deg' }] }} />
+                                    <Text style={styles.backLinkText}>Indietro</Text>
+                                </TouchableOpacity>
                             </View>
-                        )}
+                            <Text style={styles.helpText}>Personalizza la visibilità dei tuoi tornei.</Text>
 
-                        {/* ─── STEP 2 ─── */}
-                        {createStep === 2 && (
-                            <View>
-                                <Text style={styles.helpText}>Scegli come si svolge il torneo reale.</Text>
-
-                                <View style={styles.typeGrid}>
-                                    {tournamentTypes.map(type => (
-                                        <TouchableOpacity
-                                            key={type.id}
-                                            style={[styles.typeCard, leagueType === type.id && styles.typeCardActive]}
-                                            onPress={() => setLeagueType(type.id)}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Text style={[styles.typeLabel, leagueType === type.id && { color: '#fbbf24' }]}>{type.label}</Text>
-                                            <Text style={styles.typeDesc}>{type.desc}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-
-                                {/* Gruppi config */}
-                                {(leagueType === 'gironi' || leagueType === 'gironi_eliminazione') && (
-                                    <View style={styles.configBox}>
-                                        <Text style={styles.configTitle}>Impostazioni Gironi</Text>
-                                        <View style={styles.configRow}>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.configLabel}>Numero di Gironi</Text>
-                                                <TextInput style={styles.configInput} keyboardType="numeric" value={groupCount} onChangeText={setGroupCount} />
-                                            </View>
-                                            {leagueType === 'gironi_eliminazione' && (
-                                                <View style={{ flex: 1, marginLeft: 10 }}>
-                                                    <Text style={styles.configLabel}>Squadre che passano</Text>
-                                                    <TextInput style={styles.configInput} keyboardType="numeric" value={groupAdvancingTeams} onChangeText={setGroupAdvancingTeams} />
-                                                </View>
-                                            )}
-                                        </View>
-                                        {/* Nomi dei gironi configurabili */}
-                                        <View style={{ marginTop: 12 }}>
-                                            <Text style={styles.configLabel}>Nomi dei Gironi (opzionale)</Text>
-                                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
-                                                {Array.from({ length: Math.min(parseInt(groupCount) || 2, 20) }).map((_, i) => (
-                                                    <TextInput
-                                                        key={i}
-                                                        style={[styles.configInput, { width: '48%', marginBottom: 10 }]}
-                                                        placeholder={`Girone ${String.fromCharCode(65 + i)}`}
-                                                        placeholderTextColor="#64748b"
-                                                        value={customGroupNames[i] || ''}
-                                                        onChangeText={val => setCustomGroupNames(prev => ({ ...prev, [i]: val }))}
-                                                    />
-                                                ))}
-                                            </View>
-                                        </View>
-
-                                        {/* Rigori gironi */}
-                                        <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 12 }}>
-                                            <TouchableOpacity
-                                                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
-                                                onPress={() => setGroupPenaltiesEnabled(!groupPenaltiesEnabled)}
-                                            >
-                                                <View style={[styles.checkbox, groupPenaltiesEnabled && styles.checkboxActive]}>
-                                                    {groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
-                                                </View>
-                                                <Text style={[styles.configLabel, { marginBottom: 0 }]}>Rigori in caso di pareggio</Text>
-                                            </TouchableOpacity>
-
-                                            {groupPenaltiesEnabled && (
-                                                <View style={styles.configRow}>
-                                                    <View style={{ flex: 1 }}>
-                                                        <Text style={styles.configLabel}>Punti Vincitore</Text>
-                                                        <TextInput style={styles.configInput} keyboardType="numeric" value={groupPenaltiesWinStr} onChangeText={setGroupPenaltiesWinStr} />
-                                                    </View>
-                                                    <View style={{ flex: 1, marginLeft: 10 }}>
-                                                        <Text style={styles.configLabel}>Punti Sconfitto</Text>
-                                                        <TextInput style={styles.configInput} keyboardType="numeric" value={groupPenaltiesLossStr} onChangeText={setGroupPenaltiesLossStr} />
-                                                    </View>
-                                                </View>
-                                            )}
-                                        </View>
-                                    </View>
-                                )}
-
-                                {/* Eliminazione config */}
-                                {(leagueType === 'gironi_eliminazione' || leagueType === 'eliminazione') && (
-                                    <View style={[styles.configBox, { borderColor: '#fbbf24', borderLeftWidth: 3 }]}>
-                                        <Text style={[styles.configTitle, { color: '#fbbf24' }]}>Eliminazione Diretta</Text>
-                                        <Text style={styles.hintText}>Le partite le creerai dalla sezione "Calendario Partite" selezionando il tipo "Playoff".</Text>
-                                        <View style={styles.configRow}>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.configLabel}>Fase iniziale</Text>
-                                                {stageOptions.map(opt => (
-                                                    <TouchableOpacity
-                                                        key={opt.value}
-                                                        style={[styles.stageOption, playoffStartingStage === opt.value && styles.stageOptionActive]}
-                                                        onPress={() => setPlayoffStartingStage(opt.value)}
-                                                    >
-                                                        <Text style={[styles.stageOptionText, playoffStartingStage === opt.value && { color: '#fbbf24', fontWeight: 'bold' }]}>{opt.label}</Text>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
-                                            <View style={{ flex: 1, marginLeft: 10 }}>
-                                                <Text style={styles.configLabel}>Generazione</Text>
-                                                <TouchableOpacity
-                                                    style={[styles.stageOption, playoffCalendarType === 'manual' && styles.stageOptionActive]}
-                                                    onPress={() => setPlayoffCalendarType('manual')}
-                                                >
-                                                    <Text style={[styles.stageOptionText, playoffCalendarType === 'manual' && { color: '#fbbf24', fontWeight: 'bold' }]}>Manuale</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    style={[styles.stageOption, playoffCalendarType === 'automatic' && styles.stageOptionActive]}
-                                                    onPress={() => setPlayoffCalendarType('automatic')}
-                                                >
-                                                    <Text style={[styles.stageOptionText, playoffCalendarType === 'automatic' && { color: '#fbbf24', fontWeight: 'bold' }]}>Automatico</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
-                                    </View>
-                                )}
-
-                                {/* Playout */}
-                                <View style={styles.configBox}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            {userLeagues.map(league => {
+                                const isHidden = hiddenLeagueIds.includes(league.id);
+                                return (
+                                    <View key={league.id} style={styles.manageRow}>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={styles.configTitle}>Playoff/Playout</Text>
-                                            <Text style={styles.hintText}>Mini-torneo tra le ultime classificate.</Text>
+                                            <Text style={styles.manageName}>{league.name}</Text>
+                                            <Text style={styles.manageRoleLabel}>
+                                                {league.roles[currentUser.id] === 'admin' ? 'Amministratore' : 'Utente'}
+                                            </Text>
                                         </View>
-                                        <Switch value={playoutEnabled} onValueChange={setPlayoutEnabled} trackColor={{ false: "#1e293b", true: "#0ea5e9" }} />
+                                        <View style={styles.manageActions}>
+                                            <TouchableOpacity onPress={() => handleEditLeague(league)} style={styles.miniActionBtn}>
+                                                <Edit3 size={16} color="#fbbf24" />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => handleDeleteLeague(league)} style={styles.miniActionBtn}>
+                                                <Trash2 size={16} color="#ef4444" />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[styles.manageBtnToggle, isHidden && styles.manageBtnShow]}
+                                                onPress={() => toggleHideLeague(league.id)}
+                                            >
+                                                {isHidden ? <Eye size={16} color="#22c55e" /> : <EyeOff size={16} color="#ef4444" />}
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
-                                    {playoutEnabled && (
-                                        <View style={{ marginTop: 10 }}>
-                                            <Text style={styles.configLabel}>Squadre nel Playoff/Playout</Text>
-                                            <TextInput style={[styles.configInput, { width: 80 }]} keyboardType="numeric" value={playoutTeamsCount} onChangeText={setPlayoutTeamsCount} />
-                                        </View>
-                                    )}
-                                </View>
+                                );
+                            })}
+                        </View>
+                    )}
 
-                                <View style={styles.btnRow}>
-                                    <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={handlePrevStep}>
-                                        <Text style={styles.secondaryBtnText}>← Indietro</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex]} onPress={handleNextStep}>
-                                        <Text style={styles.primaryBtnText}>Avanti →</Text>
-                                    </TouchableOpacity>
+                    {/* ═══════ CREATE MODE ═══════ */}
+                    {mode === 'create' && (
+                        <View style={styles.formCard}>
+                            {/* Header + Step Indicator */}
+                            <View style={styles.formHeaderRow}>
+                                <Text style={styles.wizardTitle}>
+                                    {createStep === 1 ? 'Configurazione' : createStep === 2 ? 'Formula' : 'Fantacalcio'}
+                                </Text>
+                                <View style={styles.stepBadge}>
+                                    <Text style={styles.stepBadgeText}>{createStep} di 3</Text>
                                 </View>
                             </View>
-                        )}
 
-                        {/* ─── STEP 3 ─── */}
-                        {createStep === 3 && (
-                            <View>
-                                {/* Fantasy Toggle */}
-                                <View style={styles.fantasyToggleBox}>
-                                    <Switch value={hasFantasy} onValueChange={setHasFantasy} trackColor={{ false: "#1e293b", true: "#0ea5e9" }} />
-                                    <View style={{ marginLeft: 12, flex: 1 }}>
-                                        <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16 }}>Modalità Fantacalcio</Text>
+                            {/* Progress Bar */}
+                            <View style={styles.progressBar}>
+                                {[1, 2, 3].map(step => (
+                                    <View key={step} style={[styles.progressSegment, step <= createStep && styles.progressSegmentActive]} />
+                                ))}
+                            </View>
+
+                            {/* ─── STEP 1 ─── */}
+                            {createStep === 1 && (
+                                <View>
+                                    <Text style={styles.label}>Nome del Torneo *</Text>
+                                    <TextInput
+                                        style={[styles.input, { fontSize: 18 }]}
+                                        placeholder="Es. Champions degli Amici 2026"
+                                        placeholderTextColor="#64748b"
+                                        value={leagueName}
+                                        onChangeText={setLeagueName}
+                                    />
+
+                                    <Text style={styles.label}>Logo del Torneo</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 25, gap: 15 }}>
+                                        <TouchableOpacity
+                                            style={[styles.secondaryBtn, { flex: 1, paddingVertical: 12, borderRadius: 15 }]}
+                                            onPress={pickImage}
+                                        >
+                                            <ImageIcon size={18} color="#38bdf8" style={{ marginRight: 10 }} />
+                                            <Text style={[styles.secondaryBtnText, { fontSize: 14 }]}>
+                                                {leagueLogo ? 'Cambia Logo' : 'Carica Logo'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        {leagueLogo && (
+                                            <Image
+                                                source={{ uri: leagueLogo }}
+                                                style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                                            />
+                                        )}
+                                    </View>
+
+                                    <View style={styles.dashedBox}>
+                                        <Text style={styles.label}>Nome Serie <Text style={styles.optionalTag}>(opzionale)</Text></Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Es. Champions degli Amici"
+                                            placeholderTextColor="#64748b"
+                                            value={seriesName}
+                                            onChangeText={setSeriesName}
+                                        />
                                         <Text style={styles.hintText}>
-                                            {hasFantasy ? 'Attiva — I partecipanti potranno creare le loro squadre fantasy.' : 'Disattivata — Solo torneo reale.'}
+                                            Se crei più tornei con lo stesso Nome Serie, i giocatori verranno collegati per <Text style={{ color: '#fbbf24', fontWeight: 'bold' }}>statistiche di carriera</Text> congiunte.
                                         </Text>
                                     </View>
+
+
+                                    <View style={styles.btnRow}>
+                                        <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={() => { setMode('list'); setCreateStep(1); }}>
+                                            <Text style={styles.secondaryBtnText}>Annulla</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex, !leagueName && { opacity: 0.5 }]} onPress={handleNextStep} disabled={!leagueName}>
+                                            <Text style={styles.primaryBtnText}>Avanti →</Text>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
+                            )}
 
-                                {hasFantasy && (
-                                    <View style={styles.fantasyRulesBox}>
-                                        <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16, marginBottom: 16 }}>Regole Fantasy</Text>
+                            {/* ─── STEP 2 ─── */}
+                            {createStep === 2 && (
+                                <View>
+                                    <Text style={styles.helpText}>Scegli come si svolge il torneo reale.</Text>
 
-                                        <View style={styles.rulesGrid}>
-                                            <View style={styles.ruleItem}>
-                                                <Text style={styles.ruleLabel}>Budget</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={budget} onChangeText={setBudget} />
+                                    <View style={styles.typeGrid}>
+                                        {tournamentTypes.map(type => (
+                                            <TouchableOpacity
+                                                key={type.id}
+                                                style={[styles.typeCard, leagueType === type.id && styles.typeCardActive]}
+                                                onPress={() => setLeagueType(type.id)}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Text style={[styles.typeLabel, leagueType === type.id && { color: '#fbbf24' }]}>{type.label}</Text>
+                                                <Text style={styles.typeDesc}>{type.desc}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+
+                                    {/* Gruppi config */}
+                                    {(leagueType === 'gironi' || leagueType === 'gironi_eliminazione') && (
+                                        <View style={styles.configBox}>
+                                            <Text style={styles.configTitle}>Impostazioni Gironi</Text>
+                                            <View style={styles.configRow}>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.configLabel}>Numero di Gironi</Text>
+                                                    <TextInput style={styles.configInput} keyboardType="numeric" value={groupCount} onChangeText={setGroupCount} />
+                                                </View>
+                                                {leagueType === 'gironi_eliminazione' && (
+                                                    <View style={{ flex: 1, marginLeft: 10 }}>
+                                                        <Text style={styles.configLabel}>Squadre che passano</Text>
+                                                        <TextInput style={styles.configInput} keyboardType="numeric" value={groupAdvancingTeams} onChangeText={setGroupAdvancingTeams} />
+                                                    </View>
+                                                )}
                                             </View>
-                                            <View style={styles.ruleItem}>
-                                                <Text style={styles.ruleLabel}>Max Rosa</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={squadSize} onChangeText={setSquadSize} />
+                                            {/* Nomi dei gironi configurabili */}
+                                            <View style={{ marginTop: 12 }}>
+                                                <Text style={styles.configLabel}>Nomi dei Gironi (opzionale)</Text>
+                                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+                                                    {Array.from({ length: Math.min(parseInt(groupCount) || 2, 20) }).map((_, i) => (
+                                                        <TextInput
+                                                            key={i}
+                                                            style={[styles.configInput, { width: '48%', marginBottom: 10 }]}
+                                                            placeholder={`Girone ${String.fromCharCode(65 + i)}`}
+                                                            placeholderTextColor="#64748b"
+                                                            value={customGroupNames[i] || ''}
+                                                            onChangeText={val => setCustomGroupNames(prev => ({ ...prev, [i]: val }))}
+                                                        />
+                                                    ))}
+                                                </View>
                                             </View>
-                                            <View style={styles.ruleItem}>
-                                                <Text style={styles.ruleLabel}>Titolari</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={startersCount} onChangeText={setStartersCount} />
+
+                                            {/* Rigori gironi */}
+                                            <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 12 }}>
+                                                <TouchableOpacity
+                                                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+                                                    onPress={() => setGroupPenaltiesEnabled(!groupPenaltiesEnabled)}
+                                                >
+                                                    <View style={[styles.checkbox, groupPenaltiesEnabled && styles.checkboxActive]}>
+                                                        {groupPenaltiesEnabled && <Text style={styles.checkmark}>✓</Text>}
+                                                    </View>
+                                                    <Text style={[styles.configLabel, { marginBottom: 0 }]}>Rigori in caso di pareggio</Text>
+                                                </TouchableOpacity>
+
+                                                {groupPenaltiesEnabled && (
+                                                    <View style={styles.configRow}>
+                                                        <View style={{ flex: 1 }}>
+                                                            <Text style={styles.configLabel}>Punti Vincitore</Text>
+                                                            <TextInput style={styles.configInput} keyboardType="numeric" value={groupPenaltiesWinStr} onChangeText={setGroupPenaltiesWinStr} />
+                                                        </View>
+                                                        <View style={{ flex: 1, marginLeft: 10 }}>
+                                                            <Text style={styles.configLabel}>Punti Sconfitto</Text>
+                                                            <TextInput style={styles.configInput} keyboardType="numeric" value={groupPenaltiesLossStr} onChangeText={setGroupPenaltiesLossStr} />
+                                                        </View>
+                                                    </View>
+                                                )}
                                             </View>
-                                            <View style={styles.ruleItem}>
-                                                <Text style={styles.ruleLabel}>Panchinari</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={benchCount} onChangeText={setBenchCount} />
-                                            </View>
-                                            <View style={styles.ruleItem}>
-                                                <Text style={styles.ruleLabel}>Sost. Max</Text>
-                                                <TextInput style={styles.ruleInput} keyboardType="numeric" value={maxSubstitutions} onChangeText={setMaxSubstitutions} />
-                                            </View>
-                                            <View style={[styles.ruleItem, { minWidth: '100%', marginTop: 10 }]}>
-                                                <Text style={styles.ruleLabel}>Tipo Rosa</Text>
-                                                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                                        </View>
+                                    )}
+
+                                    {/* Eliminazione config */}
+                                    {(leagueType === 'gironi_eliminazione' || leagueType === 'eliminazione') && (
+                                        <View style={[styles.configBox, { borderColor: '#fbbf24', borderLeftWidth: 3 }]}>
+                                            <Text style={[styles.configTitle, { color: '#fbbf24' }]}>Eliminazione Diretta</Text>
+                                            <Text style={styles.hintText}>Le partite le creerai dalla sezione "Calendario Partite" selezionando il tipo "Playoff".</Text>
+                                            <View style={styles.configRow}>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.configLabel}>Fase iniziale</Text>
+                                                    {stageOptions.map(opt => (
+                                                        <TouchableOpacity
+                                                            key={opt.value}
+                                                            style={[styles.stageOption, playoffStartingStage === opt.value && styles.stageOptionActive]}
+                                                            onPress={() => setPlayoffStartingStage(opt.value)}
+                                                        >
+                                                            <Text style={[styles.stageOptionText, playoffStartingStage === opt.value && { color: '#fbbf24', fontWeight: 'bold' }]}>{opt.label}</Text>
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                                    <Text style={styles.configLabel}>Generazione</Text>
                                                     <TouchableOpacity
-                                                        style={[styles.miniToggle, rosterType === 'fixed' && styles.miniToggleActive, { flex: 1 }]}
-                                                        onPress={() => setRosterType('fixed')}
+                                                        style={[styles.stageOption, playoffCalendarType === 'manual' && styles.stageOptionActive]}
+                                                        onPress={() => setPlayoffCalendarType('manual')}
                                                     >
-                                                        <Text style={[styles.miniToggleText, rosterType === 'fixed' && { color: '#0ea5e9' }, { fontSize: 12 }]}>Fissa</Text>
+                                                        <Text style={[styles.stageOptionText, playoffCalendarType === 'manual' && { color: '#fbbf24', fontWeight: 'bold' }]}>Manuale</Text>
                                                     </TouchableOpacity>
                                                     <TouchableOpacity
-                                                        style={[styles.miniToggle, rosterType === 'variable' && styles.miniToggleActive, { flex: 1 }]}
-                                                        onPress={() => setRosterType('variable')}
+                                                        style={[styles.stageOption, playoffCalendarType === 'automatic' && styles.stageOptionActive]}
+                                                        onPress={() => setPlayoffCalendarType('automatic')}
                                                     >
-                                                        <Text style={[styles.miniToggleText, rosterType === 'variable' && { color: '#0ea5e9' }, { fontSize: 12 }]}>Variabile</Text>
+                                                        <Text style={[styles.stageOptionText, playoffCalendarType === 'automatic' && { color: '#fbbf24', fontWeight: 'bold' }]}>Automatico</Text>
                                                     </TouchableOpacity>
                                                 </View>
                                             </View>
                                         </View>
+                                    )}
 
-                                        {/* Custom Roles */}
-                                        <View style={styles.customRolesSection}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <Text style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 14 }}>Categorie Personalizzate</Text>
-                                                <Switch value={useCustomRoles} onValueChange={setUseCustomRoles} trackColor={{ false: "#1e293b", true: "#fbbf24" }} />
+                                    {/* Playout */}
+                                    <View style={styles.configBox}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.configTitle}>Playoff/Playout</Text>
+                                                <Text style={styles.hintText}>Mini-torneo tra le ultime classificate.</Text>
                                             </View>
+                                            <Switch value={playoutEnabled} onValueChange={setPlayoutEnabled} trackColor={{ false: "#1e293b", true: "#0ea5e9" }} />
+                                        </View>
+                                        {playoutEnabled && (
+                                            <View style={{ marginTop: 10 }}>
+                                                <Text style={styles.configLabel}>Squadre nel Playoff/Playout</Text>
+                                                <TextInput style={[styles.configInput, { width: 80 }]} keyboardType="numeric" value={playoutTeamsCount} onChangeText={setPlayoutTeamsCount} />
+                                            </View>
+                                        )}
+                                    </View>
 
-                                            {useCustomRoles && (
-                                                <View style={{ marginTop: 12 }}>
-                                                    {customRoles.map((role, idx) => (
-                                                        <View key={idx} style={styles.customRoleRow}>
-                                                            <TouchableOpacity
-                                                                style={[styles.roleColorDot, { backgroundColor: role.color || '#fff' }]}
-                                                                onPress={() => { setRoleColorPickerIdx(idx); setRoleColorPickerVisible(true); }}
-                                                            />
-                                                            <TextInput
-                                                                style={[styles.input, { flex: 2, marginBottom: 0, padding: 8, fontSize: 13 }]}
-                                                                value={role.name}
-                                                                onChangeText={v => handleUpdateCustomRole(idx, 'name', v)}
-                                                                placeholder="Nome"
-                                                                placeholderTextColor="#64748b"
-                                                            />
-                                                            <TextInput
-                                                                style={[styles.input, { width: 40, marginBottom: 0, padding: 8, fontSize: 13, textAlign: 'center' }]}
-                                                                keyboardType="numeric"
-                                                                value={role.minLimit.toString()}
-                                                                onChangeText={v => handleUpdateCustomRole(idx, 'minLimit', parseInt(v) || 0)}
-                                                            />
-                                                            <Text style={{ color: '#64748b', fontSize: 10 }}>—</Text>
-                                                            <TextInput
-                                                                style={[styles.input, { width: 40, marginBottom: 0, padding: 8, fontSize: 13, textAlign: 'center' }]}
-                                                                keyboardType="numeric"
-                                                                value={role.maxLimit.toString()}
-                                                                onChangeText={v => handleUpdateCustomRole(idx, 'maxLimit', parseInt(v) || 0)}
-                                                            />
-                                                            <TouchableOpacity onPress={() => handleRemoveCustomRole(idx)}>
-                                                                <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
-                                                            </TouchableOpacity>
-                                                        </View>
-                                                    ))}
-                                                    <TouchableOpacity onPress={handleAddCustomRole} style={{ marginTop: 8 }}>
-                                                        <Text style={{ color: '#38bdf8', fontSize: 13 }}>+ Aggiungi Categoria</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            )}
+                                    <View style={styles.btnRow}>
+                                        <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={handlePrevStep}>
+                                            <Text style={styles.secondaryBtnText}>← Indietro</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex]} onPress={handleNextStep}>
+                                            <Text style={styles.primaryBtnText}>Avanti →</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            )}
+
+                            {/* ─── STEP 3 ─── */}
+                            {createStep === 3 && (
+                                <View>
+                                    {/* Fantasy Toggle */}
+                                    <View style={styles.fantasyToggleBox}>
+                                        <Switch value={hasFantasy} onValueChange={setHasFantasy} trackColor={{ false: "#1e293b", true: "#0ea5e9" }} />
+                                        <View style={{ marginLeft: 12, flex: 1 }}>
+                                            <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16 }}>Modalità Fantacalcio</Text>
+                                            <Text style={styles.hintText}>
+                                                {hasFantasy ? 'Attiva — I partecipanti potranno creare le loro squadre fantasy.' : 'Disattivata — Solo torneo reale.'}
+                                            </Text>
                                         </View>
                                     </View>
-                                )}
 
-                                <View style={styles.btnRow}>
-                                    <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={handlePrevStep}>
-                                        <Text style={styles.secondaryBtnText}>Indietro</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex]} onPress={handleCreateLeague}>
-                                        <CheckCircle2 size={20} color="#fff" style={{ marginRight: 10 }} />
-                                        <Text style={styles.primaryBtnText}>Crea</Text>
-                                    </TouchableOpacity>
+                                    {hasFantasy && (
+                                        <View style={styles.fantasyRulesBox}>
+                                            <Text style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: 16, marginBottom: 16 }}>Regole Fantasy</Text>
+
+                                            <View style={styles.rulesGrid}>
+                                                <View style={styles.ruleItem}>
+                                                    <Text style={styles.ruleLabel}>Budget</Text>
+                                                    <TextInput style={styles.ruleInput} keyboardType="numeric" value={budget} onChangeText={setBudget} />
+                                                </View>
+                                                <View style={styles.ruleItem}>
+                                                    <Text style={styles.ruleLabel}>Max Rosa</Text>
+                                                    <TextInput style={styles.ruleInput} keyboardType="numeric" value={squadSize} onChangeText={setSquadSize} />
+                                                </View>
+                                                <View style={styles.ruleItem}>
+                                                    <Text style={styles.ruleLabel}>Titolari</Text>
+                                                    <TextInput style={styles.ruleInput} keyboardType="numeric" value={startersCount} onChangeText={setStartersCount} />
+                                                </View>
+                                                <View style={styles.ruleItem}>
+                                                    <Text style={styles.ruleLabel}>Panchinari</Text>
+                                                    <TextInput style={styles.ruleInput} keyboardType="numeric" value={benchCount} onChangeText={setBenchCount} />
+                                                </View>
+                                                <View style={styles.ruleItem}>
+                                                    <Text style={styles.ruleLabel}>Sost. Max</Text>
+                                                    <TextInput style={styles.ruleInput} keyboardType="numeric" value={maxSubstitutions} onChangeText={setMaxSubstitutions} />
+                                                </View>
+                                                <View style={[styles.ruleItem, { minWidth: '100%', marginTop: 10 }]}>
+                                                    <Text style={styles.ruleLabel}>Tipo Rosa</Text>
+                                                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                                                        <TouchableOpacity
+                                                            style={[styles.miniToggle, rosterType === 'fixed' && styles.miniToggleActive, { flex: 1 }]}
+                                                            onPress={() => setRosterType('fixed')}
+                                                        >
+                                                            <Text style={[styles.miniToggleText, rosterType === 'fixed' && { color: '#0ea5e9' }, { fontSize: 12 }]}>Fissa</Text>
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity
+                                                            style={[styles.miniToggle, rosterType === 'variable' && styles.miniToggleActive, { flex: 1 }]}
+                                                            onPress={() => setRosterType('variable')}
+                                                        >
+                                                            <Text style={[styles.miniToggleText, rosterType === 'variable' && { color: '#0ea5e9' }, { fontSize: 12 }]}>Variabile</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            </View>
+
+                                            {/* Custom Roles */}
+                                            <View style={styles.customRolesSection}>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <Text style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 14 }}>Categorie Personalizzate</Text>
+                                                    <Switch value={useCustomRoles} onValueChange={setUseCustomRoles} trackColor={{ false: "#1e293b", true: "#fbbf24" }} />
+                                                </View>
+
+                                                {useCustomRoles && (
+                                                    <View style={{ marginTop: 12 }}>
+                                                        {customRoles.map((role, idx) => (
+                                                            <View key={idx} style={styles.customRoleRow}>
+                                                                <TouchableOpacity
+                                                                    style={[styles.roleColorDot, { backgroundColor: role.color || '#fff' }]}
+                                                                    onPress={() => { setRoleColorPickerIdx(idx); setRoleColorPickerVisible(true); }}
+                                                                />
+                                                                <TextInput
+                                                                    style={[styles.input, { flex: 2, marginBottom: 0, padding: 8, fontSize: 13 }]}
+                                                                    value={role.name}
+                                                                    onChangeText={v => handleUpdateCustomRole(idx, 'name', v)}
+                                                                    placeholder="Nome"
+                                                                    placeholderTextColor="#64748b"
+                                                                />
+                                                                <TextInput
+                                                                    style={[styles.input, { width: 40, marginBottom: 0, padding: 8, fontSize: 13, textAlign: 'center' }]}
+                                                                    keyboardType="numeric"
+                                                                    value={role.minLimit.toString()}
+                                                                    onChangeText={v => handleUpdateCustomRole(idx, 'minLimit', parseInt(v) || 0)}
+                                                                />
+                                                                <Text style={{ color: '#64748b', fontSize: 10 }}>—</Text>
+                                                                <TextInput
+                                                                    style={[styles.input, { width: 40, marginBottom: 0, padding: 8, fontSize: 13, textAlign: 'center' }]}
+                                                                    keyboardType="numeric"
+                                                                    value={role.maxLimit.toString()}
+                                                                    onChangeText={v => handleUpdateCustomRole(idx, 'maxLimit', parseInt(v) || 0)}
+                                                                />
+                                                                <TouchableOpacity onPress={() => handleRemoveCustomRole(idx)}>
+                                                                    <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>✕</Text>
+                                                                </TouchableOpacity>
+                                                            </View>
+                                                        ))}
+                                                        <TouchableOpacity onPress={handleAddCustomRole} style={{ marginTop: 8 }}>
+                                                            <Text style={{ color: '#38bdf8', fontSize: 13 }}>+ Aggiungi Categoria</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    <View style={styles.btnRow}>
+                                        <TouchableOpacity style={[styles.secondaryBtn, styles.btnFlex]} onPress={handlePrevStep}>
+                                            <Text style={styles.secondaryBtnText}>Indietro</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.primaryBtn, styles.btnFlex]} onPress={handleCreateLeague}>
+                                            <CheckCircle2 size={20} color="#fff" style={{ marginRight: 10 }} />
+                                            <Text style={styles.primaryBtnText}>Crea</Text>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
-                            </View>
-                        )}
-                    </View>
-                )}
+                            )}
+                        </View>
+                    )}
 
-                {/* ═══════ JOIN MODE ═══════ */}
-                {mode === 'join' && (
-                    <View style={styles.formCard}>
-                        <View style={styles.formHeaderRow}>
-                            <Text style={styles.wizardTitle}>Unisciti</Text>
-                            <TouchableOpacity onPress={() => setMode('list')} style={styles.backLink}>
-                                <ChevronRight size={16} color="#38bdf8" style={{ transform: [{ rotate: '180deg' }] }} />
-                                <Text style={styles.backLinkText}>Indietro</Text>
+                    {/* ═══════ JOIN MODE ═══════ */}
+                    {mode === 'join' && (
+                        <View style={styles.formCard}>
+                            <View style={styles.formHeaderRow}>
+                                <Text style={styles.wizardTitle}>Unisciti</Text>
+                                <TouchableOpacity onPress={() => setMode('list')} style={styles.backLink}>
+                                    <ChevronRight size={16} color="#38bdf8" style={{ transform: [{ rotate: '180deg' }] }} />
+                                    <Text style={styles.backLinkText}>Indietro</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.joinInputBox}>
+                                <Text style={styles.label}>Codice Invito</Text>
+                                <TextInput
+                                    style={styles.joinInput}
+                                    placeholder="ABCDEF"
+                                    placeholderTextColor="rgba(255,255,255,0.1)"
+                                    value={joinCode}
+                                    onChangeText={setJoinCode}
+                                    maxLength={6}
+                                    autoCapitalize="characters"
+                                />
+                                <Text style={styles.hintText}>Inserisci il codice di 6 caratteri ricevuto dall'amministratore.</Text>
+                            </View>
+
+                            <TouchableOpacity style={styles.primaryBtn} onPress={handleJoinLeague}>
+                                <LogIn size={20} color="#fff" style={{ marginRight: 10 }} />
+                                <Text style={styles.primaryBtnText}>Partecipa al Torneo</Text>
                             </TouchableOpacity>
                         </View>
-                        
-                        <View style={styles.joinInputBox}>
-                            <Text style={styles.label}>Codice Invito</Text>
-                            <TextInput
-                                style={styles.joinInput}
-                                placeholder="ABCDEF"
-                                placeholderTextColor="rgba(255,255,255,0.1)"
-                                value={joinCode}
-                                onChangeText={setJoinCode}
-                                maxLength={6}
-                                autoCapitalize="characters"
-                            />
-                            <Text style={styles.hintText}>Inserisci il codice di 6 caratteri ricevuto dall'amministratore.</Text>
-                        </View>
-
-                        <TouchableOpacity style={styles.primaryBtn} onPress={handleJoinLeague}>
-                            <LogIn size={20} color="#fff" style={{ marginRight: 10 }} />
-                            <Text style={styles.primaryBtnText}>Partecipa al Torneo</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+                    )}
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            {/* Modal Profilo Utente */}
+            <Modal
+                visible={profileModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setProfileModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.profileModalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Profilo Utente</Text>
+                            <TouchableOpacity onPress={() => setProfileModalVisible(false)}>
+                                <X size={24} color="#94a3b8" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.profileInfoBox}>
+                            <View style={styles.profileAvatar}>
+                                <UserIcon size={40} color="#38bdf8" />
+                            </View>
+                            <Text style={styles.profileName}>{currentUser.firstName} {currentUser.lastName}</Text>
+                            <Text style={styles.profileEmail}>{currentUser.email}</Text>
+                        </View>
+
+                        <View style={{ marginTop: 24, gap: 12 }}>
+                            <TouchableOpacity
+                                style={[styles.secondaryBtn, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)' }]}
+                                onPress={handleDeleteAccount}
+                            >
+                                <Trash2 size={20} color="#ef4444" style={{ marginRight: 10 }} />
+                                <Text style={[styles.secondaryBtnText, { color: '#ef4444' }]}>Elimina Account</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.primaryBtn} onPress={() => setProfileModalVisible(false)}>
+                                <Text style={styles.primaryBtnText}>Chiudi</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Color Picker Modal for Custom Roles */}
             <ColorPickerModal
@@ -916,5 +987,54 @@ const styles = StyleSheet.create({
     customRoleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
     roleColorDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)' },
     joinInputBox: { marginBottom: 30 },
-    joinInput: { fontSize: 40, fontWeight: '900', color: '#38bdf8', textAlign: 'center', letterSpacing: 10, paddingVertical: 20, textTransform: 'uppercase' }
+    joinInput: { fontSize: 40, fontWeight: '900', color: '#38bdf8', textAlign: 'center', letterSpacing: 10, paddingVertical: 20, textTransform: 'uppercase' },
+    // ─── Modal Profilo ───
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'flex-end',
+    },
+    profileModalContent: {
+        backgroundColor: '#1e293b',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        color: '#f8fafc',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    profileInfoBox: {
+        alignItems: 'center',
+        paddingVertical: 16,
+    },
+    profileAvatar: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(56, 189, 248, 0.3)',
+    },
+    profileName: {
+        color: '#f8fafc',
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    profileEmail: {
+        color: '#94a3b8',
+        fontSize: 14,
+    }
 });
