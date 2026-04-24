@@ -32,7 +32,7 @@ export default function TeamProfileScreen({ route, navigation }: any) {
 
     const catColors: Record<string, string> = { POR: '#FF9800', DIF: '#2196F3', CEN: '#4CAF50', ATT: '#F44336' };
     const getCatColor = (cat: string) => {
-        const cr = league.settings.customRoles?.find(r => r.name === cat);
+        const cr = league?.settings?.customRoles?.find(r => r.name === cat);
         return cr?.color || catColors[cat] || '#9E9E9E';
     };
 
