@@ -36,7 +36,7 @@
       "submit": {
         "production": {
           "android": {
-            "serviceAccountKeyPath": "./play-store-service-account.json",
+            "serviceAccountKeyPath": "./secrets/fantasy-494718-ada67540967b.json",
             "track": "internal"
           }
         }
