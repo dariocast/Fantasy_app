@@ -13,14 +13,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fantalega.app",
+      "bundleIdentifier": "it.dvdesp.fantatorneo",
       "infoPlist": {
         "NSCameraUsageDescription": "L'app ha bisogno della fotocamera per farti scattare una foto per il profilo e per il logo della squadra.",
         "NSPhotoLibraryUsageDescription": "L'app ha bisogno di accedere alla galleria per permetterti di caricare il logo della tua squadra e la foto profilo."
       }
     },
     "android": {
-      "package": "com.fantalega.app",
+      "package": "it.dvdesp.fantatorneo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#070c1f"

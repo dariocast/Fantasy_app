@@ -22,7 +22,7 @@ eas build --platform all --profile production
 
 - **Name:** Fantasy
 - **Slug:** fantalega-mobile
-- **Bundle ID:** `com.fantalega.app` (iOS/Android)
+- **Bundle ID:** `it.dvdesp.fantatorneo` (iOS/Android)
 - **Permissions:** Camera and Photo Library access for profile/team logo uploads.
 
 ## Environment Variables

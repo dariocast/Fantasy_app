@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.fantalega.app</string>
+          <string>it.dvdesp.fantatorneo</string>
         </array>
       </dict>
     </array>

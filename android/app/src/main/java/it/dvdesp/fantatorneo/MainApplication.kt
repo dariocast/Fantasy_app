@@ -1,4 +1,4 @@
-package com.fantalega.app
+package it.dvdesp.fantatorneo
 
 import android.app.Application
 import android.content.res.Configuration
