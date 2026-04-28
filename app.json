@@ -30,7 +30,8 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -45,6 +46,12 @@
           "cameraPermission": "L'app ha bisogno della fotocamera per farti scattare una foto per il profilo."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "27719a1e-1c18-49cf-90a3-eea82dc923ba"
+      }
+    },
+    "owner": "dariocast"
   }
 }
